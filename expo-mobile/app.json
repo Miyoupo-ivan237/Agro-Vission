@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Agro-Vission",
+    "slug": "agro-vission",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "sdkVersion": "54.0.0",
+    "platforms": ["ios", "android", "web"],
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
+        }
+      ]
+    ],
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.agrovision.app"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.agrovision.app"
+    }
+  }
+}
