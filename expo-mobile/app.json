@@ -1,10 +1,9 @@
 {
   "expo": {
-    "name": "Agro-Vission",
-    "slug": "agro-vission",
+    "name": "PACNOVA",
+    "slug": "pacnova",
     "version": "1.0.0",
     "orientation": "portrait",
-    "sdkVersion": "54.0.0",
     "platforms": ["ios", "android", "web"],
     "icon": "./assets/icon.png",
     "splash": {

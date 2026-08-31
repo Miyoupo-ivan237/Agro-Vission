@@ -1,17 +1,161 @@
+// backend/prisma/schema.prisma
+// PostgreSQL Database Schema for HARVEST / Agro-Vission Ecosystem
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  name         String
-  email        String   @unique
-  phone        String
-  passwordHash String
-  createdAt    DateTime @default(now())
+  id              String           @id @default(uuid())
+  name            String
+  email           String           @unique
+  phone           String?          @default("")
+  phoneNumber     String?          @default("")
+  password        String?
+  passwordHash    String?
+  isBlocked       Boolean          @default(false)
+  role            String           @default("farmer") // "farmer" | "admin"
+  location        String?          @default("Cameroon")
+  farmSize        String?          @default("1 Hectare")
+  preferredCrop   String?          @default("Cassava & Maize")
+  createdAt       DateTime         @default(now())
+  
+  // Relations
+  diagnoses       Diagnosis[]
+  recommendations CropRecommendation[]
+  farmInfo        FarmInformation[]
+  notifications   Notification[]
+  surveys         Survey[]
+  chatMessages    ChatMessage[]
 }
+
+model PlantImage {
+  imageId     String     @id @default(uuid())
+  imagePath   String
+  uploadDate  DateTime   @default(now())
+  diagnosisId String?    @unique
+  diagnosis   Diagnosis? @relation(fields: [diagnosisId], references: [id])
+}
+
+model Diagnosis {
+  id             String       @id @default(uuid())
+  userId         String?
+  farmerId       String?
+  diseaseName    String
+  scientificName String?      @default("")
+  crop           String       @default("General")
+  cropName       String       @default("General")
+  symptoms       String
+  causes         String?
+  treatment      String?
+  diagnosisDate  DateTime     @default(now())
+  confidence     Float        @default(0.92)
+  severity       String       @default("Moderate")
+  source         String       @default("Offline AI Engine")
+  imageUri       String?
+  createdAt      DateTime     @default(now())
+  
+  // Relations
+  user           User?        @relation(fields: [userId], references: [id])
+  plantImage     PlantImage?
+  treatments     Treatment[]
+}
+
+model Treatment {
+  treatmentId   String     @id @default(uuid())
+  diagnosisId   String
+  treatmentType String     // "Organic" | "Chemical" | "Preventative"
+  medication    String
+  instruction   String
+  status        String     @default("Active")
+  
+  diagnosis     Diagnosis  @relation(fields: [diagnosisId], references: [id])
+}
+
+model FarmInformation {
+  id               String               @id @default(uuid())
+  farmerId         String?
+  userId           String?
+  location         String
+  season           String
+  soilCondition    String
+  landSize         String?              @default("1 Hectare")
+  createdAt        DateTime             @default(now())
+  
+  user             User?                @relation(fields: [userId], references: [id])
+  recommendations  CropRecommendation[]
+}
+
+model CropRecommendation {
+  id                 String           @id @default(uuid())
+  userId             String?
+  farmerId           String?
+  farmInfoId         String?
+  location           String?          @default("Cameroon")
+  season             String?          @default("General")
+  soilCondition      String?          @default("General")
+  primaryCrop        String
+  secondaryCrop      String?
+  reason             String?          @default("")
+  fertilizerPlan     String?
+  actionPlan         String?
+  recommendationDate DateTime         @default(now())
+  source             String           @default("Offline Recommendation Engine")
+  createdAt          DateTime         @default(now())
+  
+  user               User?            @relation(fields: [userId], references: [id])
+  farmInfo           FarmInformation? @relation(fields: [farmInfoId], references: [id])
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  userId     String?
+  farmerId   String?
+  message    String
+  reply      String
+  modelUsed  String   @default("Ollama agrovission-agronomist")
+  isOffline  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  
+  user       User?    @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  userId     String?
+  farmerId   String?
+  type       String   @default("general") // "weather" | "pest_alert" | "system"
+  title      String
+  message    String
+  cropId     String?
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+  
+  user       User?    @relation(fields: [userId], references: [id])
+}
+
+model Survey {
+  id            String   @id @default(uuid())
+  surveyId      String?  @default(uuid())
+  userId        String?
+  farmerId      String?
+  farmName      String?  @default("My Farm")
+  name          String?  @default("My Farm")
+  cropType      String   @default("General")
+  targetProblem String?
+  growthStage   String   @default("Vegetative")
+  healthScore   Int      @default(90)
+  pestPresent   Boolean  @default(false)
+  soilMoisture  String   @default("Optimal")
+  status        String   @default("Submitted")
+  notes         String?
+  createdAt     DateTime @default(now())
+  
+  user          User?    @relation(fields: [userId], references: [id])
+}
+
