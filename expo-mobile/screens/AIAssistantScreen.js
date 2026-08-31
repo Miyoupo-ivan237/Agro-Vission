@@ -29,7 +29,7 @@ export default function AIAssistantScreen({ goTo, language = 'English' }) {
     try {
       // Small simulated delay for local processing
       await new Promise(resolve => setTimeout(resolve, 600));
-      const response = await sendAgronomistChat({ message: userMsg.text, history: messages });
+      const response = await sendAgronomistChat({ message: userMsg.text, history: messages, language });
       const aiMsg = { 
         id: (Date.now() + 1).toString(), 
         sender: 'ai', 

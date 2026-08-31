@@ -79,6 +79,7 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
         crop: selectedCrop,
         symptomsText: `Image scan of ${selectedCrop} plant`,
         imageUri,
+        language
       });
       setResult(res.diagnosis || res);
     } catch (error) {

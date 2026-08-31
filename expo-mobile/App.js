@@ -1,4 +1,4 @@
-import React, { useState, Component } from 'react';
+import React, { useState, Component, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, StatusBar, Pressable } from 'react-native';
 import WelcomeScreen from './screens/WelcomeScreen';
 import LoginScreen from './screens/LoginScreen';
@@ -9,6 +9,8 @@ import CropAdviceScreen from './screens/CropAdviceScreen';
 import AIAssistantScreen from './screens/AIAssistantScreen';
 import SurveyScreen from './screens/SurveyScreen';
 import AdminDashboard from './screens/AdminDashboard';
+import NotificationCenterScreen from './screens/NotificationCenterScreen';
+import { trackAppUsage } from './src/api';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -72,6 +74,8 @@ export default function App() {
         return <AIAssistantScreen goTo={setCurrentRoute} language={language} />;
       case 'survey':
         return <SurveyScreen goTo={setCurrentRoute} language={language} />;
+      case 'notifications':
+        return <NotificationCenterScreen goTo={setCurrentRoute} language={language} />;
       default:
         return <WelcomeScreen goTo={setCurrentRoute} setLanguage={setLanguage} currentLanguage={language} />;
     }

@@ -23,6 +23,8 @@ model User {
   location        String?          @default("Cameroon")
   farmSize        String?          @default("1 Hectare")
   preferredCrop   String?          @default("Cassava & Maize")
+  appUsageCount   Int              @default(0) // Track number of app uses
+  lastUsedAt      DateTime?        // Track last app usage
   createdAt       DateTime         @default(now())
   
   // Relations
@@ -126,17 +128,21 @@ model ChatMessage {
 }
 
 model Notification {
-  id         String   @id @default(uuid())
-  userId     String?
-  farmerId   String?
-  type       String   @default("general") // "weather" | "pest_alert" | "system"
-  title      String
-  message    String
-  cropId     String?
-  is_read    Boolean  @default(false)
-  created_at DateTime @default(now())
+  id              String   @id @default(uuid())
+  userId          String?
+  farmerId        String?
+  type            String   @default("general") // "diagnosis_ready" | "recommendation_ready" | "agronomist_ready" | "usage_milestone" | "system"
+  title           String
+  message         String
+  cropId          String?
+  relatedDataId   String?  // ID of related diagnosis, recommendation, or chat message
+  relatedType     String?  // "diagnosis" | "recommendation" | "chat_message"
+  priority        String   @default("normal") // "low" | "normal" | "high"
+  isRead          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  readAt          DateTime?
   
-  user       User?    @relation(fields: [userId], references: [id])
+  user            User?    @relation(fields: [userId], references: [id])
 }
 
 model Survey {

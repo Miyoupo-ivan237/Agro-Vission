@@ -666,9 +666,57 @@ const CROP_DISEASES_DB = {
 };
 
 /**
- * TensorFlow/Heuristic Multi-Modal Crop Pathology Classifier
+ * French Translation Utilities for Disease Names and Treatments
  */
-function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNotes = '' }) {
+const DISEASE_NAME_TRANSLATIONS = {
+  'Cassava Mosaic Disease (CMD)': 'Maladie de la Mosaïque du Manioc (CMD)',
+  'Cassava Brown Streak Disease (CBSD)': 'Maladie de la Tache Brune du Manioc (CBSD)',
+  'Cassava Bacterial Blight (CBB)': 'Brûlure Bactérienne du Manioc (CBB)',
+  'Maize Fall Armyworm': 'Légionnaire d\'Automne du Maïs',
+  'Maize Stem Borer': 'Foreur de la Tige du Maïs',
+  'Maize Northern Leaf Blight': 'Brûlure de la Feuille Nord du Maïs',
+  'Tomato Early Blight': 'Brûlure Précoce de la Tomate',
+  'Tomato Late Blight': 'Brûlure Tardive de la Tomate',
+  'Tomato Bacterial Wilt': 'Flétrissement Bactérien de la Tomate',
+  'Black Sigatoka': 'Sigatoka Noire',
+  'Banana Weevil Borer': 'Charançon du Bananier',
+  'Cocoa Black Pod Disease': 'Maladie de la Pourriture Noire du Cacao',
+  'Cocoa Mirid': 'Miride du Cacao',
+  'Coffee Berry Disease (CBD)': 'Maladie des Baies du Café (CBD)',
+  'Coffee Leaf Rust': 'Rouille des Feuilles du Café'
+};
+
+const TREATMENT_TRANSLATIONS = {
+  'Rogue (uproot and burn) all infected plants': 'Arracher et brûler toutes les plantes infectées',
+  'Spray neem seed oil extract': 'Pulvériser un extrait d\'huile de graines de neem',
+  'Use companion planting': 'Utiliser la culture associée',
+  'Apply systemic insecticide': 'Appliquer un insecticide systémique',
+  'Copper-based organic fungicides': 'Fongicides biologiques à base de cuivre',
+  'Strict roguing and burning': 'Extraction et brûlage strictes',
+  'Prune infected shoot tips': 'Élaguer les extrémités infectées',
+  'Preventative copper sprays': 'Pulvérisations préventives à base de cuivre',
+  'Destroy infected plants immediately': 'Détruire immédiatement les plantes infectées',
+  'Hot water treatment': 'Traitement à l\'eau chaude',
+  'Well-ventilated conditions': 'Conditions bien aérées',
+  'resistant varieties': 'variétés résistantes',
+  'disease-free planting material': 'matériel de plantation exempt de maladie'
+};
+
+function translateDiseaseName(name) {
+  return DISEASE_NAME_TRANSLATIONS[name] || name;
+}
+
+function translateTreatment(text) {
+  let translated = text;
+  for (const [en, fr] of Object.entries(TREATMENT_TRANSLATIONS)) {
+    translated = translated.replace(new RegExp(en, 'gi'), fr);
+  }
+  return translated;
+}
+
+
+function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNotes = '', language = 'English' }) {
+  const isFrench = language === 'Français' || language === 'French';
   const combinedText = `${crop || ''} ${symptomsText} ${additionalNotes}`.toLowerCase();
   
   let targetCrops = [];
@@ -714,9 +762,15 @@ function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNote
     success: true,
     diagnosis: {
       ...bestMatch,
+      name: isFrench ? translateDiseaseName(bestMatch.name) : bestMatch.name,
+      organicTreatment: isFrench ? bestMatch.organicTreatment.map(t => translateTreatment(t)) : bestMatch.organicTreatment,
+      chemicalTreatment: isFrench ? bestMatch.chemicalTreatment.map(t => translateTreatment(t)) : bestMatch.chemicalTreatment,
+      symptoms: isFrench ? bestMatch.symptoms.map(s => translateTreatment(s)) : bestMatch.symptoms,
+      prevention: isFrench ? bestMatch.prevention.map(p => translateTreatment(p)) : bestMatch.prevention,
+      language: language,
       matchedScore: highestScore,
       diagnosedAt: new Date().toISOString(),
-      source: 'Agro-Vission AI Pathology Engine (TensorFlow & Plant Pathology)',
+      source: isFrench ? 'Moteur de Pathologie IA Agro-Vission (TensorFlow & Pathologie des Plantes)' : 'Agro-Vission AI Pathology Engine (TensorFlow & Plant Pathology)',
       imageUri: imageUri || null
     }
   };

@@ -99,7 +99,8 @@ const SOIL_TYPES_DETAILED = [
 
 const SEASONS = ['Onset of Major Rains', 'Mid / Heavy Rainy Season', 'Dry Season (Irrigated Farming)'];
 
-export default function CropAdviceScreen({ goTo }) {
+export default function CropAdviceScreen({ goTo, language = 'English' }) {
+  const isFr = language === 'Français';
   const [selectedRegion, setSelectedRegion] = useState(CAMEROON_10_REGIONS[0]);
   const [selectedSoil, setSelectedSoil] = useState(SOIL_TYPES_DETAILED[0]);
   const [selectedSeason, setSelectedSeason] = useState(SEASONS[0]);
@@ -114,7 +115,8 @@ export default function CropAdviceScreen({ goTo }) {
         location: selectedRegion.name,
         soilCondition: selectedSoil.name,
         season: selectedSeason,
-        landSize
+        landSize,
+        language
       });
       if (res && res.recommendation) {
         setRecommendation(res.recommendation);

@@ -467,7 +467,8 @@ const CAMEROON_REGIONS_PROFILE = {
 /**
  * Generate comprehensive recommendation based on farm parameters
  */
-function getCropRecommendation({ location = '', season = '', soilCondition = '', landSize = '1', priority = 'yield' }) {
+function getCropRecommendation({ location = '', season = '', soilCondition = '', landSize = '1', priority = 'yield', language = 'English' }) {
+  const isFrench = language === 'Français' || language === 'French';
   const locLower = (location || '').toLowerCase();
   const seasonLower = (season || '').toLowerCase();
   const soilLower = (soilCondition || '').toLowerCase();
@@ -531,6 +532,18 @@ function getCropRecommendation({ location = '', season = '', soilCondition = '',
 
   const sizeNum = parseFloat(landSize) || 1;
 
+  const soilAssessmentText = isFrench 
+    ? `La condition du sol "${soilCondition || 'Agricole standard'}" à ${location || 'Cameroun'} est optimale pour ${primary.name}. ${regionProfile ? regionProfile.soilRecommendation : 'Assurez-vous d\'avoir une matière organique adéquate et un engrais équilibré.'}`
+    : `Soil condition "${soilCondition || 'Standard agricultural'}" in ${location || 'Cameroon'} is optimal for ${primary.name}. ${regionProfile ? regionProfile.soilRecommendation : 'Ensure adequate organic matter and balanced fertilizer.'}`;
+
+  const seasonalAdviceText = isFrench
+    ? `Durant la saison ${season || 'actuelle'}, assurez-vous une préparation des terres rapide et la formation de billons avant les pluies principales.`
+    : `During the ${season || 'current'} season, ensure timely land preparation and ridge formation before the main rains.`;
+
+  const landEstimateText = isFrench
+    ? `Pour ${landSize} Hectare(s), le rendement projeté est de ${(sizeNum * 3.5).toFixed(1)} - ${(sizeNum * 7.0).toFixed(1)} Tonnes selon la gestion recommandée.`
+    : `For ${landSize} Hectare(s), projected yield is ${(sizeNum * 3.5).toFixed(1)} - ${(sizeNum * 7.0).toFixed(1)} Tons under recommended management.`;
+
   return {
     success: true,
     recommendation: {
@@ -538,12 +551,13 @@ function getCropRecommendation({ location = '', season = '', soilCondition = '',
       primaryDetails: primary,
       secondaryCrop: secondary.name,
       secondaryDetails: secondary,
-      agroEcologicalZone: primary.zone || (regionProfile ? regionProfile.climate : 'Tropical Cameroonian Agro-Ecological Zone'),
-      soilAssessment: `Soil condition "${soilCondition || 'Standard agricultural'}" in ${location || 'Cameroon'} is optimal for ${primary.name}. ${regionProfile ? regionProfile.soilRecommendation : 'Ensure adequate organic matter and balanced fertilizer.'}`,
-      seasonalAdvice: `During the ${season || 'current'} season, ensure timely land preparation and ridge formation before the main rains.`,
-      landEstimate: `For ${landSize} Hectare(s), projected yield is ${(sizeNum * 3.5).toFixed(1)} - ${(sizeNum * 7.0).toFixed(1)} Tons under recommended management.`,
+      agroEcologicalZone: primary.zone || (regionProfile ? regionProfile.climate : (isFrench ? 'Zone Agro-Écologique Tropicale du Cameroun' : 'Tropical Cameroonian Agro-Ecological Zone')),
+      soilAssessment: soilAssessmentText,
+      seasonalAdvice: seasonalAdviceText,
+      landEstimate: landEstimateText,
+      language: language,
       generatedAt: new Date().toISOString(),
-      source: 'Agro-Vission Cameroon 10-Region Agro-Ecological Engine'
+      source: isFrench ? 'Moteur Agro-Écologique Cameroun 10-Régions Agro-Vission' : 'Agro-Vission Cameroon 10-Region Agro-Ecological Engine'
     }
   };
 }

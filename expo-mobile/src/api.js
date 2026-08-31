@@ -46,7 +46,7 @@ const offlineStorage = {
 };
 
 // Safe request wrapper that catches ALL network issues silently
-async function request(path, body, token, timeoutMs = 2500) {
+async function request(path, body, token, timeoutMs = 2500, method = 'AUTO') {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -54,8 +54,10 @@ async function request(path, body, token, timeoutMs = 2500) {
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
+    const requestMethod = method === 'AUTO' ? (body ? 'POST' : 'GET') : method;
+    
     const res = await fetch(`${BASE_URL}${path}`, {
-      method: body ? 'POST' : 'GET',
+      method: requestMethod,
       headers,
       body: body ? JSON.stringify(body) : undefined,
       signal: controller.signal
@@ -124,9 +126,9 @@ export async function updateProfile(payload, token) {
 }
 
 // 2. AI Crop Diagnosis
-export async function diagnosePlant({ crop, symptomsText, imageUri, additionalNotes }) {
+export async function diagnosePlant({ crop, symptomsText, imageUri, additionalNotes, language = 'English' }) {
   try {
-    const data = await request('/api/ai/diagnose', { crop, symptomsText, imageUri, additionalNotes }, null, 3000);
+    const data = await request('/api/ai/diagnose', { crop, symptomsText, imageUri, additionalNotes, language }, null, 3000);
     if (data && data.success && data.diagnosis) {
       offlineStorage.diagnoses.unshift(data.diagnosis);
       return data;
@@ -141,9 +143,9 @@ export async function diagnosePlant({ crop, symptomsText, imageUri, additionalNo
 }
 
 // 3. AI Crop Recommendation
-export async function getRecommendation({ location, season, soilCondition, landSize, priority }) {
+export async function getRecommendation({ location, season, soilCondition, landSize, priority, language = 'English' }) {
   try {
-    const data = await request('/api/ai/recommend', { location, season, soilCondition, landSize, priority }, null, 3000);
+    const data = await request('/api/ai/recommend', { location, season, soilCondition, landSize, priority, language }, null, 3000);
     if (data && data.success && data.recommendation) {
       offlineStorage.recommendations.unshift(data.recommendation);
       return data;
@@ -158,9 +160,9 @@ export async function getRecommendation({ location, season, soilCondition, landS
 }
 
 // 4. AI Agronomist Chat
-export async function sendAgronomistChat({ message, history }) {
+export async function sendAgronomistChat({ message, history, language = 'English' }) {
   try {
-    const data = await request('/api/ai/chat', { message, history }, null, 4000);
+    const data = await request('/api/ai/chat', { message, history, language }, null, 4000);
     if (data && data.reply) {
       return data;
     }
@@ -212,11 +214,48 @@ export async function getSurveys(token) {
 }
 
 // 7. Notifications
-export async function getNotifications() {
+export async function getNotifications(token, unreadOnly = false) {
   try {
-    return await request('/api/notifications');
+    const path = unreadOnly ? '/api/notifications?unreadOnly=true' : '/api/notifications';
+    return await request(path, null, token);
   } catch (err) {
-    return offlineStorage.notifications;
+    return { 
+      notifications: offlineStorage.notifications || [],
+      unreadCount: 0,
+      totalCount: 0
+    };
+  }
+}
+
+export async function markNotificationAsRead(notificationId, token) {
+  try {
+    return await request(`/api/notifications/${notificationId}/read`, {}, token, 2500, 'PUT');
+  } catch (err) {
+    return { success: false };
+  }
+}
+
+export async function markAllNotificationsAsRead(token) {
+  try {
+    return await request('/api/notifications/read-all', {}, token, 2500, 'PUT');
+  } catch (err) {
+    return { success: false };
+  }
+}
+
+export async function getUnreadNotificationCount(token) {
+  try {
+    return await request('/api/notifications/unread/count', null, token);
+  } catch (err) {
+    return { unreadCount: 0 };
+  }
+}
+
+export async function trackAppUsage(language = 'English', token) {
+  try {
+    return await request('/api/users/track-usage', { language }, token);
+  } catch (err) {
+    return { success: false };
   }
 }
 
@@ -232,5 +271,9 @@ export default {
   getRecommendationHistory,
   submitCropSurvey,
   getSurveys,
-  getNotifications
+  getNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  getUnreadNotificationCount,
+  trackAppUsage
 };
