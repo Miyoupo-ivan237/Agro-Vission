@@ -98,7 +98,7 @@ async function notifyAgronomistReady(userId, chatMessageId, language = 'English'
     : 'AI Agronomist Response Ready';
     
   const message = isFrench
-    ? 'L\'Agronome IA a répondu à votre question. Consultez la discussion pour les conseils détaillés sur la gestion de votre ferme.`
+    ? 'L\'Agronome IA a répondu à votre question. Consultez la discussion pour les conseils détaillés sur la gestion de votre ferme.'
     : 'The AI Agronomist has answered your question. Check the chat for detailed advice on managing your farm.';
 
   return createNotification({

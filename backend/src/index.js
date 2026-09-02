@@ -6,11 +6,18 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const path = require('path');
+const {
+  diagnoseCrop,
+  getCropRecommendation,
+  chatAgronomist,
+  checkOllamaStatus,
+  getSupportedDiseases
+} = require('../../ai');
 
 // Import notification service
 const notificationService = require('./notificationService');
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 const prisma = new PrismaClient();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -392,7 +399,7 @@ app.post('/api/notifications', optionalAuth, async (req, res) => {
         message,
         farmerId: farmerId || null,
         cropId: cropId || null,
-        is_read: false
+        isRead: false
       }
     });
     return res.status(201).json(notif);
@@ -408,7 +415,7 @@ app.get('/api/notifications', optionalAuth, async (req, res) => {
     if (userId) {
       notifications = await prisma.notification.findMany({
         where: { farmerId: userId },
-        orderBy: { created_at: 'desc' },
+        orderBy: { createdAt: 'desc' },
       });
     }
 
@@ -419,8 +426,8 @@ app.get('/api/notifications', optionalAuth, async (req, res) => {
           type: 'system',
           title: '🌿 Welcome to PACNOVA!',
           message: 'Offline AI, 10-Region Engine, and TensorFlow models are perfectly configured.',
-          is_read: false,
-          created_at: new Date()
+          isRead: false,
+          createdAt: new Date()
         },
         {
           id: 2,
@@ -778,11 +785,16 @@ app.post('/api/ai/chat', optionalAuth, async (req, res) => {
   }
 });
 
-app.listen(port, () => {
+const server = app.listen(port, '0.0.0.0', () => {
   console.log(`=======================================================`);
   console.log(`  🌾 Agro-Vission Backend & AI Service Running! 🌾`);
   console.log(`  📡 Local URL: http://localhost:${port}`);
   console.log(`  🤖 AI Diagnosis & Recommendation: Active & Offline-Ready`);
   console.log(`  🦙 Ollama Local LLM: Connected on http://localhost:11434`);
   console.log(`=======================================================`);
+});
+
+server.on('error', (error) => {
+  console.error(`Backend could not listen on port ${port}:`, error.message);
+  process.exitCode = 1;
 });

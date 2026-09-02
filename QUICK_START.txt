@@ -1,0 +1,172 @@
+╔════════════════════════════════════════════════════════════════╗
+║         AGRO-VISSION QUICK START GUIDE                         ║
+║                                                                ║
+║  Plant Disease Diagnosis + AI Agronomist for Cameroon Farmers ║
+╚════════════════════════════════════════════════════════════════╝
+
+📋 WHAT YOU'LL SEE
+═══════════════════════════════════════════════════════════════
+
+When you run START_ALL_VISIBLE.ps1, three terminal windows will open:
+
+1️⃣  OLLAMA WINDOW (Magenta/Purple)
+   └─ Shows: Local AI LLM starting up
+   └─ Shows: "Loading agrovision-agronomist model..."
+   └─ This powers the AI agronomist chat feature
+
+2️⃣  BACKEND WINDOW (Green)
+   └─ Shows: "🌾 Agro-Vission Backend & AI Service Running!"
+   └─ Shows: "📡 Local URL: http://192.168.1.81:5000"
+   └─ This is your API server with PostgreSQL database
+
+3️⃣  EXPO WINDOW (Cyan/Blue) ⭐ MOST IMPORTANT
+   └─ Shows: "PACNOVA MOBILE APP - EXPO QR CODE"
+   └─ Shows: █████████████████████ (ASCII QR Code)
+   └─ 🔍 THIS IS WHAT YOU SCAN ON YOUR PHONE!
+
+
+🚀 HOW TO START ALL SERVICES
+═══════════════════════════════════════════════════════════════
+
+Option 1: Double-click this file
+   👉 START_ALL_VISIBLE.ps1
+
+Option 2: Open PowerShell and run:
+   👉 powershell -ExecutionPolicy Bypass -File START_ALL_VISIBLE.ps1
+
+
+📱 HOW TO USE ON YOUR PHONE
+═══════════════════════════════════════════════════════════════
+
+Prerequisites:
+   ✓ Phone on same WiFi as your PC (192.168.x.x network)
+   ✓ Expo Go app installed (iOS App Store or Google Play)
+
+Steps:
+   1. Run START_ALL_VISIBLE.ps1 on your PC
+   2. Wait for three windows to open (30-60 seconds)
+   3. Find the EXPO WINDOW (cyan/blue terminal)
+   4. Look for the QR code in the Expo window
+   5. Open Expo Go app on your phone
+   6. Tap "Scan QR code" at bottom
+   7. Point phone camera at the QR code on your PC screen
+   8. Wait for app to load (30-45 seconds)
+   9. Enjoy PACNOVA! 🌾
+
+
+⚙️ WHAT EACH WINDOW SHOWS
+═══════════════════════════════════════════════════════════════
+
+OLLAMA (Magenta)
+├─ Startup logs for local AI model
+├─ Running on: http://127.0.0.1:11434
+└─ No user input needed, just observe
+
+BACKEND (Green)
+├─ API requests from your phone
+├─ Database operations (PostgreSQL)
+├─ Disease diagnosis results
+├─ Crop recommendations
+├─ AI agronomist responses
+└─ Running on: http://192.168.1.81:5000
+
+EXPO (Cyan) ⭐
+├─ ┌─────────────────────────────────┐
+├─ │ Scan this QR code now!          │
+├─ │ (ASCII representation shown)    │
+├─ └─────────────────────────────────┘
+├─ Shows connection status
+├─ Displays any app errors
+├─ Shows reload prompts
+└─ Press 'r' to reload, 'c' to clear cache
+
+
+🎯 FEATURES YOU CAN TEST
+═══════════════════════════════════════════════════════════════
+
+✓ Plant Disease Diagnosis
+  └─ Take photo of plant leaf
+  └─ AI identifies disease
+  └─ Get organic/chemical treatments
+
+✓ Crop Recommendations
+  └─ Select region (10 Cameroon zones)
+  └─ Input soil type and season
+  └─ Get fertilizer schedule & best crops
+
+✓ AI Agronomist Chat
+  └─ Ask any farming question
+  └─ Ollama AI responds (trained on Cameroon agriculture)
+  └─ Offline or online modes
+
+✓ Notifications
+  └─ Diagnosis ready alerts
+  └─ Recommendation notifications
+  └─ AI response notifications
+  └─ 2-use milestone celebration
+
+✓ Bilingual
+  └─ Switch between English & Français
+  └─ All AI responses in selected language
+
+
+🛠️ KEYBOARD SHORTCUTS IN EXPO WINDOW
+═══════════════════════════════════════════════════════════════
+
+r  - Reload the app (if you made code changes)
+c  - Clear cache and reload
+q  - Quit Expo server (closes the window)
+
+
+❌ TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+Problem: Can't see QR code in Expo window
+Solution: 
+  ✓ Make sure Expo window is fully visible
+  ✓ Wait 30-60 seconds for it to load
+  ✓ Check that npm is in your PATH
+  ✓ Try pressing 'q' and restarting
+
+Problem: Can't connect on phone after scanning
+Solution:
+  ✓ Make sure phone is on same WiFi
+  ✓ Make sure PC IP is 192.168.1.81
+  ✓ Check firewall allows port 5000
+  ✓ Check that Backend window shows "running"
+
+Problem: Backend shows errors
+Solution:
+  ✓ Make sure PostgreSQL is running
+  ✓ Check that port 5000 is not in use
+  ✓ Try restarting with fresh window
+
+Problem: Ollama window shows errors
+Solution:
+  ✓ Make sure Ollama is installed
+  ✓ Make sure "agrovision-agronomist" model exists
+  ✓ Check internet for initial model download
+
+
+📊 MONITORING THE SERVICES
+═══════════════════════════════════════════════════════════════
+
+Each window shows live logs:
+  🦙 OLLAMA    → AI model info & usage
+  🖥️  BACKEND  → API calls & errors (watch this for debugging!)
+  📱 EXPO     → App compilation & hot reload status
+
+
+✅ EXPECTED BEHAVIOR
+═══════════════════════════════════════════════════════════════
+
+After starting:
+  1. All three windows open within 30 seconds
+  2. Ollama window shows: "Listening on 127.0.0.1:11434"
+  3. Backend window shows: "🌾 Agro-Vission Backend & AI Service Running!"
+  4. Expo window shows: QR code + "Tunnel Mode" or "LAN Mode" message
+  5. You should see no major errors in any window
+
+
+Need help? Check the individual window logs!
+═══════════════════════════════════════════════════════════════

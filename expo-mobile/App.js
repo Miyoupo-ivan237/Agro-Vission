@@ -1,15 +1,6 @@
 import React, { useState, Component, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, StatusBar, Pressable } from 'react-native';
-import WelcomeScreen from './screens/WelcomeScreen';
-import LoginScreen from './screens/LoginScreen';
-import RegisterScreen from './screens/RegisterScreen';
-import FarmerDashboard from './screens/FarmerDashboard';
-import DiagnosisScreen from './screens/DiagnosisScreen';
-import CropAdviceScreen from './screens/CropAdviceScreen';
-import AIAssistantScreen from './screens/AIAssistantScreen';
-import SurveyScreen from './screens/SurveyScreen';
-import AdminDashboard from './screens/AdminDashboard';
-import NotificationCenterScreen from './screens/NotificationCenterScreen';
+import { Text, StyleSheet, SafeAreaView, StatusBar, Pressable } from 'react-native';
+import AppNavigator from './navigation/AppNavigator';
 import { trackAppUsage } from './src/api';
 
 class ErrorBoundary extends Component {
@@ -31,7 +22,7 @@ class ErrorBoundary extends Component {
       return (
         <SafeAreaView style={styles.errorContainer}>
           <Text style={styles.errorIcon}>🍃</Text>
-          <Text style={styles.errorTitle}>PACNOVA Agro-Vission</Text>
+          <Text style={styles.errorTitle}>AGROVISSION</Text>
           <Text style={styles.errorSub}>Loading agricultural environment...</Text>
           <Pressable
             style={styles.retryButton}
@@ -54,38 +45,18 @@ export default function App() {
   const [userEmail, setUserEmail] = useState(null);
   const [language, setLanguage] = useState('English');
 
-  const renderScreen = () => {
-    switch (currentRoute) {
-      case 'welcome':
-        return <WelcomeScreen goTo={setCurrentRoute} setLanguage={setLanguage} currentLanguage={language} />;
-      case 'login':
-        return <LoginScreen goTo={setCurrentRoute} userEmail={userEmail} setUserEmail={setUserEmail} language={language} />;
-      case 'register':
-        return <RegisterScreen goTo={setCurrentRoute} setUserEmail={setUserEmail} language={language} />;
-      case 'home':
-        return <FarmerDashboard goTo={setCurrentRoute} language={language} />;
-      case 'admin':
-        return <AdminDashboard goTo={setCurrentRoute} language={language} />;
-      case 'diagnosis':
-        return <DiagnosisScreen goTo={setCurrentRoute} language={language} />;
-      case 'cropAdvice':
-        return <CropAdviceScreen goTo={setCurrentRoute} language={language} />;
-      case 'aiChat':
-        return <AIAssistantScreen goTo={setCurrentRoute} language={language} />;
-      case 'survey':
-        return <SurveyScreen goTo={setCurrentRoute} language={language} />;
-      case 'notifications':
-        return <NotificationCenterScreen goTo={setCurrentRoute} language={language} />;
-      default:
-        return <WelcomeScreen goTo={setCurrentRoute} setLanguage={setLanguage} currentLanguage={language} />;
-    }
-  };
-
   return (
     <ErrorBoundary onReset={() => setCurrentRoute('welcome')}>
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-        {renderScreen()}
+        <AppNavigator
+          route={currentRoute}
+          setRoute={setCurrentRoute}
+          language={language}
+          setLanguage={setLanguage}
+          userEmail={userEmail}
+          setUserEmail={setUserEmail}
+        />
       </SafeAreaView>
     </ErrorBoundary>
   );

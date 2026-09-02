@@ -473,7 +473,7 @@ export function offlineRecommendCrop({ location = '', season = '', soilCondition
       seasonalAdvice: `During the ${season || 'current'} season, ensure timely land preparation before major rains.`,
       landEstimate: `For ${landSize} Hectare(s), projected yield is ${(sizeNum * 3.5).toFixed(1)} - ${(sizeNum * 7.0).toFixed(1)} Tons under standard agro-management.`,
       generatedAt: new Date().toISOString(),
-      source: 'PACNOVA 10-Region Offline Engine',
+      source: 'AGROVISSION 10-Region Offline Engine',
       isOffline: true
     }
   };

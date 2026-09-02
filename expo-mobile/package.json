@@ -1,20 +1,22 @@
 {
-  "name": "pacnova-mobile",
+  "name": "agrovission-mobile",
   "version": "1.0.0",
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "npx expo start --offline",
-    "start-tunnel": "npx expo start --tunnel",
-    "start-clear": "npx expo start --offline -c",
-    "android": "npx expo run:android",
-    "ios": "npx expo run:ios",
-    "web": "npx expo start --web"
+    "start": "npx --no-install expo start --offline --port 8082",
+    "start-usb": "set EXPO_OFFLINE=1&& npx --no-install expo start --localhost --port 8082",
+    "start-tunnel": "npx --no-install expo start --tunnel",
+    "start-clear": "npx --no-install expo start --offline --clear --port 8082",
+    "android": "npx --no-install expo run:android",
+    "ios": "npx --no-install expo run:ios",
+    "web": "npx --no-install expo start --web --offline --port 8082"
   },
   "dependencies": {
-    "expo": "~52.0.46",
-    "expo-image-picker": "~16.0.6",
-    "expo-status-bar": "~2.0.1",
+    "@expo/metro-runtime": "~4.0.1",
+    "expo": "~54.0.0",
+    "expo-image-picker": "~15.0.0",
+    "expo-status-bar": "~1.12.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.9",
@@ -25,6 +27,7 @@
     "twrnc": "^4.5.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2"
+    "@babel/core": "^7.25.2",
+    "sharp": "^0.35.4"
   }
 }

@@ -2,12 +2,14 @@
   "name": "agro-vission-backend",
   "version": "0.1.0",
   "private": true,
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
-    "dev": "node src/index.js",
-    "start": "node src/index.js",
+    "dev": "node index.js",
+    "start": "node index.js",
     "migrate": "npx prisma migrate dev --name init",
-    "generate": "npx prisma generate"
+    "generate": "npx prisma generate",
+    "seed": "node prisma/seed.js",
+    "check-users": "node scripts/check_users.js"
   },
   "dependencies": {
     "@prisma/client": "^5.8.0",

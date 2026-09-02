@@ -1,13 +1,13 @@
 // expo-mobile/src/api.js
-// Client API Client with Automatic Seamless Offline AI Fallback for PACNOVA
+// Client API Client with Automatic Seamless Offline AI Fallback for AGROVISSION
 
-import { offlineDiagnoseCrop, offlineRecommendCrop, offlineChatAgronomist } from './offline_ai';
+import { offlineDiagnoseCrop, offlineRecommendCrop, offlineChatAgronomist } from './offline_ai.js';
 
-const BASE_URL = 'http://192.168.1.81:5000'; // Updated to 192.168.1.81 for phone LAN connection
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.81:5000';
 
 // Local offline memory stores
 const offlineStorage = {
-  user: { name: 'Demo Farmer', email: 'farmer@pacnova.cm', role: 'farmer', location: 'Cameroon' },
+  user: { name: 'Demo Farmer', email: 'farmer@agrovission.cm', role: 'farmer', location: 'Cameroon' },
   diagnoses: [
     {
       id: 1,
@@ -38,7 +38,7 @@ const offlineStorage = {
     {
       id: 1,
       title: '🌿 100% Offline AI Enabled',
-      message: 'PACNOVA plant disease diagnosis and agronomy chat operate directly on your phone with zero internet required.',
+      message: 'AGROVISSION plant disease diagnosis and agronomy chat operate directly on your phone with zero internet required.',
       category: 'system',
       createdAt: new Date().toISOString()
     }
@@ -101,7 +101,7 @@ export async function loginUser({ email, password }) {
     return {
       id: 1,
       name: offlineStorage.user.name || 'Farmer',
-      email: email || 'farmer@pacnova.cm',
+      email: email || 'farmer@agrovission.cm',
       token: 'offline-session-token',
       isOffline: true
     };

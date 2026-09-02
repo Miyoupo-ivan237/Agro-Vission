@@ -1,9 +1,9 @@
 // expo-mobile/src/translations.js
-// Bilingual English & French Dictionary for PACNOVA
+// Bilingual English & French Dictionary for AGROVISSION
 
 export const TRANSLATIONS = {
   English: {
-    appName: 'PACNOVA',
+    appName: 'AGROVISSION',
     tagline: 'Cameroon Offline AI Agronomist & 10-Region Crop Engine',
     getStarted: 'Get Started',
     selectLanguage: 'Select Language',
@@ -39,7 +39,7 @@ export const TRANSLATIONS = {
     futurePrevention: '🛡️ Future Prevention:'
   },
   Français: {
-    appName: 'PACNOVA',
+    appName: 'AGROVISSION',
     tagline: 'Agronome IA Hors-Ligne & Moteur Agricole des 10 Régions du Cameroun',
     getStarted: 'Commencer',
     selectLanguage: 'Choisir la Langue',

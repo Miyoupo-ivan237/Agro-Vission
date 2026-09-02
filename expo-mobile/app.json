@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "PACNOVA",
-    "slug": "pacnova",
+    "name": "AGROVISSION",
+    "slug": "agrovission",
     "version": "1.0.0",
     "orientation": "portrait",
     "platforms": ["ios", "android", "web"],
@@ -21,9 +21,14 @@
         }
       ]
     ],
+    "updates": {
+      "enabled": false,
+      "checkAutomatically": "NEVER",
+      "fallbackToCacheTimeout": 30000
+    },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.agrovision.app"

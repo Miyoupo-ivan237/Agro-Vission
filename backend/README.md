@@ -12,8 +12,13 @@ npx prisma generate
 # run migrations and create dev.db
 npx prisma migrate dev --name init
 # start the server
-node src/index.js
+node index.js
 ```
+
+The application entry point is `index.js`. The `config`, `routes`, `controllers`,
+`services`, `middleware`, `utils`, `tests`, and `scripts` directories provide the
+organized module layout. Existing `src` modules remain as compatibility
+implementations while endpoint handlers are migrated incrementally.
 
 Notes:
 - The default `DATABASE_URL` is set to `file:./dev.db` in `.env`.
