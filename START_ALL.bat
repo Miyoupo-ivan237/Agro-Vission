@@ -61,8 +61,7 @@ echo ║                                                              ║
 echo ║   🖥️   2. BACKEND - API Server (Green)                     ║
 echo ║      Shows: Server running on port 5000                    ║
 echo ║      Shows: API requests and database logs                 ║
-echo ║                                                              ║
-echo ║   📱 3. EXPO MOBILE - PACNOVA QR CODE (Cyan/Blue)         ║
+echo ║   📱 3. EXPO MOBILE - AGRO-VISSION QR CODE (Cyan/Blue)     ║
 echo ║      🔍 THIS WINDOW SHOWS THE QR CODE!                     ║
 echo ║      Look for the ASCII QR code in this window             ║
 echo ║                                                              ║

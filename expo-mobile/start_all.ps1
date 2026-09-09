@@ -6,4 +6,4 @@ $env:REACT_NATIVE_PACKAGER_HOSTNAME = "192.168.1.81"
 Write-Host "=== Metro Bundler Host: 192.168.1.81 (LAN Mode) ===" -ForegroundColor Yellow
 Write-Host "=== Launching Metro & Displaying QR Code... ===" -ForegroundColor Green
 
-npx expo start --lan -c
+node ./node_modules/expo/bin/cli start --lan -c

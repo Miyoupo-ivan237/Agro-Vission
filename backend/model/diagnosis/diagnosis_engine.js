@@ -715,9 +715,16 @@ function translateTreatment(text) {
 }
 
 
-function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNotes = '', language = 'English' }) {
+function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNotes = '', farmerContext = {}, language = 'English' }) {
   const isFrench = language === 'Français' || language === 'French';
-  const combinedText = `${crop || ''} ${symptomsText} ${additionalNotes}`.toLowerCase();
+  const contextText = [
+    farmerContext.region,
+    farmerContext.location,
+    farmerContext.season,
+    farmerContext.soilCondition,
+    farmerContext.growthStage
+  ].filter(Boolean).join(' ');
+  const combinedText = `${crop || ''} ${symptomsText} ${additionalNotes} ${contextText}`.toLowerCase();
   
   let targetCrops = [];
   if (crop && CROP_DISEASES_DB[crop.toLowerCase()]) {
@@ -769,6 +776,7 @@ function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNote
       prevention: isFrench ? bestMatch.prevention.map(p => translateTreatment(p)) : bestMatch.prevention,
       language: language,
       matchedScore: highestScore,
+      farmerContext,
       diagnosedAt: new Date().toISOString(),
       source: isFrench ? 'Moteur de Pathologie IA Agro-Vission (TensorFlow & Pathologie des Plantes)' : 'Agro-Vission AI Pathology Engine (TensorFlow & Plant Pathology)',
       imageUri: imageUri || null

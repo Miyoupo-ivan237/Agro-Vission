@@ -1,3 +1,3 @@
-const { getCropRecommendation } = require('../../ai');
+const { getCropRecommendation } = require('../model');
 
 module.exports = { getCropRecommendation };

@@ -4,6 +4,17 @@
 import { offlineDiagnoseCrop, offlineRecommendCrop, offlineChatAgronomist } from './offline_ai.js';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.81:5000';
+let sessionToken = null;
+
+function getFarmerContext(context = {}) {
+  return {
+    name: offlineStorage.user?.name,
+    location: offlineStorage.user?.location,
+    preferredCrop: offlineStorage.user?.preferredCrop,
+    farmSize: offlineStorage.user?.farmSize,
+    ...context
+  };
+}
 
 // Local offline memory stores
 const offlineStorage = {
@@ -48,7 +59,8 @@ const offlineStorage = {
 // Safe request wrapper that catches ALL network issues silently
 async function request(path, body, token, timeoutMs = 2500, method = 'AUTO') {
   const headers = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const activeToken = token || sessionToken;
+  if (activeToken) headers['Authorization'] = `Bearer ${activeToken}`;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -84,6 +96,7 @@ export async function registerUser({ name, email, phone, password, location }) {
   try {
     const data = await request('/api/register', { name, email, phone, password, location });
     offlineStorage.user = { name, email, phone, location };
+    sessionToken = data.token || null;
     return data;
   } catch (err) {
     const dummyUser = { id: 999, name, email, phone, location: location || 'Cameroon', token: 'offline-token' };
@@ -96,6 +109,7 @@ export async function loginUser({ email, password }) {
   try {
     const data = await request('/api/login', { email, password });
     offlineStorage.user = data;
+    sessionToken = data.token || null;
     return data;
   } catch (err) {
     return {
@@ -105,6 +119,15 @@ export async function loginUser({ email, password }) {
       token: 'offline-session-token',
       isOffline: true
     };
+  }
+}
+
+export async function registerPushToken(pushToken, token) {
+  if (!pushToken) return { success: false };
+  try {
+    return await request('/api/users/push-token', { pushToken }, token, 4000, 'PUT');
+  } catch (err) {
+    return { success: false };
   }
 }
 
@@ -126,9 +149,9 @@ export async function updateProfile(payload, token) {
 }
 
 // 2. AI Crop Diagnosis
-export async function diagnosePlant({ crop, symptomsText, imageUri, additionalNotes, language = 'English' }) {
+export async function diagnosePlant({ crop, symptomsText, imageUri, additionalNotes, farmerContext, language = 'English' }) {
   try {
-    const data = await request('/api/ai/diagnose', { crop, symptomsText, imageUri, additionalNotes, language }, null, 3000);
+    const data = await request('/api/ai/diagnose', { crop, symptomsText, imageUri, additionalNotes, farmerContext: getFarmerContext({ ...farmerContext, crop }), language }, sessionToken, 3000);
     if (data && data.success && data.diagnosis) {
       offlineStorage.diagnoses.unshift(data.diagnosis);
       return data;
@@ -143,9 +166,9 @@ export async function diagnosePlant({ crop, symptomsText, imageUri, additionalNo
 }
 
 // 3. AI Crop Recommendation
-export async function getRecommendation({ location, season, soilCondition, landSize, priority, language = 'English' }) {
+export async function getRecommendation({ location, season, soilCondition, landSize, priority, farmerContext, language = 'English' }) {
   try {
-    const data = await request('/api/ai/recommend', { location, season, soilCondition, landSize, priority, language }, null, 3000);
+    const data = await request('/api/ai/recommend', { location, season, soilCondition, landSize, priority, farmerContext: getFarmerContext({ ...farmerContext, location, season, soilCondition, landSize, priority }), language }, sessionToken, 3000);
     if (data && data.success && data.recommendation) {
       offlineStorage.recommendations.unshift(data.recommendation);
       return data;
@@ -160,9 +183,9 @@ export async function getRecommendation({ location, season, soilCondition, landS
 }
 
 // 4. AI Agronomist Chat
-export async function sendAgronomistChat({ message, history, language = 'English' }) {
+export async function sendAgronomistChat({ message, history, farmerContext, language = 'English' }) {
   try {
-    const data = await request('/api/ai/chat', { message, history, language }, null, 4000);
+    const data = await request('/api/ai/chat', { message, history, farmerContext: getFarmerContext(farmerContext), language }, sessionToken, 4000);
     if (data && data.reply) {
       return data;
     }
@@ -275,5 +298,6 @@ export default {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   getUnreadNotificationCount,
-  trackAppUsage
+  trackAppUsage,
+  registerPushToken
 };

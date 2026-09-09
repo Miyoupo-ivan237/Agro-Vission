@@ -467,11 +467,14 @@ const CAMEROON_REGIONS_PROFILE = {
 /**
  * Generate comprehensive recommendation based on farm parameters
  */
-function getCropRecommendation({ location = '', season = '', soilCondition = '', landSize = '1', priority = 'yield', language = 'English' }) {
+function getCropRecommendation({ location = '', season = '', soilCondition = '', landSize = '1', priority = 'yield', farmerContext = {}, language = 'English' }) {
   const isFrench = language === 'Français' || language === 'French';
-  const locLower = (location || '').toLowerCase();
-  const seasonLower = (season || '').toLowerCase();
-  const soilLower = (soilCondition || '').toLowerCase();
+  const effectiveLocation = location || farmerContext.location || farmerContext.region || '';
+  const effectiveSeason = season || farmerContext.season || '';
+  const effectiveSoil = soilCondition || farmerContext.soilCondition || '';
+  const locLower = effectiveLocation.toLowerCase();
+  const seasonLower = effectiveSeason.toLowerCase();
+  const soilLower = effectiveSoil.toLowerCase();
 
   // Find regional match if available
   let matchedRegionKey = null;
@@ -533,12 +536,12 @@ function getCropRecommendation({ location = '', season = '', soilCondition = '',
   const sizeNum = parseFloat(landSize) || 1;
 
   const soilAssessmentText = isFrench 
-    ? `La condition du sol "${soilCondition || 'Agricole standard'}" à ${location || 'Cameroun'} est optimale pour ${primary.name}. ${regionProfile ? regionProfile.soilRecommendation : 'Assurez-vous d\'avoir une matière organique adéquate et un engrais équilibré.'}`
-    : `Soil condition "${soilCondition || 'Standard agricultural'}" in ${location || 'Cameroon'} is optimal for ${primary.name}. ${regionProfile ? regionProfile.soilRecommendation : 'Ensure adequate organic matter and balanced fertilizer.'}`;
+    ? `La condition du sol "${effectiveSoil || 'Agricole standard'}" à ${effectiveLocation || 'Cameroun'} est optimale pour ${primary.name}. ${regionProfile ? regionProfile.soilRecommendation : 'Assurez-vous d\'avoir une matière organique adéquate et un engrais équilibré.'}`
+    : `Soil condition "${effectiveSoil || 'Standard agricultural'}" in ${effectiveLocation || 'Cameroon'} is optimal for ${primary.name}. ${regionProfile ? regionProfile.soilRecommendation : 'Ensure adequate organic matter and balanced fertilizer.'}`;
 
   const seasonalAdviceText = isFrench
-    ? `Durant la saison ${season || 'actuelle'}, assurez-vous une préparation des terres rapide et la formation de billons avant les pluies principales.`
-    : `During the ${season || 'current'} season, ensure timely land preparation and ridge formation before the main rains.`;
+    ? `Durant la saison ${effectiveSeason || 'actuelle'}, assurez-vous une préparation des terres rapide et la formation de billons avant les pluies principales.`
+    : `During the ${effectiveSeason || 'current'} season, ensure timely land preparation and ridge formation before the main rains.`;
 
   const landEstimateText = isFrench
     ? `Pour ${landSize} Hectare(s), le rendement projeté est de ${(sizeNum * 3.5).toFixed(1)} - ${(sizeNum * 7.0).toFixed(1)} Tonnes selon la gestion recommandée.`
@@ -555,6 +558,7 @@ function getCropRecommendation({ location = '', season = '', soilCondition = '',
       soilAssessment: soilAssessmentText,
       seasonalAdvice: seasonalAdviceText,
       landEstimate: landEstimateText,
+      farmerContext,
       language: language,
       generatedAt: new Date().toISOString(),
       source: isFrench ? 'Moteur Agro-Écologique Cameroun 10-Régions Agro-Vission' : 'Agro-Vission Cameroon 10-Region Agro-Ecological Engine'

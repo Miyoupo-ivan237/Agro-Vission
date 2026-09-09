@@ -17,17 +17,17 @@ pause >nul
 
 echo.
 echo Starting Backend...
-start "Agro-Vission Backend" cmd /k "cd /d C:\Users\FixUser\Desktop\Agro-Vission\backend && node src/index.js"
+start "Agro-Vission Backend" cmd /k "cd /d "%~dp0backend" && node src/index.js"
 
 timeout /t 2 /nobreak
 
 echo Starting Admin Dashboard...
-start "Agro-Vission Admin" cmd /k "cd /d C:\Users\FixUser\Desktop\Agro-Vission\Admin && npm install && npx next dev -p 3000"
+start "Agro-Vission Admin" cmd /k "cd /d "%~dp0Admin" && npm run dev"
 
 timeout /t 2 /nobreak
 
 echo Starting Mobile App (Web)...
-start "Agro-Vission Mobile" cmd /k "cd /d C:\Users\FixUser\Desktop\Agro-Vission\expo-mobile && npm install && npx expo start --web"
+start "Agro-Vission Mobile" cmd /k "cd /d "%~dp0expo-mobile" && npm run web"
 
 echo.
 echo ========================================
@@ -37,7 +37,7 @@ echo.
 echo Access your app:
 echo   Backend:  http://localhost:5000
 echo   Admin:    http://localhost:3000
-echo   Mobile:   http://localhost:8081
+echo   Mobile:   http://localhost:8082
 echo.
 echo To stop, close the individual windows.
 echo.

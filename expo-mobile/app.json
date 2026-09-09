@@ -19,6 +19,14 @@
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photos.",
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#1B5E20",
+          "defaultChannel": "ai-results"
+        }
       ]
     ],
     "updates": {

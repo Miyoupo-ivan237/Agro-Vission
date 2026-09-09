@@ -7,12 +7,12 @@ color 06
 echo.
 echo ╔════════════════════════════════════════╗
 echo ║                                        ║
-echo ║  PACNOVA MOBILE APP - EXPO QR CODE    ║
+echo ║  AGRO-VISSION MOBILE APP - EXPO QR     ║
 echo ║                                        ║
 echo ║  📱 Scan QR Code with Expo Go App     ║
 echo ║                                        ║
 echo ║  ✓ Phone on same WiFi as PC          ║
-echo ║  ✓ Connection via LAN (192.168.1.81) ║
+echo ║  ✓ Auto LAN ^& Offline AI Ready        ║
 echo ║                                        ║
 echo ╚════════════════════════════════════════╝
 echo.
@@ -25,8 +25,6 @@ echo ═════════════════════════
 echo QR CODE APPEARS BELOW:
 echo ════════════════════════════════════════
 echo.
-
-set REACT_NATIVE_PACKAGER_HOSTNAME=192.168.1.81
 
 npm start
 

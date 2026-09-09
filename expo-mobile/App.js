@@ -1,7 +1,8 @@
 import React, { useState, Component, useEffect } from 'react';
 import { Text, StyleSheet, SafeAreaView, StatusBar, Pressable } from 'react-native';
 import AppNavigator from './navigation/AppNavigator';
-import { trackAppUsage } from './src/api';
+import { registerPushToken } from './src/api';
+import { registerForPushNotifications, subscribeToNotificationActions } from './services/pushNotificationService';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -44,6 +45,24 @@ export default function App() {
   const [currentRoute, setCurrentRoute] = useState('welcome');
   const [userEmail, setUserEmail] = useState(null);
   const [language, setLanguage] = useState('English');
+
+  useEffect(() => {
+    const responseSubscription = subscribeToNotificationActions((data) => {
+      if (data.type === 'diagnosis_ready') setCurrentRoute('diagnosis');
+      if (data.type === 'recommendation_ready') setCurrentRoute('cropAdvice');
+      if (data.type === 'agronomist_ready') setCurrentRoute('aiChat');
+      if (data.type === 'usage_milestone') setCurrentRoute('home');
+    });
+    return () => responseSubscription.remove();
+  }, []);
+
+  useEffect(() => {
+    if (!userEmail) return undefined;
+    registerForPushNotifications().then((pushToken) => {
+      if (pushToken) registerPushToken(pushToken);
+    });
+    return undefined;
+  }, [userEmail]);
 
   return (
     <ErrorBoundary onReset={() => setCurrentRoute('welcome')}>

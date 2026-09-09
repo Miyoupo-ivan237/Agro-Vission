@@ -12,7 +12,7 @@ const {
   chatAgronomist,
   checkOllamaStatus,
   getSupportedDiseases
-} = require('../../ai');
+} = require('../model');
 
 // Import notification service
 const notificationService = require('./notificationService');
@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.get('/', (req, res) => {
   res.json({
     status: 'online',
-    system: 'Agro-Vission / PlantVillage AI Backend',
+    system: 'Agro-Vission AI Backend',
     version: '2.0.0',
     offlineCapable: true,
     localOllamaSupported: true,
@@ -206,6 +206,23 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
   }
 });
 
+// Register the device token used for AI result push notifications.
+app.put('/api/users/push-token', authenticateToken, async (req, res) => {
+  try {
+    const { pushToken } = req.body;
+    if (!pushToken || !pushToken.startsWith('ExponentPushToken[')) {
+      return res.status(400).json({ error: 'A valid Expo push token is required' });
+    }
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { expoPushToken: pushToken }
+    });
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ==========================================
 // 2. AI SERVICES (DIAGNOSIS, RECOMMENDATION, CHAT)
 // ==========================================
@@ -226,13 +243,12 @@ app.get('/api/ai/status', async (req, res) => {
 // AI Crop Disease Diagnosis
 app.post('/api/ai/diagnose', optionalAuth, async (req, res) => {
   try {
-    const { crop, symptomsText, imageUri, additionalNotes, language = 'English' } = req.body;
-    const result = diagnoseCrop({ crop, symptomsText, imageUri, additionalNotes, language });
+    const { crop, symptomsText, imageUri, additionalNotes, farmerContext = {}, language = 'English' } = req.body;
+    const result = diagnoseCrop({ crop, symptomsText, imageUri, additionalNotes, farmerContext, language });
 
-    // Store in database if possible
     try {
       if (result.success && result.diagnosis) {
-        await prisma.diagnosis.create({
+        const diagnosis = await prisma.diagnosis.create({
           data: {
             userId: req.user?.id || null,
             crop: result.diagnosis.crop || 'General',
@@ -249,6 +265,16 @@ app.post('/api/ai/diagnose', optionalAuth, async (req, res) => {
             source: result.diagnosis.source || 'Offline AI Diagnosis Engine'
           }
         });
+
+        if (req.user?.id) {
+          await notificationService.notifyDiagnosisReady(
+            req.user.id,
+            diagnosis.id,
+            result.diagnosis.name,
+            crop,
+            language
+          );
+        }
       }
     } catch (dbErr) {
       console.warn('Diagnosis log save warning:', dbErr.message);
@@ -263,13 +289,12 @@ app.post('/api/ai/diagnose', optionalAuth, async (req, res) => {
 // AI Crop Recommendation
 app.post('/api/ai/recommend', optionalAuth, async (req, res) => {
   try {
-    const { location, season, soilCondition, landSize, priority, language = 'English' } = req.body;
-    const result = getCropRecommendation({ location, season, soilCondition, landSize, priority, language });
+    const { location, season, soilCondition, landSize, priority, farmerContext = {}, language = 'English' } = req.body;
+    const result = getCropRecommendation({ location, season, soilCondition, landSize, priority, farmerContext, language });
 
-    // Store in database
     try {
       if (result.success && result.recommendation) {
-        await prisma.cropRecommendation.create({
+        const recommendation = await prisma.cropRecommendation.create({
           data: {
             userId: req.user?.id || null,
             location: location || 'Unknown',
@@ -282,6 +307,16 @@ app.post('/api/ai/recommend', optionalAuth, async (req, res) => {
             source: result.recommendation.source || 'Offline Recommendation Engine'
           }
         });
+
+        if (req.user?.id) {
+          await notificationService.notifyRecommendationReady(
+            req.user.id,
+            recommendation.id,
+            result.recommendation.primaryCrop,
+            location,
+            language
+          );
+        }
       }
     } catch (dbErr) {
       console.warn('Recommendation log save warning:', dbErr.message);
@@ -296,8 +331,33 @@ app.post('/api/ai/recommend', optionalAuth, async (req, res) => {
 // AI Agronomist Chat (Ollama Local LLM + Offline Fallback)
 app.post('/api/ai/chat', optionalAuth, async (req, res) => {
   try {
-    const { message, history, language = 'English' } = req.body;
-    const response = await chatAgronomist({ message, history, language });
+    const { message, history, farmerContext = {}, language = 'English' } = req.body;
+    const response = await chatAgronomist({ message, history, farmerContext, language });
+
+    try {
+      if (response && response.reply) {
+        const chatMessage = await prisma.chatMessage.create({
+          data: {
+            userId: req.user?.id || null,
+            message,
+            reply: response.reply,
+            modelUsed: response.modelUsed || 'Ollama agrovision-agronomist',
+            isOffline: response.isOfflineFallback || false
+          }
+        });
+
+        if (req.user?.id) {
+          await notificationService.notifyAgronomistReady(
+            req.user.id,
+            chatMessage.id,
+            language
+          );
+        }
+      }
+    } catch (dbErr) {
+      console.warn('Chat log save warning:', dbErr.message);
+    }
+
     return res.json(response);
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -385,24 +445,28 @@ app.get('/api/surveys', optionalAuth, async (req, res) => {
 // Create Notification (Admin / System)
 app.post('/api/notifications', optionalAuth, async (req, res) => {
   try {
-    const { type, title, message, farmerId, cropId } = req.body;
-    
-    // In production, verify if user is admin, but for now we allow system to create
+    const { type, title, message, farmerId, userId, cropId, relatedDataId, relatedType, priority } = req.body;
+
     if (!title || !message) {
       return res.status(400).json({ error: 'Title and message are required' });
     }
 
-    const notif = await prisma.notification.create({
-      data: {
-        type: type || 'general',
-        title,
-        message,
-        farmerId: farmerId || null,
-        cropId: cropId || null,
-        isRead: false
-      }
+    const targetUserId = userId || farmerId || req.user?.id;
+    if (!targetUserId) {
+      return res.status(400).json({ error: 'User ID required' });
+    }
+
+    const notif = await notificationService.createNotification({
+      userId: targetUserId,
+      type: type || 'general',
+      title,
+      message,
+      relatedDataId: relatedDataId || null,
+      relatedType: relatedType || null,
+      priority: priority || 'normal'
     });
-    return res.status(201).json(notif);
+
+    return res.status(201).json(notif || { success: true, message: 'Notification created' });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -410,42 +474,20 @@ app.post('/api/notifications', optionalAuth, async (req, res) => {
 
 app.get('/api/notifications', optionalAuth, async (req, res) => {
   try {
-    const userId = req.user?.id || null;
-    let notifications = [];
-    if (userId) {
-      notifications = await prisma.notification.findMany({
-        where: { farmerId: userId },
-        orderBy: { createdAt: 'desc' },
-      });
+    const userId = req.user?.id || req.query.userId || req.body?.userId || null;
+    if (!userId) {
+      return res.json({ notifications: [], unreadCount: 0, totalCount: 0 });
     }
 
-    if (notifications.length === 0) {
-      notifications = [
-        {
-          id: 'sys-1',
-          type: 'system',
-          title: '🌿 Welcome to PACNOVA!',
-          message: 'Offline AI, 10-Region Engine, and TensorFlow models are perfectly configured.',
-          isRead: false,
-          createdAt: new Date()
-        },
-        {
-          id: 2,
-          title: '🐛 Fall Armyworm Alert',
-          message: 'Armyworm activity reported in West region. Check maize whorls every 3 days and apply wood ash / neem extract early.',
-          category: 'pest_alert',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 3,
-          title: '🌾 Offline AI Ready',
-          message: 'You can now use Plant Disease Diagnosis and AI Agronomist 100% offline directly on your mobile device.',
-          category: 'system',
-          createdAt: new Date().toISOString()
-        }
-      ];
-    }
-    return res.json(notifications);
+    const unreadOnly = req.query.unreadOnly === 'true';
+    const notifications = await notificationService.getUserNotifications(userId, unreadOnly);
+    const unreadCount = await notificationService.getUnreadNotificationCount(userId);
+
+    return res.json({
+      notifications,
+      unreadCount,
+      totalCount: notifications.length
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -566,50 +608,29 @@ app.delete('/api/admin/users/:id', async (req, res) => {
 });
 
 // ==========================================
-// 7. NOTIFICATIONS API (ENHANCED)
+// 7. NOTIFICATION READ/UNREAD MANAGEMENT
 // ==========================================
 
-// Get user notifications
-app.get('/api/notifications', optionalAuth, async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(400).json({ error: 'User ID required' });
-    }
-
-    const unreadOnly = req.query.unreadOnly === 'true';
-    const notifications = await notificationService.getUserNotifications(userId, unreadOnly);
-    const unreadCount = await notificationService.getUnreadNotificationCount(userId);
-
-    return res.json({
-      notifications,
-      unreadCount,
-      totalCount: notifications.length
-    });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// Mark notification as read
+// Mark a single notification as read
 app.put('/api/notifications/:id/read', optionalAuth, async (req, res) => {
   try {
-    const { id } = req.params;
-    const notification = await notificationService.markNotificationAsRead(id);
-    return res.json(notification);
+    const notification = await notificationService.markNotificationAsRead(req.params.id);
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+    return res.json({ success: true, notification });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
 
-// Mark all notifications as read
+// Mark all notifications as read for a user
 app.put('/api/notifications/read-all', optionalAuth, async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user?.id || req.body?.userId || null;
     if (!userId) {
-      return res.status(400).json({ error: 'User ID required' });
+      return res.json({ success: true, message: 'No user to update' });
     }
-
     await notificationService.markAllNotificationsAsRead(userId);
     return res.json({ success: true, message: 'All notifications marked as read' });
   } catch (err) {
@@ -620,11 +641,10 @@ app.put('/api/notifications/read-all', optionalAuth, async (req, res) => {
 // Get unread notification count
 app.get('/api/notifications/unread/count', optionalAuth, async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user?.id || req.query.userId || null;
     if (!userId) {
-      return res.status(400).json({ error: 'User ID required' });
+      return res.json({ unreadCount: 0 });
     }
-
     const count = await notificationService.getUnreadNotificationCount(userId);
     return res.json({ unreadCount: count });
   } catch (err) {
@@ -632,158 +652,26 @@ app.get('/api/notifications/unread/count', optionalAuth, async (req, res) => {
   }
 });
 
-// Track app usage
+// ==========================================
+// 8. USAGE TRACKING
+// ==========================================
+
+// Track app usage (called on login/app open)
 app.post('/api/users/track-usage', optionalAuth, async (req, res) => {
   try {
-    const userId = req.user?.id;
     const { language = 'English' } = req.body;
-    
+    const userId = req.user?.id || null;
     if (!userId) {
-      return res.status(400).json({ error: 'User ID required' });
+      return res.json({ success: false, message: 'No authenticated user' });
     }
-
-    const updatedUser = await notificationService.trackAppUsage(userId, language);
-    const unreadCount = await notificationService.getUnreadNotificationCount(userId);
-
-    return res.json({
-      user: updatedUser,
-      message: 'App usage tracked',
-      unreadNotifications: unreadCount
-    });
+    const updated = await notificationService.trackAppUsage(userId, language);
+    return res.json({ success: true, user: updated });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
 
-// Enhanced diagnosis endpoint with notifications
-app.post('/api/ai/diagnose', optionalAuth, async (req, res) => {
-  try {
-    const { crop, symptomsText, imageUri, additionalNotes, language = 'English' } = req.body;
-    const result = diagnoseCrop({ crop, symptomsText, imageUri, additionalNotes, language });
 
-    // Store in database if possible
-    try {
-      if (result.success && result.diagnosis) {
-        const diagnosis = await prisma.diagnosis.create({
-          data: {
-            userId: req.user?.id || null,
-            crop: result.diagnosis.crop || 'General',
-            diseaseName: result.diagnosis.name,
-            scientificName: result.diagnosis.scientificName || '',
-            severity: result.diagnosis.severity || 'Moderate',
-            confidence: result.diagnosis.confidence || 0.9,
-            symptoms: (result.diagnosis.symptoms || []).join('; '),
-            treatment: [
-              ...(result.diagnosis.organicTreatment || []),
-              ...(result.diagnosis.chemicalTreatment || [])
-            ].join('; '),
-            imageUri: imageUri ? imageUri.substring(0, 500) : null,
-            source: result.diagnosis.source || 'Offline AI Diagnosis Engine'
-          }
-        });
-
-        // Send notification to farmer if logged in
-        if (req.user?.id) {
-          await notificationService.notifyDiagnosisReady(
-            req.user.id,
-            diagnosis.id,
-            result.diagnosis.name,
-            crop,
-            language
-          );
-        }
-      }
-    } catch (dbErr) {
-      console.warn('Diagnosis log save warning:', dbErr.message);
-    }
-
-    return res.json(result);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// Enhanced recommendation endpoint with notifications
-app.post('/api/ai/recommend', optionalAuth, async (req, res) => {
-  try {
-    const { location, season, soilCondition, landSize, priority, language = 'English' } = req.body;
-    const result = getCropRecommendation({ location, season, soilCondition, landSize, priority, language });
-
-    // Store in database
-    try {
-      if (result.success && result.recommendation) {
-        const recommendation = await prisma.cropRecommendation.create({
-          data: {
-            userId: req.user?.id || null,
-            location: location || 'Unknown',
-            season: season || 'General',
-            soilCondition: soilCondition || 'General',
-            primaryCrop: result.recommendation.primaryCrop,
-            secondaryCrop: result.recommendation.secondaryCrop,
-            fertilizerPlan: JSON.stringify(result.recommendation.primaryDetails?.fertilizerSchedule || []),
-            actionPlan: result.recommendation.primaryDetails?.actionPlan || '',
-            source: result.recommendation.source || 'Offline Recommendation Engine'
-          }
-        });
-
-        // Send notification to farmer if logged in
-        if (req.user?.id) {
-          await notificationService.notifyRecommendationReady(
-            req.user.id,
-            recommendation.id,
-            result.recommendation.primaryCrop,
-            location,
-            language
-          );
-        }
-      }
-    } catch (dbErr) {
-      console.warn('Recommendation log save warning:', dbErr.message);
-    }
-
-    return res.json(result);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// Enhanced chat endpoint with notifications
-app.post('/api/ai/chat', optionalAuth, async (req, res) => {
-  try {
-    const { message, history, language = 'English' } = req.body;
-    const response = await chatAgronomist({ message, history, language });
-    
-    // Store in database if possible
-    try {
-      if (response && response.reply) {
-        const chatMessage = await prisma.chatMessage.create({
-          data: {
-            userId: req.user?.id || null,
-            message,
-            reply: response.reply,
-            modelUsed: response.modelUsed || 'Ollama agrovision-agronomist',
-            isOffline: response.isOfflineFallback || false
-          }
-        });
-
-        // Send notification to farmer if logged in
-        if (req.user?.id) {
-          await notificationService.notifyAgronomistReady(
-            req.user.id,
-            chatMessage.id,
-            language
-          );
-        }
-      }
-    } catch (dbErr) {
-      console.warn('Chat log save warning:', dbErr.message);
-    }
-
-    return res.json(response);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
 
 const server = app.listen(port, '0.0.0.0', () => {
   console.log(`=======================================================`);

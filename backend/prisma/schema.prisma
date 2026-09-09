@@ -1,5 +1,5 @@
 // backend/prisma/schema.prisma
-// PostgreSQL Database Schema for HARVEST / Agro-Vission Ecosystem
+// PostgreSQL Database Schema for Agro-Vission Ecosystem
 
 generator client {
   provider = "prisma-client-js"
@@ -25,6 +25,7 @@ model User {
   preferredCrop   String?          @default("Cassava & Maize")
   appUsageCount   Int              @default(0) // Track number of app uses
   lastUsedAt      DateTime?        // Track last app usage
+  expoPushToken   String?
   createdAt       DateTime         @default(now())
   
   // Relations

@@ -2,6 +2,7 @@
 // Ollama Local LLM & Cameroon Agricultural Expert AI System
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
+const OLLAMA_NUM_CTX = Number(process.env.OLLAMA_NUM_CTX || 4096);
 const PREFERRED_MODELS = [
   process.env.OLLAMA_MODEL || 'agrovission-agronomist',
   'agrovission-agronomist:latest',
@@ -13,7 +14,7 @@ const PREFERRED_MODELS = [
   'mistral'
 ];
 
-const AGRONOMIST_SYSTEM_PROMPT = `You are "PlantVillage Agro-Vission AI", an expert Agronomist, Soil Scientist, and Plant Pathologist specialized in Cameroon and Sub-Saharan African agriculture. You have been trained as a specialist in Cameroonian agronomy with deep knowledge of the country's 10 regions.
+const AGRONOMIST_SYSTEM_PROMPT = `You are "Agro-Vission AI", an expert Agronomist, Soil Scientist, and Plant Pathologist specialized in Cameroon and Sub-Saharan African agriculture. You have been trained as a specialist in Cameroonian agronomy with deep knowledge of the country's 10 regions.
 
 🌾 CAMEROON AGRICULTURAL EXPERTISE:
 Your expertise covers all 10 Cameroon regions with their specific agro-ecological zones:
@@ -238,7 +239,7 @@ async function resolveActiveOllamaModel() {
 /**
  * Chat with Agronomist AI using Ollama or Offline Agronomy Fallback
  */
-async function chatAgronomist({ message, history = [], language = 'English' }) {
+async function chatAgronomist({ message, history = [], farmerContext = {}, language = 'English' }) {
   if (!message || !message.trim()) {
     return {
       success: false,
@@ -249,11 +250,16 @@ async function chatAgronomist({ message, history = [], language = 'English' }) {
   }
 
   const modelToUse = await resolveActiveOllamaModel();
+  const modelCandidates = [modelToUse, ...PREFERRED_MODELS].filter((model, index, models) => models.indexOf(model) === index);
   const isFrench = language === 'Français' || language === 'French';
+  const contextSummary = Object.entries(farmerContext)
+    .filter(([, value]) => value !== undefined && value !== null && String(value).trim())
+    .map(([key, value]) => `${key}: ${value}`)
+    .join('; ');
 
   // Updated system prompt with language support
   const SYSTEM_PROMPT = isFrench 
-    ? `Vous êtes "PlantVillage Agro-Vission AI", un expert Agronome, Pédologue et Phytopathologiste spécialisé dans l'agriculture camerounaise et sub-saharienne.
+    ? `Vous êtes "Agro-Vission AI", un expert Agronome, Pédologue et Phytopathologiste spécialisé dans l'agriculture camerounaise et sub-saharienne.
 Vous possédez une expertise agro-écologique profonde sur les 10 régions du Cameroun.
 Lors de la réponse aux agriculteurs ou techniciens agricoles:
 1. Fournir une réponse directe et actionnelle avec les variétés exactes de cultures, espacements et quantités.
@@ -263,13 +269,14 @@ Lors de la réponse aux agriculteurs ou techniciens agricoles:
 Gardez un ton encourageant, pratique, scientifique et direct. Répondez toujours en français.`
     : AGRONOMIST_SYSTEM_PROMPT;
 
-  // 1. Attempt local Ollama LLM call
-  try {
+  // Try the selected model first, then a known installed fallback.
+  for (const candidateModel of modelCandidates) {
+    try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout for local LLM
 
     const formattedMessages = [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: `${SYSTEM_PROMPT}\n\nFarmer context (use it to personalize advice, but ask when essential details are missing): ${contextSummary || 'No farmer profile context supplied.'}` },
       ...history.map(h => ({
         role: h.sender === 'user' ? 'user' : 'assistant',
         content: h.text || h.content || ''
@@ -281,10 +288,11 @@ Gardez un ton encourageant, pratique, scientifique et direct. Répondez toujours
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: modelToUse,
+        model: candidateModel,
         messages: formattedMessages,
         stream: false,
         options: {
+          num_ctx: OLLAMA_NUM_CTX,
           temperature: 0.6,
           top_p: 0.9
         }
@@ -301,14 +309,15 @@ Gardez un ton encourageant, pratique, scientifique et direct. Répondez toujours
         return {
           success: true,
           reply: reply.trim(),
-          source: `Ollama Local LLM (${modelToUse})`,
+          source: `Ollama Local LLM (${candidateModel})`,
           isOfflineFallback: false,
-          modelUsed: modelToUse
+          modelUsed: candidateModel
         };
       }
     }
-  } catch (err) {
-    // Ollama not currently running or timed out; seamlessly transition to offline knowledge engine
+    } catch (err) {
+      // Try the next installed Ollama model before using the offline engine.
+    }
   }
 
   // 2. Intelligent Offline Fallback Engine

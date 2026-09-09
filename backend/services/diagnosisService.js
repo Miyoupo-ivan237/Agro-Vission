@@ -1,3 +1,3 @@
-const { diagnoseCrop, getSupportedDiseases } = require('../../ai');
+const { diagnoseCrop, getSupportedDiseases } = require('../model');
 
 module.exports = { diagnoseCrop, getSupportedDiseases };

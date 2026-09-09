@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { getT } from '../src/translations';
+import { getT } from '../../src/translations';
 
 export default function AdminDashboard({ goTo, language = 'English' }) {
   const t = getT(language);

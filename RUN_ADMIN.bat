@@ -1,5 +1,5 @@
 @echo off
-cd /d C:\Users\FixUser\Desktop\Agro-Vission\Admin
+cd /d "%~dp0Admin"
 echo Starting Admin Dashboard on http://localhost:3000...
 npm run dev
 pause

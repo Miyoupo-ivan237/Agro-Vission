@@ -7,7 +7,7 @@ import DiagnosisScreen from '../screens/diagnosis/DiagnosisScreen';
 import CropAdviceScreen from '../screens/recommendation/CropAdviceScreen';
 import AIAssistantScreen from '../screens/assistant/AIAssistantScreen';
 import SurveyScreen from '../screens/survey/SurveyScreen';
-import AdminDashboard from '../screens/AdminDashboard';
+import AdminDashboard from '../screens/auth/AdminDashboard';
 import NotificationCenterScreen from '../screens/notifications/NotificationCenterScreen';
 
 export default function AppNavigator({ route, setRoute, language, setLanguage, userEmail, setUserEmail }) {

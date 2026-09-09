@@ -20,7 +20,7 @@ When you run START_ALL_VISIBLE.ps1, three terminal windows will open:
    └─ This is your API server with PostgreSQL database
 
 3️⃣  EXPO WINDOW (Cyan/Blue) ⭐ MOST IMPORTANT
-   └─ Shows: "PACNOVA MOBILE APP - EXPO QR CODE"
+   └─ Shows: "AGRO-VISSION MOBILE APP - EXPO QR CODE"
    └─ Shows: █████████████████████ (ASCII QR Code)
    └─ 🔍 THIS IS WHAT YOU SCAN ON YOUR PHONE!
 
@@ -51,7 +51,7 @@ Steps:
    6. Tap "Scan QR code" at bottom
    7. Point phone camera at the QR code on your PC screen
    8. Wait for app to load (30-45 seconds)
-   9. Enjoy PACNOVA! 🌾
+   9. Enjoy Agro-Vission! 🌾
 
 
 ⚙️ WHAT EACH WINDOW SHOWS

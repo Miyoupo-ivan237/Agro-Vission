@@ -5,6 +5,37 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+async function sendPushNotification(userId, notification) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { expoPushToken: true }
+    });
+    const token = user?.expoPushToken;
+    if (!token || !token.startsWith('ExponentPushToken[')) return;
+
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: token,
+        title: notification.title,
+        body: notification.message,
+        data: {
+          type: notification.type,
+          relatedDataId: notification.relatedDataId,
+          relatedType: notification.relatedType
+        },
+        sound: 'default',
+        priority: notification.priority === 'high' ? 'high' : 'default',
+        channelId: 'ai-results'
+      })
+    });
+  } catch (err) {
+    console.warn('Push notification delivery warning:', err.message);
+  }
+}
+
 /**
  * Create a notification for a farmer
  */
@@ -30,6 +61,7 @@ async function createNotification({
         isRead: false
       }
     });
+    await sendPushNotification(userId, notification);
     return notification;
   } catch (err) {
     console.error('Error creating notification:', err.message);
@@ -124,8 +156,8 @@ async function notifyUsageMilestone(userId, usageCount, language = 'English') {
       : 'Welcome Aboard Farmer!';
       
     const message = isFrench
-      ? 'Vous avez utilisé PACNOVA Agro-Vission 2 fois! 🎉 Notre Agronome IA basé sur Ollama s\'améliore avec chaque interaction. Plus vous posez de questions, mieux il comprendra les défis spécifiques des cultures camerounaises. Continuez à utiliser l\'application pour des recommandations personnalisées!'
-      : 'You\'ve used PACNOVA Agro-Vission 2 times! 🎉 Our Ollama-based AI Agronomist improves with each interaction. The more questions you ask, the better it understands the specific challenges of Cameroon crops. Keep using the app for personalized recommendations!';
+      ? 'Vous avez utilisé Agro-Vission 2 fois! 🎉 Notre Agronome IA basé sur Ollama s\'améliore avec chaque interaction. Plus vous posez de questions, mieux il comprendra les défis spécifiques des cultures camerounaises. Continuez à utiliser l\'application pour des recommandations personnalisées!'
+      : 'You\'ve used Agro-Vission 2 times! 🎉 Our Ollama-based AI Agronomist improves with each interaction. The more questions you ask, the better it understands the specific challenges of Cameroon crops. Keep using the app for personalized recommendations!';
 
     return createNotification({
       userId,
@@ -244,9 +276,9 @@ async function getUnreadNotificationCount(userId) {
         isRead: false
       }
     });
-    return count;
+    return count || 0;
   } catch (err) {
-    console.error('Error getting notification count:', err.message);
+    console.error('Error getting unread notification count:', err.message);
     return 0;
   }
 }
@@ -263,3 +295,5 @@ module.exports = {
   markAllNotificationsAsRead,
   getUnreadNotificationCount
 };
+
+
