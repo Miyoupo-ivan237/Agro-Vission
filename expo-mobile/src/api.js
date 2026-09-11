@@ -160,7 +160,7 @@ export async function diagnosePlant({ crop, symptomsText, imageUri, additionalNo
     // Silent on-device fallback
   }
 
-  const offlineRes = offlineDiagnoseCrop({ crop, symptomsText, imageUri });
+  const offlineRes = offlineDiagnoseCrop({ crop, symptomsText, imageUri, language });
   offlineStorage.diagnoses.unshift(offlineRes.diagnosis);
   return offlineRes;
 }
@@ -177,7 +177,7 @@ export async function getRecommendation({ location, season, soilCondition, landS
     // Silent on-device fallback
   }
 
-  const offlineRec = offlineRecommendCrop({ location, season, soilCondition, landSize });
+  const offlineRec = offlineRecommendCrop({ location, season, soilCondition, landSize, language });
   offlineStorage.recommendations.unshift(offlineRec.recommendation);
   return offlineRec;
 }
@@ -193,7 +193,7 @@ export async function sendAgronomistChat({ message, history, farmerContext, lang
     // Silent on-device fallback
   }
 
-  return offlineChatAgronomist(message);
+  return offlineChatAgronomist(message, language);
 }
 
 // 5. History & Logs

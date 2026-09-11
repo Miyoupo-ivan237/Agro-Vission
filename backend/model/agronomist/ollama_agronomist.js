@@ -3,10 +3,12 @@
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
 const OLLAMA_NUM_CTX = Number(process.env.OLLAMA_NUM_CTX || 4096);
+const OLLAMA_TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 30000);
 const PREFERRED_MODELS = [
-  process.env.OLLAMA_MODEL || 'agrovission-agronomist',
-  'agrovission-agronomist:latest',
+  process.env.OLLAMA_MODEL || 'llama3.2:latest',
   'llama3.2:latest',
+  'agrovission-agronomist:latest',
+  'agrovission-agronomist',
   'llama3.2',
   'llama3:latest',
   'llama3',
@@ -249,6 +251,21 @@ async function chatAgronomist({ message, history = [], farmerContext = {}, langu
     };
   }
 
+  // Known crop and disease questions use the verified local knowledge base immediately.
+  // This keeps farmer answers available even when Ollama is still loading a model.
+  const lowerMsg = message.toLowerCase();
+  for (const item of OFFLINE_KNOWLEDGE) {
+    if (item.triggers.some(t => lowerMsg.includes(t))) {
+      return {
+        success: true,
+        reply: item.response,
+        source: 'Agro-Vission Curated Agronomy Engine (Offline)',
+        isOfflineFallback: true,
+        modelUsed: 'Offline Knowledge Engine'
+      };
+    }
+  }
+
   const modelToUse = await resolveActiveOllamaModel();
   const modelCandidates = [modelToUse, ...PREFERRED_MODELS].filter((model, index, models) => models.indexOf(model) === index);
   const isFrench = language === 'Français' || language === 'French';
@@ -273,7 +290,7 @@ Gardez un ton encourageant, pratique, scientifique et direct. Répondez toujours
   for (const candidateModel of modelCandidates) {
     try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout for local LLM
+    const timeoutId = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
 
     const formattedMessages = [
       { role: 'system', content: `${SYSTEM_PROMPT}\n\nFarmer context (use it to personalize advice, but ask when essential details are missing): ${contextSummary || 'No farmer profile context supplied.'}` },
@@ -321,7 +338,6 @@ Gardez un ton encourageant, pratique, scientifique et direct. Répondez toujours
   }
 
   // 2. Intelligent Offline Fallback Engine
-  const lowerMsg = message.toLowerCase();
   for (const item of OFFLINE_KNOWLEDGE) {
     if (item.triggers.some(t => lowerMsg.includes(t))) {
       return {

@@ -22,6 +22,8 @@ const prisma = new PrismaClient();
 const app = express();
 const port = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-to-a-secure-random-value';
+const ADMIN_EMAIL = 'ivanmiyoupo@gmail.com';
+const ADMIN_PASSWORD = 'miyoupo10';
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -118,12 +120,33 @@ app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    // Hardcoded Admin Access as requested
-    if (email === 'ivanmiyoupo@gmail.com' && password === 'miyoupo10') {
-      const token = jwt.sign({ id: 'admin-123', email, role: 'admin' }, JWT_SECRET, { expiresIn: '30d' });
+    // Ensure the configured admin is also a real database user for dashboard actions.
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      let adminId = 'admin-123';
+      try {
+        const adminPasswordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+        const admin = await prisma.user.upsert({
+          where: { email: ADMIN_EMAIL },
+          update: { name: 'Ivan Miyoupo', passwordHash: adminPasswordHash, role: 'admin', isBlocked: false },
+          create: {
+            name: 'Ivan Miyoupo',
+            email: ADMIN_EMAIL,
+            passwordHash: adminPasswordHash,
+            role: 'admin',
+            location: 'Cameroon',
+            farmSize: 'All farms',
+            preferredCrop: 'All crops'
+          }
+        });
+        adminId = admin.id;
+      } catch (adminDbError) {
+        console.warn('Admin database sync warning:', adminDbError.message);
+      }
+
+      const token = jwt.sign({ id: adminId, email: ADMIN_EMAIL, role: 'admin' }, JWT_SECRET, { expiresIn: '30d' });
       return res.json({
-        id: 'admin-123',
-        email,
+        id: adminId,
+        email: ADMIN_EMAIL,
         name: 'Ivan Miyoupo',
         role: 'admin',
         token,

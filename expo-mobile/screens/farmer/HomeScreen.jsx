@@ -1,7 +1,24 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Pressable, StyleSheet, ScrollView, Image, ImageBackground } from 'react-native';
+
+const CROP_SPOTLIGHTS = [
+  { crop: 'Cassava', zone: 'Centre & South', image: 'https://images.unsplash.com/photo-1592982537447-6f23349c814b?auto=format&fit=crop&w=1200&q=80' },
+  { crop: 'Maize', zone: 'Adamawa & West', image: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=1200&q=80' },
+  { crop: 'Tomato', zone: 'Foumbot & Highlands', image: 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&w=1200&q=80' },
+  { crop: 'Plantain', zone: 'Littoral & South-West', image: 'https://images.unsplash.com/photo-1528825871115-3581a5387919?auto=format&fit=crop&w=1200&q=80' }
+];
 
 export default function HomeScreen({ goTo, userEmail }) {
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const spotlight = CROP_SPOTLIGHTS[spotlightIndex];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSpotlightIndex((current) => (current + 1) % CROP_SPOTLIGHTS.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
       {/* Top Banner */}
@@ -18,20 +35,40 @@ export default function HomeScreen({ goTo, userEmail }) {
         </Pressable>
       </View>
 
-      {/* Main Feature 1: AI Pathology Diagnosis */}
-      <View style={styles.heroCard}>
-        <View style={styles.badgeRow}>
-          <Text style={styles.heroBadge}>🔬 FEATURE #1</Text>
-          <Text style={styles.offlineTag}>⚡ Offline AI Ready</Text>
+      <ImageBackground
+        source={{ uri: 'https://images.unsplash.com/photo-1499529112087-3cb3b73d8b8?auto=format&fit=crop&w=1200&q=80' }}
+        style={styles.heroCard}
+        imageStyle={styles.heroImage}
+      >
+        <View style={styles.heroShade}>
+          <View style={styles.badgeRow}>
+            <Text style={styles.heroBadge}>🔬 AI DIAGNOSIS</Text>
+            <Text style={styles.offlineTag}>⚡ OFFLINE READY</Text>
+          </View>
+          <Text style={styles.heroTitle}>See what your crop is telling you.</Text>
+          <Text style={styles.heroSub}>
+            Photograph a leaf, fruit, or stem. The pathology engine compares symptoms and returns a treatment plan for your farm.
+          </Text>
+          <Pressable style={styles.primaryButton} onPress={() => goTo('diagnosis')}>
+            <Text style={styles.primaryButtonText}>📸 Inspect a Crop</Text>
+          </Pressable>
         </View>
-        <Text style={styles.heroTitle}>AI Crop Disease Diagnostics</Text>
-        <Text style={styles.heroSub}>
-          Take or select a photo of cassava, maize, tomato, cocoa, or banana to detect diseases and get treatment plans instantly.
-        </Text>
-        <Pressable style={styles.primaryButton} onPress={() => goTo('diagnosis')}>
-          <Text style={styles.primaryButtonText}>📸 Start AI Diagnosis</Text>
-        </Pressable>
-      </View>
+      </ImageBackground>
+
+      <ImageBackground
+        source={{ uri: 'https://images.unsplash.com/photo-1595846519845-68e298c2edd8?auto=format&fit=crop&w=1200&q=80' }}
+        style={styles.recommendationBanner}
+        imageStyle={styles.recommendationImage}
+      >
+        <View style={styles.recommendationShade}>
+          <Text style={styles.spotlightEyebrow}>CROP SPOTLIGHT • {spotlight.zone}</Text>
+          <Text style={styles.spotlightTitle}>{spotlight.crop} planning for your season</Text>
+          <Text style={styles.spotlightText}>Match your region, soil, farm size, and rainfall to a practical planting plan.</Text>
+          <Pressable style={styles.lightButton} onPress={() => goTo('cropAdvice')}>
+            <Text style={styles.lightButtonText}>🌾 Build Recommendation</Text>
+          </Pressable>
+        </View>
+      </ImageBackground>
 
       {/* 2x2 Feature Grid */}
       <View style={styles.grid}>
@@ -117,13 +154,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   heroCard: {
-    backgroundColor: '#ffffff',
+    minHeight: 270,
     borderRadius: 20,
-    padding: 20,
     marginBottom: 20,
     elevation: 4,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+  },
+  heroImage: {
+    borderRadius: 20,
+  },
+  heroShade: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: 20,
+    backgroundColor: 'rgba(4, 43, 28, 0.62)',
   },
   badgeRow: {
     flexDirection: 'row',
@@ -151,12 +195,12 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#FFFFFF',
     marginBottom: 6,
   },
   heroSub: {
     fontSize: 13,
-    color: '#475569',
+    color: '#E2F4E8',
     lineHeight: 18,
     marginBottom: 16,
   },
@@ -170,6 +214,53 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
     fontSize: 15,
+  },
+  recommendationBanner: {
+    minHeight: 220,
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 20,
+  },
+  recommendationImage: {
+    borderRadius: 20,
+  },
+  recommendationShade: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: 20,
+    backgroundColor: 'rgba(16, 55, 42, 0.56)',
+  },
+  spotlightEyebrow: {
+    color: '#D7F5B8',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  spotlightTitle: {
+    color: '#FFFFFF',
+    fontSize: 21,
+    lineHeight: 26,
+    fontWeight: '900',
+    marginBottom: 6,
+  },
+  spotlightText: {
+    color: '#F1F8E9',
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  lightButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#D7F5B8',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderRadius: 12,
+  },
+  lightButtonText: {
+    color: '#17452D',
+    fontSize: 13,
+    fontWeight: '900',
   },
   grid: {
     flexDirection: 'row',
