@@ -18,7 +18,7 @@ Start-Sleep -Seconds 3
 
 # Start Backend Server
 Write-Host "🖥️  [2/3] Starting Backend Server (Port 5000)..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -NoExit -Command `"Set-Location '$rootDir\backend'; Write-Host '═════════════════════════════════════════' -ForegroundColor Green; Write-Host '  AGRO-VISSION BACKEND SERVER' -ForegroundColor Green; Write-Host '═════════════════════════════════════════' -ForegroundColor Green; Write-Host 'Database: PostgreSQL' -ForegroundColor Cyan; Write-Host 'API URL: http://192.168.1.81:5000' -ForegroundColor Cyan; Write-Host ''; node src/index.js`"" -WindowStyle Normal
+Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -NoExit -Command `"Set-Location '$rootDir\backend'; Write-Host '═════════════════════════════════════════' -ForegroundColor Green; Write-Host '  AGRO-VISSION BACKEND SERVER' -ForegroundColor Green; Write-Host '═════════════════════════════════════════' -ForegroundColor Green; Write-Host 'Database: PostgreSQL' -ForegroundColor Cyan; Write-Host 'API URL: http://192.168.42.199:5000' -ForegroundColor Cyan; Write-Host ''; node src/index.js`"" -WindowStyle Normal
 Start-Sleep -Seconds 2
 
 # Start Expo Mobile App
@@ -49,7 +49,7 @@ Write-Host "║                                                  ║" -Foregroun
 Write-Host "║   1. Install Expo Go app (iOS/Android)         ║" -ForegroundColor Cyan
 Write-Host "║   2. Connect phone to same WiFi network        ║" -ForegroundColor Cyan
 Write-Host "║   3. Open Expo Go and scan the QR code         ║" -ForegroundColor Cyan
-Write-Host "║   4. App loads from 192.168.1.81:5000         ║" -ForegroundColor Cyan
+Write-Host "║   4. App loads from 192.168.42.199:5000        ║" -ForegroundColor Cyan
 Write-Host "║                                                  ║" -ForegroundColor Cyan
 Write-Host "╠══════════════════════════════════════════════════╣" -ForegroundColor Cyan
 Write-Host "║   KEYBOARD SHORTCUTS:                            ║" -ForegroundColor Cyan

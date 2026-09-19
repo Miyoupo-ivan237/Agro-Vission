@@ -75,7 +75,7 @@ echo ║   4. Point phone camera at the QR code                      ║
 echo ║   5. Wait 30-45 seconds for app to load                    ║
 echo ║                                                              ║
 echo ║   ✓ Phone must be on same WiFi as this PC                  ║
-echo ║   ✓ PC IP: 192.168.1.81                                    ║
+echo ║   ✓ PC IP: 192.168.42.199                                  ║
 echo ║                                                              ║
 echo ╚══════════════════════════════════════════════════════════════╝
 echo.

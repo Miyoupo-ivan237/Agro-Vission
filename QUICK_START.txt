@@ -16,7 +16,7 @@ When you run START_ALL_VISIBLE.ps1, three terminal windows will open:
 
 2️⃣  BACKEND WINDOW (Green)
    └─ Shows: "🌾 Agro-Vission Backend & AI Service Running!"
-   └─ Shows: "📡 Local URL: http://192.168.1.81:5000"
+   └─ Shows: "📡 Local URL: http://192.168.42.199:5000"
    └─ This is your API server with PostgreSQL database
 
 3️⃣  EXPO WINDOW (Cyan/Blue) ⭐ MOST IMPORTANT
@@ -68,7 +68,7 @@ BACKEND (Green)
 ├─ Disease diagnosis results
 ├─ Crop recommendations
 ├─ AI agronomist responses
-└─ Running on: http://192.168.1.81:5000
+└─ Running on: http://192.168.42.199:5000
 
 EXPO (Cyan) ⭐
 ├─ ┌─────────────────────────────────┐
@@ -131,7 +131,7 @@ Solution:
 Problem: Can't connect on phone after scanning
 Solution:
   ✓ Make sure phone is on same WiFi
-  ✓ Make sure PC IP is 192.168.1.81
+  ✓ Make sure PC IP is 192.168.42.199
   ✓ Check firewall allows port 5000
   ✓ Check that Backend window shows "running"
 

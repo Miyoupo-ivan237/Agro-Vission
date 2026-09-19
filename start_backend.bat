@@ -10,7 +10,7 @@ echo   AGRO-VISSION BACKEND SERVER
 echo ═════════════════════════════════════════
 echo.
 echo Port: 5000
-echo API URL: http://192.168.1.81:5000
+echo API URL: http://192.168.42.199:5000
 echo Database: PostgreSQL
 echo.
 echo Starting Node.js backend...

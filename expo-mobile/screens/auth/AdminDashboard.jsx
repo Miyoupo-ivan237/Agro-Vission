@@ -5,7 +5,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  TextInput, Alert, ActivityIndicator, RefreshControl,
+  Alert, RefreshControl,
 } from 'react-native';
 import {
   getAllUsers,
@@ -18,7 +18,6 @@ import {
 } from '../../services/authService';
 import {
   subscribeToNotifications,
-  addNotification,
   markAllNotificationsAsRead,
 } from '../../services/notificationService';
 
@@ -58,8 +57,6 @@ export default function AdminDashboard({ goTo, language = 'English' }) {
 
   const [users, setUsers] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [broadcastText, setBroadcastText] = useState('');
-  const [sending, setSending] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [currentAdmin, setCurrentAdmin] = useState(null);
@@ -168,38 +165,6 @@ export default function AdminDashboard({ goTo, language = 'English' }) {
   const activeRegions = countRegions(farmers);
   const adminName = currentAdmin?.name || 'Ivan Miyoupo';
 
-  async function handleBroadcast() {
-    const msg = broadcastText.trim();
-    if (!msg) {
-      Alert.alert(
-        isFr ? 'Message vide' : 'Empty Message',
-        isFr ? 'Veuillez saisir un message avant d\'envoyer.' : 'Please enter a message before sending.'
-      );
-      return;
-    }
-    setSending(true);
-    try {
-      await addNotification({
-        type: 'admin_broadcast',
-        title: isFr ? 'Message Admin' : 'Admin Broadcast',
-        message: msg,
-        priority: 'high',
-        fireSystemAlert: true,
-      });
-      setBroadcastText('');
-      Alert.alert(
-        isFr ? 'Envoye' : 'Sent',
-        isFr
-          ? 'Votre message a ete diffuse a tous les utilisateurs.'
-          : 'Your message has been broadcast to all users.'
-      );
-    } catch (err) {
-      Alert.alert(isFr ? 'Erreur' : 'Error', String(err.message));
-    } finally {
-      setSending(false);
-    }
-  }
-
   function handleLogout() {
     Alert.alert(
       isFr ? 'Deconnexion' : 'Logout',
@@ -218,7 +183,7 @@ export default function AdminDashboard({ goTo, language = 'English' }) {
   const TABS = [
     { key: 'overview', icon: '📊', en: 'Overview',      fr: 'Vue'          },
     { key: 'farmers',  icon: '👥', en: 'Farmers',       fr: 'Agriculteurs' },
-    { key: 'alerts',   icon: '📢', en: 'Alerts',        fr: 'Alertes'      },
+    { key: 'alerts',   icon: '🤖', en: 'AI Log',        fr: 'Journal IA'   },
   ];
 
   return (
@@ -378,13 +343,6 @@ export default function AdminDashboard({ goTo, language = 'English' }) {
             <Text style={styles.sectionTitle}>
               {isFr ? 'Actions Rapides' : 'Quick Actions'}
             </Text>
-            <Pressable style={styles.actionBtn} onPress={() => setActiveTab('alerts')}>
-              <Text style={styles.actionIcon}>📢</Text>
-              <Text style={styles.actionLabel}>
-                {isFr ? 'Envoyer une alerte' : 'Send alert to farmers'}
-              </Text>
-              <Text style={styles.actionArrow}>›</Text>
-            </Pressable>
             <Pressable style={styles.actionBtn} onPress={() => setActiveTab('farmers')}>
               <Text style={styles.actionIcon}>👥</Text>
               <Text style={styles.actionLabel}>
@@ -512,53 +470,27 @@ export default function AdminDashboard({ goTo, language = 'English' }) {
           </>
         )}
 
-        {/* ALERTS TAB */}
+        {/* AI NOTIFICATIONS TAB */}
         {activeTab === 'alerts' && (
           <>
-            <View style={styles.broadcastCard}>
-              <Text style={styles.broadcastTitle}>
-                {isFr ? 'Envoyer une Alerte' : 'Broadcast Alert to Farmers'}
-              </Text>
-              <Text style={styles.broadcastSub}>
-                {isFr
-                  ? 'Le message apparaitra dans le centre de notifications.'
-                  : 'Message will appear in the notification center for all users.'}
-              </Text>
-              <TextInput
-                style={styles.broadcastInput}
-                multiline
-                numberOfLines={4}
-                placeholder={
-                  isFr
-                    ? 'Saisir votre message...'
-                    : 'Type your message... (e.g. Drought alert in North Region)'
-                }
-                placeholderTextColor="#94A3B8"
-                value={broadcastText}
-                onChangeText={setBroadcastText}
-                textAlignVertical="top"
-              />
-              <Pressable
-                style={[
-                  styles.sendBtn,
-                  (!broadcastText.trim() || sending) && styles.sendBtnDisabled,
-                ]}
-                onPress={handleBroadcast}
-                disabled={!broadcastText.trim() || sending}
-              >
-                {sending ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.sendBtnText}>
-                    {isFr ? 'Envoyer a tous' : 'Send to All'}
-                  </Text>
-                )}
-              </Pressable>
+            {/* Info banner explaining notifications come from AI only */}
+            <View style={styles.aiInfoBanner}>
+              <Text style={styles.aiInfoIcon}>🤖</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.aiInfoTitle}>
+                  {isFr ? 'Notifications IA uniquement' : 'AI-Generated Notifications Only'}
+                </Text>
+                <Text style={styles.aiInfoSub}>
+                  {isFr
+                    ? 'Les alertes sont automatiquement générées par le système IA (diagnostic, recommandations, enquêtes).'
+                    : 'Alerts are automatically generated by the AI system (diagnosis, recommendations, surveys).'}
+                </Text>
+              </View>
             </View>
 
             <View style={styles.tabHeader}>
               <Text style={styles.tabHeaderTitle}>
-                {isFr ? 'Notifications' : 'All Notifications'} ({notifications.length})
+                {isFr ? 'Notifications IA' : 'AI Notifications'} ({notifications.length})
               </Text>
               {unreadCount > 0 && (
                 <Pressable onPress={() => markAllNotificationsAsRead()}>
@@ -571,8 +503,11 @@ export default function AdminDashboard({ goTo, language = 'English' }) {
 
             {notifications.length === 0 ? (
               <View style={styles.emptyCard}>
+                <Text style={{ fontSize: 32, marginBottom: 8 }}>🤖</Text>
                 <Text style={styles.emptyText}>
-                  {isFr ? 'Aucune notification.' : 'No notifications yet.'}
+                  {isFr
+                    ? 'Aucune notification IA pour l\'instant.\nElles apparaîtront après un diagnostic ou une recommandation.'
+                    : 'No AI notifications yet.\nThey will appear after a diagnosis or recommendation is made.'}
                 </Text>
               </View>
             ) : (
@@ -581,13 +516,12 @@ export default function AdminDashboard({ goTo, language = 'English' }) {
                   key={n.id}
                   style={[styles.notifRow, !n.isRead && styles.notifRowUnread]}
                 >
-                  <View style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: n.isRead ? '#CBD5E1' : '#0F4C81',
-                    marginTop: 6,
-                  }} />
+                  <Text style={{ fontSize: 18, marginTop: 2 }}>
+                    {n.type === 'diagnosis_ready' ? '🔬'
+                      : n.type === 'recommendation_ready' ? '🌾'
+                      : n.type === 'survey_submitted' ? '📋'
+                      : '🤖'}
+                  </Text>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.notifTitle}>{n.title}</Text>
                     <Text style={styles.notifMsg}>{n.message}</Text>
@@ -598,7 +532,7 @@ export default function AdminDashboard({ goTo, language = 'English' }) {
                   <View style={{
                     backgroundColor:
                       n.type === 'diagnosis_ready' ? '#ECFDF5'
-                        : n.type === 'admin_broadcast' ? '#FFF7ED'
+                        : n.type === 'recommendation_ready' ? '#EFF6FF'
                         : '#F1F5F9',
                     paddingHorizontal: 7,
                     paddingVertical: 2,
@@ -794,19 +728,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  broadcastCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 18, marginTop: 16, marginBottom: 20,
-    elevation: 3, borderTopWidth: 4, borderTopColor: '#0F4C81',
+  aiInfoBanner: {
+    flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#EFF6FF',
+    borderRadius: 14, padding: 14, marginTop: 16, marginBottom: 16,
+    borderLeftWidth: 4, borderLeftColor: '#0F4C81', gap: 12,
   },
-  broadcastTitle: { fontSize: 16, fontWeight: '800', color: '#1E293B', marginBottom: 4 },
-  broadcastSub:   { fontSize: 12, color: '#64748B', marginBottom: 14 },
-  broadcastInput: {
-    backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12,
-    padding: 12, fontSize: 14, color: '#1E293B', minHeight: 100, marginBottom: 14,
-  },
-  sendBtn:         { backgroundColor: '#0F4C81', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  sendBtnDisabled: { backgroundColor: '#94A3B8' },
-  sendBtnText:     { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
+  aiInfoIcon:  { fontSize: 28, marginTop: 2 },
+  aiInfoTitle: { fontSize: 13, fontWeight: '800', color: '#1E293B', marginBottom: 3 },
+  aiInfoSub:   { fontSize: 11, color: '#475569', lineHeight: 16 },
 
   notifRow: {
     flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#FFFFFF',
