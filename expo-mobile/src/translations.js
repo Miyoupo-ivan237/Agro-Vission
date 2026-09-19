@@ -36,11 +36,34 @@ export const TRANSLATIONS = {
     noPests: 'No Pests Detected',
     organicTreatment: '🧪 Organic Treatment Steps:',
     chemicalTreatment: '💊 Chemical Intervention:',
-    futurePrevention: '🛡️ Future Prevention:'
+    futurePrevention: '🛡️ Future Prevention:',
+    // Common UI terms
+    toolsAndServices: 'Agricultural Tools & Services',
+    toolsSub: 'Select a tool to assist your daily field operations',
+    cropAdvice: 'Crop Advice',
+    cropAdviceDesc: 'Agro-ecological planting & fertilizer schedules for Cameroon',
+    aiAgronomist: 'AI Agronomist',
+    aiAgronomistDesc: 'Ask questions to your local Qwen AI agronomist in English or French',
+    fieldSurvey: 'Field Survey',
+    fieldSurveyDesc: 'Log field moisture, crop growth stages, and pest infestations',
+    alertsAndHistory: 'Alerts & History',
+    alertsAndHistoryDesc: 'View past diagnosis reports and regional farm alerts',
+    open: 'Open',
+    chat: 'Chat',
+    log: 'Log',
+    view: 'View',
+    signOut: 'Sign Out',
+    region: 'REGION',
+    aiModel: 'AI MODEL',
+    mode: 'MODE',
+    offlineReady: 'Offline Ready',
+    farmer: 'FARMER',
+    buildPlan: 'Build Tailored Recommendation →',
+    regionalSpotlight: 'REGIONAL SPOTLIGHT'
   },
   Français: {
     appName: 'AGROVISSION',
-    tagline: 'Installer',
+    tagline: 'Agronome IA Hors-Ligne & Moteur de Cultures pour les 10 Régions du Cameroun',
     getStarted: 'Commencer',
     selectLanguage: 'Choisir la Langue',
     dashboard: 'Tableau de Bord',
@@ -72,10 +95,44 @@ export const TRANSLATIONS = {
     noPests: 'Aucun Ravageur Détecté',
     organicTreatment: '🧪 Traitements Biologiques & Naturels :',
     chemicalTreatment: '💊 Interventions Chimiques :',
-    futurePrevention: '🛡️ Prévention Future :'
+    futurePrevention: '🛡️ Prévention Future :',
+    // Common UI terms
+    toolsAndServices: 'Outils & Services Agricoles',
+    toolsSub: 'Sélectionnez un outil pour vos travaux quotidiens aux champs',
+    cropAdvice: 'Conseils de Culture',
+    cropAdviceDesc: 'Calendriers agro-écologiques et fertilisation pour le Cameroun',
+    aiAgronomist: 'Agronome IA',
+    aiAgronomistDesc: 'Posez vos questions à l\'IA agronomique en français ou anglais',
+    fieldSurvey: 'Enquête Parcelle',
+    fieldSurveyDesc: 'Suivez l\'humidité du sol, la croissance et les attaques de ravageurs',
+    alertsAndHistory: 'Alertes & Historique',
+    alertsAndHistoryDesc: 'Rapports de diagnostic passés et alertes régionales',
+    open: 'Ouvrir',
+    chat: 'Discuter',
+    log: 'Noter',
+    view: 'Voir',
+    signOut: 'Déconnexion',
+    region: 'RÉGION',
+    aiModel: 'MODÈLE IA',
+    mode: 'MODE',
+    offlineReady: 'Hors-Ligne',
+    farmer: 'AGRICULTEUR',
+    buildPlan: 'Créer une Recommandation Adaptée →',
+    regionalSpotlight: 'ZOOM RÉGIONAL'
   }
 };
 
 export function getT(lang = 'English') {
   return TRANSLATIONS[lang] || TRANSLATIONS['English'];
+}
+
+export function getSeverityLabel(severity = 'Moderate', isFrench = false) {
+  const map = {
+    Critical: isFrench ? 'Critique' : 'Critical',
+    High: isFrench ? 'Élevée' : 'High',
+    'Moderate to High': isFrench ? 'Modérée à Élevée' : 'Moderate to High',
+    Moderate: isFrench ? 'Modérée' : 'Moderate',
+    Low: isFrench ? 'Faible' : 'Low'
+  };
+  return map[severity] || severity;
 }

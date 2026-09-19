@@ -1,15 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { sendAgronomistChat } from '../../src/api';
 import { getT } from '../../src/translations';
 
 export default function AIAssistantScreen({ goTo, language = 'English' }) {
   const t = getT(language);
+  const isFr = language === 'Français' || language === 'Francais';
   const [messages, setMessages] = useState([
     {
       id: '1',
       sender: 'ai',
-      text: language === 'Français' 
+      text: isFr 
         ? "Bonjour ! Je suis l'Agronome IA d'AGROVISSION, fonctionnant 100% hors-ligne. Comment puis-je aider votre ferme aujourd'hui ?"
         : "Hello! I am the AGROVISSION AI Agronomist, running 100% offline. How can I help your farm today?"
     }
@@ -17,6 +18,21 @@ export default function AIAssistantScreen({ goTo, language = 'English' }) {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollViewRef = useRef();
+
+  useEffect(() => {
+    setMessages(prev => {
+      if (prev.length === 1 && prev[0].sender === 'ai') {
+        return [{
+          id: '1',
+          sender: 'ai',
+          text: isFr
+            ? "Bonjour ! Je suis l'Agronome IA d'AGROVISSION, fonctionnant 100% hors-ligne. Comment puis-je aider votre ferme aujourd'hui ?"
+            : "Hello! I am the AGROVISSION AI Agronomist, running 100% offline. How can I help your farm today?"
+        }];
+      }
+      return prev;
+    });
+  }, [isFr]);
 
   const handleSend = async () => {
     if (!inputText.trim()) return;

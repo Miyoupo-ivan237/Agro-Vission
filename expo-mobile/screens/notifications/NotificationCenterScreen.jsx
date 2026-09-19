@@ -29,21 +29,21 @@ const NOTIFICATION_COLORS = {
   system:              { bg: '#F5F3FF', color: '#7C3AED', border: '#7C3AED' },
 };
 
-function formatDate(date) {
+function formatDate(date, isFr = false) {
   const now = new Date();
   const d = new Date(date);
   const diffMs = now - d;
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return d.toLocaleDateString();
+  if (diffMins < 1) return isFr ? "à l'instant" : 'just now';
+  if (diffMins < 60) return isFr ? `il y a ${diffMins} min` : `${diffMins}m ago`;
+  if (diffHours < 24) return isFr ? `il y a ${diffHours} h` : `${diffHours}h ago`;
+  if (diffDays < 7) return isFr ? `il y a ${diffDays} j` : `${diffDays}d ago`;
+  return d.toLocaleDateString(isFr ? 'fr-FR' : 'en-US');
 }
 
-function NotificationCard({ notification, onMarkAsRead }) {
+function NotificationCard({ notification, onMarkAsRead, isFr = false }) {
   const config = NOTIFICATION_COLORS[notification.type] || NOTIFICATION_COLORS.general;
   const icon = NOTIFICATION_ICONS[notification.type] || NOTIFICATION_ICONS.general;
 
@@ -57,7 +57,7 @@ function NotificationCard({ notification, onMarkAsRead }) {
           <Text style={styles.notificationIcon}>{icon}</Text>
           <View style={styles.notificationTitleArea}>
             <Text style={[styles.notificationTitle, { color: config.color }]}>{notification.title}</Text>
-            <Text style={styles.notificationTime}>{formatDate(notification.createdAt)}</Text>
+            <Text style={styles.notificationTime}>{formatDate(notification.createdAt, isFr)}</Text>
           </View>
           {!notification.isRead && (
             <View style={[styles.unreadDot, { backgroundColor: config.color }]} />
@@ -65,7 +65,9 @@ function NotificationCard({ notification, onMarkAsRead }) {
         </View>
         <Text style={styles.notificationMessage}>{notification.message}</Text>
         {notification.priority === 'high' && (
-          <Text style={styles.priorityBadge}>🔔 High Priority</Text>
+          <Text style={styles.priorityBadge}>
+            {isFr ? '🔔 Priorité Haute' : '🔔 High Priority'}
+          </Text>
         )}
       </View>
     </Pressable>
@@ -152,6 +154,7 @@ export default function NotificationCenterScreen({ goTo, language = 'English' })
                 key={n.id}
                 notification={n}
                 onMarkAsRead={handleMarkAsRead}
+                isFr={isFr}
               />
             ))}
             <View style={styles.spacer} />

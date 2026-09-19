@@ -729,20 +729,25 @@ function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNote
   // Crop alias normalization
   const rawCrop = (crop || '').toLowerCase().trim();
   let normalizedCrop = rawCrop;
-  if (rawCrop === 'corn' || rawCrop === 'maïs') normalizedCrop = 'maize';
+  if (rawCrop === 'corn' || rawCrop === 'maïs' || rawCrop === 'mais') normalizedCrop = 'maize';
   else if (rawCrop === 'manioc') normalizedCrop = 'cassava';
   else if (rawCrop === 'tomate') normalizedCrop = 'tomato';
-  else if (rawCrop === 'banane') normalizedCrop = 'banana';
+  else if (rawCrop === 'banane' || rawCrop === 'plantain') normalizedCrop = 'banana';
   else if (rawCrop === 'cacao') normalizedCrop = 'cocoa';
   else if (rawCrop === 'pomme de terre') normalizedCrop = 'potato';
   else if (rawCrop === 'piment') normalizedCrop = 'pepper';
+  else if (rawCrop === 'arachide' || rawCrop === 'garnut' || rawCrop === 'peanut' || rawCrop === 'groundnut') normalizedCrop = 'groundnut';
+  else if (rawCrop === 'riz') normalizedCrop = 'rice';
+  else if (rawCrop === 'igname') normalizedCrop = 'yam';
+  else if (rawCrop === 'café' || rawCrop === 'cafe') normalizedCrop = 'coffee';
+  else if (rawCrop === 'oignon') normalizedCrop = 'onion';
 
   let targetCrops = [];
   if (normalizedCrop && normalizedCrop !== 'auto' && CROP_DISEASES_DB[normalizedCrop]) {
     targetCrops = [normalizedCrop];
   } else {
     const knownCrops = Object.keys(CROP_DISEASES_DB);
-    const matched = knownCrops.filter(c => combinedText.includes(c) || (c === 'maize' && /corn|maïs|mais|whorl|ear/i.test(combinedText)));
+    const matched = knownCrops.filter(c => combinedText.includes(c) || (c === 'groundnut' && /garnut|arachide|peanut/i.test(combinedText)) || (c === 'maize' && /corn|maïs|mais|whorl|ear/i.test(combinedText)));
     targetCrops = matched.length > 0 ? matched : ['maize'];
   }
 

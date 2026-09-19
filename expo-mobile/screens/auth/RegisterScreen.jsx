@@ -6,19 +6,12 @@ import {
 } from 'react-native';
 import { registerUser, validateEmail, validatePassword, validatePhone } from '../../services/authService';
 
-const CAMEROON_REGIONS = [
-  'Centre', 'Littoral', 'Ouest (West)', 'Nord-Ouest (North-West)',
-  'Sud-Ouest (South-West)', 'Adamaoua', 'Nord (North)',
-  'Extrême-Nord (Far-North)', 'Est (East)', 'Sud (South)'
-];
-
 export default function RegisterScreen({ goTo, setUserEmail, language = 'English' }) {
   const isFr = language === 'Français';
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [location, setLocation] = useState('Centre');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +26,6 @@ export default function RegisterScreen({ goTo, setUserEmail, language = 'English
     const cleanName = name.trim();
     const cleanEmail = email.trim();
     const cleanPhone = phone.trim();
-    const cleanLocation = location.trim();
     const cleanPass = password.trim();
 
     // 1. Name validation
@@ -64,13 +56,7 @@ export default function RegisterScreen({ goTo, setUserEmail, language = 'English
         : 'Invalid phone number (minimum 8-9 digits, e.g. +237 6XX...)';
     }
 
-    // 4. Location validation
-    if (!cleanLocation) {
-      missingFields.push(isFr ? 'Région / Localisation' : 'Farm Region');
-      newErrors.location = isFr ? 'La région / localisation est obligatoire' : 'Farm region is required';
-    }
-
-    // 5. Password validation (Alphanumeric: letters + numbers, min 6 chars)
+    // 4. Password validation (Alphanumeric: letters + numbers, min 6 chars)
     if (!cleanPass) {
       missingFields.push(isFr ? 'Mot de Passe' : 'Password');
       newErrors.password = isFr ? 'Le mot de passe est obligatoire' : 'Password is required';
@@ -120,7 +106,7 @@ export default function RegisterScreen({ goTo, setUserEmail, language = 'English
         email: email.trim(),
         phone: phone.trim(),
         password: password.trim(),
-        location: location.trim(),
+        location: 'Cameroon',
         role: 'farmer'
       });
 
@@ -220,28 +206,7 @@ export default function RegisterScreen({ goTo, setUserEmail, language = 'English
           />
           {errors.phone ? <Text style={styles.errorText}>⚠️ {errors.phone}</Text> : null}
 
-          {/* 4. Farm Region Selector */}
-          <Text style={styles.label}>{isFr ? 'Région Agricole *' : 'Farm Region *'}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.regionList}>
-            {CAMEROON_REGIONS.map((reg) => (
-              <Pressable
-                key={reg}
-                style={[styles.regionPill, location === reg && styles.regionPillActive]}
-                onPress={() => {
-                  setLocation(reg);
-                  if (errors.location) setErrors(prev => ({ ...prev, location: null }));
-                  if (topError) setTopError('');
-                }}
-              >
-                <Text style={[styles.regionPillText, location === reg && styles.regionPillTextActive]}>
-                  {reg}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-          {errors.location ? <Text style={styles.errorText}>⚠️ {errors.location}</Text> : null}
-
-          {/* 5. Password */}
+          {/* 4. Password */}
           <Text style={styles.label}>
             {isFr ? 'Mot de Passe (Lettres + Chiffres, min 6) *' : 'Password (Letters + Numbers, min 6) *'}
           </Text>

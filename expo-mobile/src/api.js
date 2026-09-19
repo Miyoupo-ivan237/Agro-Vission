@@ -163,9 +163,9 @@ export async function updateProfile(payload, token) {
 }
 
 // 2. AI Crop Diagnosis
-export async function diagnosePlant({ crop, symptomsText, imageUri, additionalNotes, farmerContext, language = 'English' }) {
+export async function diagnosePlant({ crop, symptomsText, imageUri, imageBase64, additionalNotes, farmerContext, language = 'English' }) {
   try {
-    const data = await request('/api/ai/diagnose', { crop, symptomsText, imageUri, additionalNotes, farmerContext: getFarmerContext({ ...farmerContext, crop }), language }, sessionToken, 3000);
+    const data = await request('/api/ai/diagnose', { crop, symptomsText, imageUri, imageBase64, additionalNotes, farmerContext: getFarmerContext({ ...farmerContext, crop }), language }, sessionToken, 180000);
     if (data && data.success && data.diagnosis) {
       offlineStorage.diagnoses.unshift(data.diagnosis);
       return data;
@@ -175,17 +175,17 @@ export async function diagnosePlant({ crop, symptomsText, imageUri, additionalNo
   }
 
   const offlineRes = offlineDiagnoseCrop({ crop, symptomsText, imageUri, language });
-  if (!offlineRes.success || !offlineRes.diagnosis) {
-    throw new Error(offlineRes.error || 'The plant could not be identified from this image.');
+  if (offlineRes && offlineRes.diagnosis) {
+    offlineStorage.diagnoses.unshift(offlineRes.diagnosis);
+    return offlineRes;
   }
-  offlineStorage.diagnoses.unshift(offlineRes.diagnosis);
   return offlineRes;
 }
 
 // 3. AI Crop Recommendation
 export async function getRecommendation({ location, season, soilCondition, landSize, priority, farmerContext, language = 'English' }) {
   try {
-    const data = await request('/api/ai/recommend', { location, season, soilCondition, landSize, priority, farmerContext: getFarmerContext({ ...farmerContext, location, season, soilCondition, landSize, priority }), language }, sessionToken, 3000);
+    const data = await request('/api/ai/recommend', { location, season, soilCondition, landSize, priority, farmerContext: getFarmerContext({ ...farmerContext, location, season, soilCondition, landSize, priority }), language }, sessionToken, 30000);
     if (data && data.success && data.recommendation) {
       offlineStorage.recommendations.unshift(data.recommendation);
       return data;
@@ -210,7 +210,7 @@ export async function getRecommendation({ location, season, soilCondition, landS
 // 4. AI Agronomist Chat
 export async function sendAgronomistChat({ message, history, farmerContext, language = 'English' }) {
   try {
-    const data = await request('/api/ai/chat', { message, history, farmerContext: getFarmerContext(farmerContext), language }, sessionToken, 4000);
+    const data = await request('/api/ai/chat', { message, history, farmerContext: getFarmerContext(farmerContext), language }, sessionToken, 180000);
     if (data && data.reply) {
       return data;
     }

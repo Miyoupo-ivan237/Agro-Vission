@@ -102,6 +102,8 @@ export async function loginUser({ email, password }) {
     // Fall through to local offline registry validation
   }
 
+  const matchedUser = _users.find(u => u.email.toLowerCase() === cleanEmail);
+
   if (!matchedUser) {
     throw new Error('No account found with this email. Please create a farmer account.');
   }
@@ -123,7 +125,7 @@ export async function registerUser({ name, email, phone, password, location, rol
   const cleanEmail = (email || '').trim().toLowerCase();
   const cleanPhone = (phone || '').trim();
   const cleanPass = (password || '').trim();
-  const cleanLocation = (location || '').trim();
+  const cleanLocation = (location || '').trim() || 'Cameroon';
 
   // Validate all required fields
   if (!cleanName || cleanName.length < 2) {
@@ -134,9 +136,6 @@ export async function registerUser({ name, email, phone, password, location, rol
   }
   if (!validatePhone(cleanPhone)) {
     throw new Error('Please enter a valid phone number (minimum 8-9 digits)');
-  }
-  if (!cleanLocation) {
-    throw new Error('Farm location / region is required');
   }
   if (!validatePassword(cleanPass)) {
     throw new Error('Password must be at least 6 characters and contain both letters and numbers');

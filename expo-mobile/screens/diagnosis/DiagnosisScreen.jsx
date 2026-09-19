@@ -17,7 +17,7 @@ if (!ImagePicker.MediaType) {
 }
 
 import { diagnosePlant } from '../../src/api';
-import { getT } from '../../src/translations';
+import { getT, getSeverityLabel } from '../../src/translations';
 import {
   scheduleLocalNotification,
   scheduleTwoWeekReminder
@@ -95,7 +95,7 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
   };
 
   // ── Run diagnosis after image selected ─────────────────────────────────────
-  const runDiagnosis = async (imageUri, overrideCrop = null) => {
+  const runDiagnosis = async (imageUri, overrideCrop = null, imageBase64 = null) => {
     const cropToUse = overrideCrop || selectedCrop;
     setLoading(true);
     setResult(null);
@@ -105,10 +105,11 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
         crop: cropToUse,
         symptomsText: `Image scan of ${cropToUse} plant`,
         imageUri,
+        imageBase64,
         farmerContext: { crop: cropToUse },
         language
       });
-      if (!res?.success || !res.diagnosis) {
+      if (!res?.diagnosis) {
         throw new Error(
           res?.error ||
           (isFr
@@ -120,7 +121,7 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
       const plant = res.identifiedPlant || {
         cropKey: cropToUse === 'auto' ? (diag.crop?.toLowerCase() || 'maize') : cropToUse,
         name: diag.crop || 'Maize',
-        icon: cropToUse === 'cassava' ? '🌱' : '🌽',
+        icon: cropToUse === 'cassava' ? '🌱' : (cropToUse === 'groundnut' ? '🥜' : '🌽'),
         confidence: 0.95
       };
       setIdentifiedPlant(plant);
@@ -155,12 +156,13 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
       quality: 0.75,
       allowsEditing: true,
       aspect: [4, 3],
+      base64: true,
     });
 
     if (!picked.canceled && picked.assets?.length > 0) {
-      const uri = picked.assets[0].uri;
-      setCapturedImage(uri);
-      await runDiagnosis(uri);
+      const asset = picked.assets[0];
+      setCapturedImage(asset.uri);
+      await runDiagnosis(asset.uri, null, asset.base64);
     }
   };
 
@@ -174,12 +176,13 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
       quality: 0.75,
       allowsEditing: true,
       aspect: [4, 3],
+      base64: true,
     });
 
     if (!picked.canceled && picked.assets?.length > 0) {
-      const uri = picked.assets[0].uri;
-      setCapturedImage(uri);
-      await runDiagnosis(uri);
+      const asset = picked.assets[0];
+      setCapturedImage(asset.uri);
+      await runDiagnosis(asset.uri, null, asset.base64);
     }
   };
 
@@ -374,10 +377,10 @@ function DiagnosisResultCard({ result, isFr }) {
         <View style={styles.rightBadges}>
           <View style={[styles.confidenceBadge, { backgroundColor: sev.color }]}>
             <Text style={styles.confidenceText}>{Math.round((result.confidence || 0.85) * 100)}%</Text>
-            <Text style={styles.confidenceLabel}>{isFr ? 'match' : 'match'}</Text>
+            <Text style={styles.confidenceLabel}>{isFr ? 'fiabilité' : 'match'}</Text>
           </View>
           <View style={[styles.severityBadge, { backgroundColor: sev.color }]}>
-            <Text style={styles.severityText}>{sev.icon} {result.severity || 'Moderate'}</Text>
+            <Text style={styles.severityText}>{sev.icon} {getSeverityLabel(result.severity, isFr)}</Text>
           </View>
         </View>
       </View>

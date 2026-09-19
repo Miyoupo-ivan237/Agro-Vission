@@ -6,29 +6,41 @@ const { width } = Dimensions.get('window');
 const CROP_SPOTLIGHTS = [
   {
     crop: 'Cassava (Manioc)',
+    cropFr: 'Manioc (Cassava)',
     zone: 'Centre & South (Bafia, Obala, Sangmélima)',
+    zoneFr: 'Centre & Sud (Bafia, Obala, Sangmélima)',
     tip: 'Plant CMD-resistant cuttings (TME 419) on 40-50cm ridges to maximize tuber yield.',
+    tipFr: 'Plantez des boutures résistantes à la CMD (TME 419) sur billons de 40-50 cm pour maximiser le rendement.',
     image: 'https://images.unsplash.com/photo-1592982537447-6f23349c814b?auto=format&fit=crop&w=1200&q=80',
     color: '#D97706'
   },
   {
     crop: 'Maize (Maïs)',
+    cropFr: 'Maïs (Corn)',
     zone: 'Adamawa, West & North (Foumbot, Ngaoundéré)',
+    zoneFr: 'Adamaoua, Ouest & Nord (Foumbot, Ngaoundéré)',
     tip: 'Top-dress with Urea at 4-5 weeks before hilling. Scout whorls for Fall Armyworm.',
+    tipFr: 'Apportez l\'Urée à 4-5 semaines avant le buttage. Surveillez les cornets contre la chenille légionnaire.',
     image: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=1200&q=80',
     color: '#0284C7'
   },
   {
     crop: 'Tomato (Tomate)',
+    cropFr: 'Tomate de Foumbot',
     zone: 'West & Highlands (Noun Valley, Foumbot)',
+    zoneFr: 'Ouest & Hauts-Plateaux (Vallée du Noun, Foumbot)',
     tip: 'Stake firmly with bamboo. Prune suckers 30cm from soil and apply Calcium Nitrate at flowering.',
+    tipFr: 'Tuteurez solidement au bambou. Égourmandez à 30 cm du sol et appliquez du Nitrate de Calcium à la floraison.',
     image: 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&w=1200&q=80',
     color: '#EF4444'
   },
   {
     crop: 'Plantain (Banane Plantain)',
+    cropFr: 'Banane Plantain du Moungo',
     zone: 'Littoral & South-West (Moungo Basin, Penja)',
+    zoneFr: 'Littoral & Sud-Ouest (Bassin du Moungo, Penja)',
     tip: 'Surgically de-leaf Black Sigatoka streaks; apply high-potassium NPK every 3 months.',
+    tipFr: 'Effeuillez préventivement les stries de cercosporiose noire ; apportez un NPK riche en potassium tous les 3 mois.',
     image: 'https://images.unsplash.com/photo-1528825871115-3581a5387919?auto=format&fit=crop&w=1200&q=80',
     color: '#059669'
   }
@@ -61,7 +73,7 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
             <View style={styles.headerTitleRow}>
               <Text style={styles.title}>Agro-Vission</Text>
               <View style={styles.portalTag}>
-                <Text style={styles.portalTagText}>FARMER</Text>
+                <Text style={styles.portalTagText}>{isFr ? 'AGRICULTEUR' : 'FARMER'}</Text>
               </View>
             </View>
             <Text style={styles.subtitle} numberOfLines={1}>
@@ -143,7 +155,9 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
       >
         <View style={styles.recommendationShade}>
           <View style={styles.spotlightHeader}>
-            <Text style={styles.spotlightEyebrow}>REGIONAL SPOTLIGHT • {spotlight.zone}</Text>
+            <Text style={styles.spotlightEyebrow}>
+              {isFr ? 'ZOOM RÉGIONAL' : 'REGIONAL SPOTLIGHT'} • {isFr ? spotlight.zoneFr : spotlight.zone}
+            </Text>
             {/* Dots */}
             <View style={styles.spotlightDots}>
               {CROP_SPOTLIGHTS.map((_, i) => (
@@ -155,19 +169,27 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
             </View>
           </View>
 
-          <Text style={styles.spotlightTitle}>{spotlight.crop}</Text>
-          <Text style={styles.spotlightText}>{spotlight.tip}</Text>
+          <Text style={styles.spotlightTitle}>{isFr ? spotlight.cropFr : spotlight.crop}</Text>
+          <Text style={styles.spotlightText}>{isFr ? spotlight.tipFr : spotlight.tip}</Text>
 
           <Pressable style={styles.lightButton} onPress={() => goTo('cropAdvice')}>
-            <Text style={styles.lightButtonText}>🌾 Build Tailored Recommendation →</Text>
+            <Text style={styles.lightButtonText}>
+              {isFr ? '🌾 Créer une Recommandation Adaptée →' : '🌾 Build Tailored Recommendation →'}
+            </Text>
           </Pressable>
         </View>
       </ImageBackground>
 
       {/* Services Grid Section Header */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Agricultural Tools & Services</Text>
-        <Text style={styles.sectionSub}>Select a tool to assist your daily field operations</Text>
+        <Text style={styles.sectionTitle}>
+          {isFr ? 'Outils & Services Agricoles' : 'Agricultural Tools & Services'}
+        </Text>
+        <Text style={styles.sectionSub}>
+          {isFr
+            ? 'Sélectionnez un outil pour vos travaux quotidiens aux champs'
+            : 'Select a tool to assist your daily field operations'}
+        </Text>
       </View>
 
       {/* 2x2 Feature Grid */}
@@ -178,10 +200,18 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
             <Text style={styles.cardIcon}>🌾</Text>
           </View>
           <View style={styles.cardContent}>
-            <Text style={styles.gridTitle}>Crop Advice</Text>
-            <Text style={styles.gridText}>Agro-ecological planting & fertilizer schedules for Cameroon</Text>
+            <Text style={styles.gridTitle}>
+              {isFr ? 'Conseils de Culture' : 'Crop Advice'}
+            </Text>
+            <Text style={styles.gridText}>
+              {isFr
+                ? 'Calendriers agro-écologiques et fertilisation pour les 10 régions du Cameroun'
+                : 'Agro-ecological planting & fertilizer schedules for Cameroon'}
+            </Text>
           </View>
-          <Text style={[styles.cardArrow, { color: '#D97706' }]}>Open →</Text>
+          <Text style={[styles.cardArrow, { color: '#D97706' }]}>
+            {isFr ? 'Ouvrir →' : 'Open →'}
+          </Text>
         </Pressable>
 
         {/* Feature 2: AI Agronomist Chat */}
@@ -190,10 +220,18 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
             <Text style={styles.cardIcon}>🤖</Text>
           </View>
           <View style={styles.cardContent}>
-            <Text style={styles.gridTitle}>AI Agronomist</Text>
-            <Text style={styles.gridText}>Ask questions to your local Qwen AI agronomist in English or French</Text>
+            <Text style={styles.gridTitle}>
+              {isFr ? 'Agronome IA' : 'AI Agronomist'}
+            </Text>
+            <Text style={styles.gridText}>
+              {isFr
+                ? 'Posez vos questions à l\'expert Qwen IA en français ou en anglais'
+                : 'Ask questions to your local Qwen AI agronomist in English or French'}
+            </Text>
           </View>
-          <Text style={[styles.cardArrow, { color: '#4F46E5' }]}>Chat →</Text>
+          <Text style={[styles.cardArrow, { color: '#4F46E5' }]}>
+            {isFr ? 'Discuter →' : 'Chat →'}
+          </Text>
         </Pressable>
 
         {/* Feature 3: Field Survey */}
@@ -202,10 +240,18 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
             <Text style={styles.cardIcon}>📋</Text>
           </View>
           <View style={styles.cardContent}>
-            <Text style={styles.gridTitle}>Field Survey</Text>
-            <Text style={styles.gridText}>Log field moisture, crop growth stages, and pest infestations</Text>
+            <Text style={styles.gridTitle}>
+              {isFr ? 'Enquête Parcelle' : 'Field Survey'}
+            </Text>
+            <Text style={styles.gridText}>
+              {isFr
+                ? 'Suivez l\'humidité du sol, les stades végétatifs et les attaques de ravageurs'
+                : 'Log field moisture, crop growth stages, and pest infestations'}
+            </Text>
           </View>
-          <Text style={[styles.cardArrow, { color: '#059669' }]}>Log →</Text>
+          <Text style={[styles.cardArrow, { color: '#059669' }]}>
+            {isFr ? 'Noter →' : 'Log →'}
+          </Text>
         </Pressable>
 
         {/* Feature 4: Notifications */}
@@ -215,9 +261,13 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
           </View>
           <View style={styles.cardContent}>
             <Text style={styles.gridTitle}>{isFr ? 'Alertes & Historique' : 'Alerts & History'}</Text>
-            <Text style={styles.gridText}>{isFr ? 'Rapports de diagnostic passés et alertes régionales' : 'View past diagnosis reports and regional farm alerts'}</Text>
+            <Text style={styles.gridText}>
+              {isFr ? 'Rapports de diagnostic passés et alertes régionales' : 'View past diagnosis reports and regional farm alerts'}
+            </Text>
           </View>
-          <Text style={[styles.cardArrow, { color: '#0284C7' }]}>View →</Text>
+          <Text style={[styles.cardArrow, { color: '#0284C7' }]}>
+            {isFr ? 'Voir →' : 'View →'}
+          </Text>
         </Pressable>
       </View>
 
@@ -227,8 +277,14 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
           <View style={styles.adminCardLeft}>
             <Text style={styles.adminIcon}>🔑</Text>
             <View>
-              <Text style={styles.adminTitle}>Admin & Analytics Portal</Text>
-              <Text style={styles.adminText}>Farmer accounts, diagnosis logs, and AI model health</Text>
+              <Text style={styles.adminTitle}>
+                {isFr ? 'Portail Administrateur & Analytique' : 'Admin & Analytics Portal'}
+              </Text>
+              <Text style={styles.adminText}>
+                {isFr
+                  ? 'Comptes agriculteurs, historique des diagnostics et état des modèles IA'
+                  : 'Farmer accounts, diagnosis logs, and AI model health'}
+              </Text>
             </View>
           </View>
           <Text style={styles.adminArrow}>→</Text>
