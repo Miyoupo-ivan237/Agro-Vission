@@ -1,0 +1,32 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/api/login'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "testfarmer@agrovission.com",
+      "password": "Test@1234"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Response has token", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("token");
+          pm.collectionVariables.set("authToken", json.token);
+      });
+      pm.test("Response has user info", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("id");
+          pm.expect(json).to.have.property("email");
+          pm.expect(json).to.have.property("role");
+      });

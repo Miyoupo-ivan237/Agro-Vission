@@ -1,8 +1,8 @@
-import React, { useState, Component, useEffect } from 'react';
-import { Text, StyleSheet, SafeAreaView, StatusBar, Pressable } from 'react-native';
+import React, { useState, useEffect, Component } from 'react';
+import { Text, StyleSheet, StatusBar, Pressable } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AppNavigator from './navigation/AppNavigator';
-import { registerPushToken } from './src/api';
-import { registerForPushNotifications, subscribeToNotificationActions } from './services/pushNotificationService';
+import { setupNotificationChannel, addNotificationTapListener } from './services/localNotificationService';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -42,42 +42,37 @@ class ErrorBoundary extends Component {
 }
 
 export default function App() {
-  const [currentRoute, setCurrentRoute] = useState('welcome');
+  const [currentRoute, setCurrentRoute] = useState('language');
   const [userEmail, setUserEmail] = useState(null);
   const [language, setLanguage] = useState('English');
 
   useEffect(() => {
-    const responseSubscription = subscribeToNotificationActions((data) => {
-      if (data.type === 'diagnosis_ready') setCurrentRoute('diagnosis');
-      if (data.type === 'recommendation_ready') setCurrentRoute('cropAdvice');
-      if (data.type === 'agronomist_ready') setCurrentRoute('aiChat');
-      if (data.type === 'usage_milestone') setCurrentRoute('home');
+    // Set up local notification channel (Android) — NO push tokens
+    setupNotificationChannel();
+    // Listen for notification taps (e.g. to navigate)
+    const sub = addNotificationTapListener((notification) => {
+      const type = notification.request?.content?.data?.type;
+      if (type === 'two_week_follow_up') setCurrentRoute('home');
     });
-    return () => responseSubscription.remove();
+    return () => sub.remove();
   }, []);
 
-  useEffect(() => {
-    if (!userEmail) return undefined;
-    registerForPushNotifications().then((pushToken) => {
-      if (pushToken) registerPushToken(pushToken);
-    });
-    return undefined;
-  }, [userEmail]);
-
   return (
-    <ErrorBoundary onReset={() => setCurrentRoute('welcome')}>
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-        <AppNavigator
-          route={currentRoute}
-          setRoute={setCurrentRoute}
-          language={language}
-          setLanguage={setLanguage}
-          userEmail={userEmail}
-          setUserEmail={setUserEmail}
-        />
-      </SafeAreaView>
-    </ErrorBoundary>
+    <SafeAreaProvider>
+      <ErrorBoundary onReset={() => setCurrentRoute('welcome')}>
+        <SafeAreaView style={styles.container}>
+          <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+          <AppNavigator
+            route={currentRoute}
+            setRoute={setCurrentRoute}
+            language={language}
+            setLanguage={setLanguage}
+            userEmail={userEmail}
+            setUserEmail={setUserEmail}
+          />
+        </SafeAreaView>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }
 

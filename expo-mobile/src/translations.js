@@ -40,7 +40,7 @@ export const TRANSLATIONS = {
   },
   Français: {
     appName: 'AGROVISSION',
-    tagline: 'Agronome IA Hors-Ligne & Moteur Agricole des 10 Régions du Cameroun',
+    tagline: 'Installer',
     getStarted: 'Commencer',
     selectLanguage: 'Choisir la Langue',
     dashboard: 'Tableau de Bord',

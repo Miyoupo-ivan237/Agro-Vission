@@ -726,13 +726,24 @@ function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNote
   ].filter(Boolean).join(' ');
   const combinedText = `${crop || ''} ${symptomsText} ${additionalNotes} ${contextText}`.toLowerCase();
   
+  // Crop alias normalization
+  const rawCrop = (crop || '').toLowerCase().trim();
+  let normalizedCrop = rawCrop;
+  if (rawCrop === 'corn' || rawCrop === 'maïs') normalizedCrop = 'maize';
+  else if (rawCrop === 'manioc') normalizedCrop = 'cassava';
+  else if (rawCrop === 'tomate') normalizedCrop = 'tomato';
+  else if (rawCrop === 'banane') normalizedCrop = 'banana';
+  else if (rawCrop === 'cacao') normalizedCrop = 'cocoa';
+  else if (rawCrop === 'pomme de terre') normalizedCrop = 'potato';
+  else if (rawCrop === 'piment') normalizedCrop = 'pepper';
+
   let targetCrops = [];
-  if (crop && CROP_DISEASES_DB[crop.toLowerCase()]) {
-    targetCrops = [crop.toLowerCase()];
+  if (normalizedCrop && normalizedCrop !== 'auto' && CROP_DISEASES_DB[normalizedCrop]) {
+    targetCrops = [normalizedCrop];
   } else {
     const knownCrops = Object.keys(CROP_DISEASES_DB);
-    const matched = knownCrops.filter(c => combinedText.includes(c));
-    targetCrops = matched.length > 0 ? matched : knownCrops;
+    const matched = knownCrops.filter(c => combinedText.includes(c) || (c === 'maize' && /corn|maïs|mais|whorl|ear/i.test(combinedText)));
+    targetCrops = matched.length > 0 ? matched : ['maize'];
   }
 
   let bestMatch = null;
@@ -758,11 +769,8 @@ function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNote
   }
 
   if (!bestMatch || highestScore < 1) {
-    if (targetCrops.length > 0 && CROP_DISEASES_DB[targetCrops[0]]) {
-      bestMatch = CROP_DISEASES_DB[targetCrops[0]][0];
-    } else {
-      bestMatch = CROP_DISEASES_DB.cassava[0];
-    }
+    const defaultCropKey = targetCrops[0] || 'maize';
+    bestMatch = CROP_DISEASES_DB[defaultCropKey] ? CROP_DISEASES_DB[defaultCropKey][0] : CROP_DISEASES_DB.maize[0];
   }
 
   return {

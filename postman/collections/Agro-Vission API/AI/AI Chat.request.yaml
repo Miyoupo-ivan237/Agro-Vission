@@ -1,0 +1,39 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/api/ai/chat'
+order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{authToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "message": "What is the best fertilizer for maize in Cameroon?",
+      "history": [],
+      "farmerContext": {
+        "location": "Yaoundé",
+        "crop": "Maize"
+      },
+      "language": "English"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Response has reply", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("reply");
+      });
+      pm.test("Reply is a non-empty string", function () {
+          const json = pm.response.json();
+          pm.expect(json.reply).to.be.a("string").and.not.empty;
+      });

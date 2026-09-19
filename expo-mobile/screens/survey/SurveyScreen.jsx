@@ -6,7 +6,8 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
-  Alert
+  Alert,
+  Image
 } from 'react-native';
 import { submitCropSurvey } from '../../src/api';
 import { CAMEROON_20_CROPS } from '../../src/cameroon_crops';
@@ -82,10 +83,13 @@ export default function SurveyScreen({ goTo }) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Top Header with Plant Leaf Brand */}
       <View style={styles.headerRow}>
+        <Pressable style={styles.topBackBtn} onPress={() => goTo('home')}>
+          <Text style={styles.topBackArrow}>←</Text>
+        </Pressable>
         <View style={styles.leafIconBadge}>
           <Text style={styles.leafIconText}>🍃</Text>
         </View>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.screenTitle}>Plant Village Survey</Text>
           <Text style={styles.screenSubtitle}>Crop Health Inspection & Field Scouting Tool</Text>
         </View>
@@ -194,6 +198,7 @@ export default function SurveyScreen({ goTo }) {
           {/* STEP 2: SCOUT FIELD / CANOPY INSPECTION */}
           {surveyStep === 2 && (
             <View>
+              <Image source={require('../../assets/logo.png')} style={styles.inspectionImage} resizeMode="contain" />
               <Text style={styles.stepTitle}>Step 2: Field Scouting & Canopy Stage</Text>
 
               <Text style={styles.label}>Crop Growth Stage</Text>
@@ -255,6 +260,7 @@ export default function SurveyScreen({ goTo }) {
           {/* STEP 3: PROBLEM INSPECTION & SUBMIT */}
           {surveyStep === 3 && (
             <View>
+              <Image source={require('../../assets/logo.png')} style={styles.inspectionImage} resizeMode="contain" />
               <Text style={styles.stepTitle}>Step 3: Disease & Pest Assessment</Text>
 
               <Text style={styles.label}>Target Symptom / Problem Observed</Text>
@@ -346,6 +352,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     marginBottom: 16,
+  },
+  topBackBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#C8E6C9',
+    elevation: 2,
+  },
+  topBackArrow: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+  },
+  inspectionImage: {
+    width: 112,
+    height: 72,
+    alignSelf: 'center',
+    marginBottom: 12,
+    borderRadius: 14,
+    backgroundColor: '#F8FAFC',
   },
   leafIconBadge: {
     backgroundColor: '#ffffff',

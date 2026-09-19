@@ -1,31 +1,46 @@
-# Agro-Vission
+﻿# Agro-Vission (Smart Crop Disease Detection System)
 
-Mobile-first app for "Smart Crop Disease Detection System for Sustainable Agriculture".
+Agro-Vission is an offline-first smart agriculture platform designed for African smallholder farmers and agricultural extension workers.
 
-Folders:
-- `expo-mobile/` — React Native (Expo) front-end
-- `backend/` — Node + Express + Prisma backend (SQLite by default)
+---
 
-To run locally:
+## 📂 Project Structure (4 Core Folders)
 
-1. Start the backend:
+This repository contains strictly **4 components**:
 
+| Folder | Name | Purpose | Tech Stack |
+|---|---|---|---|
+| 📱 **`expo-mobile/`** | Mobile Application | Offline AI scanner, disease diagnosis, farmer advisory | React Native, Expo |
+| ⚙️ **`backend/`** | REST API & Database | Authentication, reports, survey data, Prisma DB | Node.js, Express, Prisma |
+| 💻 **`Admin/`** | Admin Portal | Web dashboard for monitoring outbreaks & farmer accounts | Next.js, Tailwind CSS |
+| 🧠 **`AI/`** | AI & ML Engines | Diagnosis logic, recommendation system, Ollama assistant | TensorFlow.js, Ollama |
+
+---
+
+## 🚀 Quick Start Commands
+
+### 1. Run Mobile App:
+```bash
+cd expo-mobile
+npm run start-clear
+```
+
+### 2. Run Backend Server:
 ```bash
 cd backend
-npm install
-npx prisma generate
-npx prisma migrate dev --name init
 node src/index.js
 ```
 
-2. Start the mobile app:
-
+### 3. Run Web Admin Dashboard:
 ```bash
-cd expo-mobile
-npm install
-npm start
+cd Admin
+npm run dev
 ```
-"# MYAPP" 
-"# MYAPP" 
-"# Agro-Vission" 
-"# Future" 
+
+### 4. Run / Test AI Services:
+```bash
+cd AI
+node index.js
+```
+
+For complete details, see [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md).

@@ -7,9 +7,14 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Image
 } from 'react-native';
 import { getRecommendation } from '../../src/api';
+import {
+  scheduleLocalNotification,
+  scheduleTwoWeekReminder
+} from '../../services/localNotificationService';
 
 const CAMEROON_10_REGIONS = [
   {
@@ -77,22 +82,47 @@ const CAMEROON_10_REGIONS = [
 const SOIL_TYPES_DETAILED = [
   {
     id: 'loamy',
-    name: '🌿 Loamy / Rich Soil (Terre Limoneuse / Noire)',
+    name: 'Loamy / Rich Soil',
+    // Farmer-friendly label + colour swatch
+    emoji: '🟤',
+    color: '#6B3D11',
+    swatchBg: '#8B5E3C',
+    label: 'Dark & Soft Soil',
+    look: '👁 Looks: Dark brown or black, soft and crumbly',
+    feel: '✋ Feels: Easy to dig, stays together when squeezed',
     desc: 'Soft, dark, fertile with balanced sand & clay. Holds moisture well without waterlogging.'
   },
   {
     id: 'volcanic',
-    name: '🌋 Volcanic Soil (Terre Volcanique / Noire des Hauts-Plateaux)',
+    name: 'Volcanic Soil (Terre Volcanique / Noire des Hauts-Plateaux)',
+    emoji: '⚫',
+    color: '#1C1C1C',
+    swatchBg: '#2D2D2D',
+    label: 'Black / Ash-Dark Soil',
+    look: '👁 Looks: Very dark or black, almost like ash or charcoal',
+    feel: '✋ Feels: Light and powdery, very easy to break apart',
     desc: 'Deep, mineral-packed, friable soil from Mount Cameroon & Western Highlands. Ideal for tomatoes, potatoes, bananas.'
   },
   {
     id: 'sandy',
-    name: '🪨 Sandy Soil / Sandy Loam (Terre Sablonneuse)',
+    name: 'Sandy Soil / Sandy Loam (Terre Sablonneuse)',
+    emoji: '🟡',
+    color: '#B8860B',
+    swatchBg: '#D4A843',
+    label: 'Sandy / Light Soil',
+    look: '👁 Looks: Light yellow or pale brown, you can see fine grains',
+    feel: '✋ Feels: Gritty, slips through your fingers, dries fast',
     desc: 'Light, fast-draining, easy to plow. Ideal for groundnuts, sweet potatoes, and root pegging.'
   },
   {
     id: 'clay_laterite',
-    name: '🧱 Clay / Red Laterite Soil (Terre Argileuse / Latéritique)',
+    name: 'Clay / Red Laterite Soil (Terre Argileuse / Latéritique)',
+    emoji: '🟠',
+    color: '#8B2500',
+    swatchBg: '#C0392B',
+    label: 'Red / Orange Clay Soil',
+    look: '👁 Looks: Red, orange or brick-coloured, sometimes cracked',
+    feel: '✋ Feels: Sticky when wet, hard as rock when dry',
     desc: 'Heavy, rich in iron/aluminium oxides. Holds nutrients well; requires high ridges for cassava and yams.'
   }
 ];
@@ -101,35 +131,84 @@ const SEASONS = ['Onset of Major Rains', 'Mid / Heavy Rainy Season', 'Dry Season
 
 export default function CropAdviceScreen({ goTo, language = 'English' }) {
   const isFr = language === 'Français';
-  const [selectedRegion, setSelectedRegion] = useState(CAMEROON_10_REGIONS[0]);
-  const [selectedSoil, setSelectedSoil] = useState(SOIL_TYPES_DETAILED[0]);
-  const [selectedSeason, setSelectedSeason] = useState(SEASONS[0]);
-  const [landSize, setLandSize] = useState('1.5');
+  const [selectedRegion, setSelectedRegion] = useState(null);
+  const [selectedSoil, setSelectedSoil] = useState(null);
+  const [selectedSeason, setSelectedSeason] = useState('');
+  const [landSize, setLandSize] = useState('');
   const [loading, setLoading] = useState(false);
   const [recommendation, setRecommendation] = useState(null);
+  const [formError, setFormError] = useState('');
+  const isFormComplete = Boolean(
+    selectedRegion?.id &&
+    selectedSoil?.id &&
+    selectedSeason &&
+    landSize.trim() &&
+    Number.isFinite(Number(landSize)) &&
+    Number(landSize) > 0
+  );
+
+  const updateForm = (update) => {
+    setRecommendation(null);
+    setFormError('');
+    update();
+  };
 
   const handleRecommend = async () => {
+    setFormError('');
+    const cleanSize = (landSize || '').trim();
+    const sizeNumber = Number(cleanSize);
+    const missingFields = [];
+    if (!selectedRegion?.id) missingFields.push(isFr ? 'région' : 'region');
+    if (!selectedSoil?.id) missingFields.push(isFr ? 'type de sol' : 'soil type');
+    if (!selectedSeason) missingFields.push(isFr ? 'saison' : 'season');
+
+    if (missingFields.length > 0 || !cleanSize || !Number.isFinite(sizeNumber) || sizeNumber <= 0) {
+      setFormError(
+        missingFields.length > 0
+          ? `${isFr ? '⚠️ Veuillez renseigner' : '⚠️ Please select'}: ${missingFields.join(', ')}.`
+          : isFr
+            ? '⚠️ Veuillez renseigner la superficie de votre exploitation en hectares (ex. 1.5 Ha).'
+            : '⚠️ Please enter a valid farm land size in hectares (e.g. 1.5 Ha).'
+      );
+      return;
+    }
+
     setLoading(true);
     try {
+      // Send the validated farmer form as the recommendation request payload.
+      const region = selectedRegion;
+      const soil = selectedSoil;
       const res = await getRecommendation({
-        location: selectedRegion.name,
-        soilCondition: selectedSoil.name,
+        location: region.name,
+        soilCondition: soil.name,
         season: selectedSeason,
-        landSize,
+        landSize: cleanSize,
         farmerContext: {
-          region: selectedRegion.id,
-          location: selectedRegion.name,
+          region: region.id,
+          location: region.name,
           season: selectedSeason,
-          soilCondition: selectedSoil.name,
-          landSize
+          soilCondition: soil.name,
+          landSize: cleanSize
         },
         language
       });
       if (res && res.recommendation) {
         setRecommendation(res.recommendation);
+        await scheduleLocalNotification({
+          title: isFr ? 'Recommandation prête' : 'Recommendation ready',
+          body: isFr ? 'Votre plan de culture est disponible.' : 'Your crop plan is ready to review.',
+          data: { type: 'recommendation_ready' }
+        });
+        await scheduleTwoWeekReminder({ language });
+      } else {
+        setFormError(isFr ? '⚠️ Aucune recommandation n’a été générée.' : '⚠️ No crop recommendation was generated.');
       }
     } catch (e) {
-      // offline fallback is handled seamlessly
+      setFormError(
+        isFr
+          ? '⚠️ Impossible de traiter votre demande. Vérifiez votre connexion et réessayez.'
+          : '⚠️ The recommendation request could not be processed. Check your connection and try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -139,6 +218,7 @@ export default function CropAdviceScreen({ goTo, language = 'English' }) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Dark Theme Header matching Screenshot 2 */}
       <View style={styles.headerBox}>
+        <Image source={require('../../assets/logo.png')} style={styles.headerImage} resizeMode="contain" />
         <Pressable onPress={() => goTo('home')} style={styles.backBtn}>
           <Text style={styles.backArrow}>←</Text>
         </Pressable>
@@ -147,9 +227,9 @@ export default function CropAdviceScreen({ goTo, language = 'English' }) {
           <Text style={styles.engineBadgeText}>🌾 PLANT VILLAGE CAMEROON CROP ENGINE</Text>
         </View>
 
-        <Text style={styles.headerTitle}>Cameroon 10-Region Crop Engine</Text>
+        <Text style={styles.headerTitle}>Crop Recommendation Engine</Text>
         <Text style={styles.headerSubtitle}>
-          Tailored agro-ecological advice for all 10 Regions of Cameroon (100% Offline AI)
+          Tailored crop choices based on your location, soil, season, and farm size.
         </Text>
       </View>
 
@@ -163,38 +243,70 @@ export default function CropAdviceScreen({ goTo, language = 'English' }) {
         <Text style={styles.fieldLabel}>1. Where is your farm located? (10 Regions) *</Text>
         <ScrollView style={styles.optionList} nestedScrollEnabled>
           {CAMEROON_10_REGIONS.map((reg) => {
-            const isSelected = selectedRegion.id === reg.id;
+            const isSelected = selectedRegion?.id === reg.id;
             return (
               <Pressable
                 key={reg.id}
                 style={[styles.optionCard, isSelected && styles.optionCardSelected]}
-                onPress={() => setSelectedRegion(reg)}
+                onPress={() => updateForm(() => setSelectedRegion(reg))}
               >
                 <Text style={[styles.optionName, isSelected && styles.optionNameSelected]}>
                   {reg.name}
                 </Text>
                 <Text style={styles.optionZone}>{reg.zone}</Text>
-                <Text style={styles.optionCrops}>Top Crops: {reg.suitable}</Text>
               </Pressable>
             );
           })}
         </ScrollView>
 
-        {/* 2. Soil Picker */}
-        <Text style={[styles.fieldLabel, { marginTop: 14 }]}>2. What type of soil do you have? *</Text>
+        {/* 2. Soil Picker — visual colour cards */}
+        <Text style={[styles.fieldLabel, { marginTop: 14 }]}>
+          2. What does your soil look like? *
+        </Text>
+        <Text style={{ fontSize: 11, color: '#64748B', marginBottom: 10, lineHeight: 15 }}>
+          💡 Tip: Pick the colour that matches your farm soil. You can tell by looking at your field or pinching a bit of wet soil.
+        </Text>
         <View style={styles.soilContainer}>
           {SOIL_TYPES_DETAILED.map((s) => {
-            const isSelected = selectedSoil.id === s.id;
+            const isSelected = selectedSoil?.id === s.id;
             return (
               <Pressable
                 key={s.id}
-                style={[styles.soilCard, isSelected && styles.soilCardSelected]}
-                onPress={() => setSelectedSoil(s)}
+                style={[
+                  styles.soilCard,
+                  isSelected && styles.soilCardSelected,
+                  { flexDirection: 'row', alignItems: 'flex-start', gap: 12 }
+                ]}
+                onPress={() => updateForm(() => setSelectedSoil(s))}
               >
-                <Text style={[styles.soilName, isSelected && styles.soilNameSelected]}>
-                  {s.name}
-                </Text>
-                <Text style={styles.soilDesc}>{s.desc}</Text>
+                {/* Colour swatch */}
+                <View style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 10,
+                  backgroundColor: s.swatchBg,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexShrink: 0,
+                  borderWidth: isSelected ? 2 : 1,
+                  borderColor: isSelected ? '#059669' : 'rgba(0,0,0,0.15)'
+                }}>
+                  <Text style={{ fontSize: 22 }}>{s.emoji}</Text>
+                </View>
+
+                {/* Text info */}
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.soilName, isSelected && styles.soilNameSelected]}>
+                    {s.label}
+                  </Text>
+                  <Text style={styles.soilDesc}>{s.look}</Text>
+                  <Text style={styles.soilDesc}>{s.feel}</Text>
+                </View>
+
+                {/* Selected tick */}
+                {isSelected && (
+                  <Text style={{ fontSize: 18, color: '#059669', alignSelf: 'center' }}>✅</Text>
+                )}
               </Pressable>
             );
           })}
@@ -207,7 +319,7 @@ export default function CropAdviceScreen({ goTo, language = 'English' }) {
             <Pressable
               key={sea}
               style={[styles.pill, selectedSeason === sea && styles.pillActive]}
-              onPress={() => setSelectedSeason(sea)}
+              onPress={() => updateForm(() => setSelectedSeason(sea))}
             >
               <Text style={[styles.pillText, selectedSeason === sea && styles.pillTextActive]}>
                 {sea}
@@ -222,11 +334,22 @@ export default function CropAdviceScreen({ goTo, language = 'English' }) {
           style={styles.input}
           keyboardType="numeric"
           value={landSize}
-          onChangeText={setLandSize}
+          onChangeText={(value) => updateForm(() => setLandSize(value))}
           placeholder="e.g. 2.0"
         />
 
-        <Pressable style={styles.calculateBtn} onPress={handleRecommend} disabled={loading}>
+        {/* Form Error Banner */}
+        {formError ? (
+          <View style={{ backgroundColor: '#FEE2E2', borderRadius: 10, padding: 12, marginTop: 10, marginBottom: 4 }}>
+            <Text style={{ color: '#DC2626', fontWeight: 'bold', fontSize: 13 }}>{formError}</Text>
+          </View>
+        ) : null}
+
+        <Pressable
+          style={[styles.calculateBtn, !isFormComplete && styles.calculateBtnDisabled]}
+          onPress={handleRecommend}
+          disabled={loading || !isFormComplete}
+        >
           {loading ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
@@ -242,6 +365,7 @@ export default function CropAdviceScreen({ goTo, language = 'English' }) {
             <Text style={styles.resultBadge}>🎯 HIGHEST COMPATIBILITY CROP</Text>
           </View>
           <Text style={styles.resultCropTitle}>{recommendation.primaryCrop}</Text>
+          <Image source={require('../../assets/logo.png')} style={styles.resultCropImage} resizeMode="contain" />
 
           <Text style={styles.resultText}>{recommendation.soilAssessment}</Text>
           <Text style={styles.resultText}>{recommendation.seasonalAdvice}</Text>
@@ -280,6 +404,38 @@ export default function CropAdviceScreen({ goTo, language = 'English' }) {
                 'Basal NPK (200kg/ha) at planting; Top-dress Urea 46% (100kg/ha) at 4 weeks.'}
             </Text>
           )}
+
+          {/* Compatible / Regional Crops Section */}
+          {Array.isArray(recommendation.compatibleCrops) && recommendation.compatibleCrops.length > 0 && (
+            <View style={{ marginTop: 18 }}>
+              <Text style={styles.subHeading}>🌍 Other Crops Produced in This Region:</Text>
+              {recommendation.compatibleCrops.map((c, i) => (
+                <View
+                  key={i}
+                  style={{
+                    backgroundColor: '#F0FDF4',
+                    borderRadius: 10,
+                    padding: 11,
+                    marginBottom: 8,
+                    borderLeftWidth: 3,
+                    borderLeftColor: '#16A34A'
+                  }}
+                >
+                  <Text style={{ fontWeight: 'bold', color: '#065F46', fontSize: 13 }}>
+                    {c.name}
+                  </Text>
+                  <Text style={{ color: '#475569', fontSize: 11, marginTop: 2 }}>
+                    📦 Yield: {c.yield || c.expectedYield || '—'} · ⏱ Cycle: {c.maturity || c.maturityDays || '—'}
+                  </Text>
+                  {c.compatibility ? (
+                    <Text style={{ color: '#059669', fontSize: 11, fontWeight: '600', marginTop: 3 }}>
+                      ✅ {c.compatibility}
+                    </Text>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       )}
 
@@ -303,6 +459,21 @@ const styles = StyleSheet.create({
     paddingTop: 36,
     paddingHorizontal: 20,
     paddingBottom: 20,
+  },
+  headerImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    marginBottom: 14,
+  },
+  resultCropImage: {
+    width: 92,
+    height: 72,
+    alignSelf: 'center',
+    marginVertical: 10,
+    borderRadius: 14,
+    backgroundColor: '#F1F8E9',
   },
   backBtn: {
     width: 38,
@@ -408,7 +579,7 @@ const styles = StyleSheet.create({
   soilCard: {
     backgroundColor: '#F8FAFC',
     borderRadius: 14,
-    padding: 12,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
@@ -466,6 +637,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginTop: 20,
     alignItems: 'center',
+  },
+  calculateBtnDisabled: {
+    backgroundColor: '#94A3B8',
   },
   calculateBtnText: {
     color: '#ffffff',

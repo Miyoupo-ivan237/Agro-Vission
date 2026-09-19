@@ -2,16 +2,21 @@
 // Ollama Local LLM & Cameroon Agricultural Expert AI System
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
-const OLLAMA_NUM_CTX = Number(process.env.OLLAMA_NUM_CTX || 4096);
-const OLLAMA_TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 30000);
+const OLLAMA_NUM_CTX = Number(process.env.OLLAMA_NUM_CTX || 2048);
+const OLLAMA_TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 90000);
+const OLLAMA_KEEP_ALIVE = process.env.OLLAMA_KEEP_ALIVE || '30m';
+const OLLAMA_NUM_THREADS = Number(process.env.OLLAMA_NUM_THREADS || 4);
 const PREFERRED_MODELS = [
-  process.env.OLLAMA_MODEL || 'llama3.2:latest',
-  'llama3.2:latest',
+  process.env.OLLAMA_MODEL || 'qwen2.5:3b',
+  'qwen2.5:3b',
+  'qwen2.5:latest',
+  'qwen2.5',
+  'qwen2.5:1.5b',
+  'qwen2.5:7b',
   'agrovission-agronomist:latest',
   'agrovission-agronomist',
+  'llama3.2:latest',
   'llama3.2',
-  'llama3:latest',
-  'llama3',
   'mistral:latest',
   'mistral'
 ];
@@ -189,11 +194,13 @@ const OFFLINE_KNOWLEDGE = [
 - **Late Blight Shield:** Apply Mancozeb preventatively and Metalaxyl during persistent foggy/rainy weather.`
   },
   {
-    triggers: ['groundnut', 'arachide', 'peanut', 'maroua', 'garoua'],
-    response: `🥜 **Groundnut Production & Rosette Shield (North, Far North, Centre):**
-- **Tillage:** Till soil loose and friable for easy peg penetration into the ground.
-- **Fertilizer:** Apply Single Super Phosphate (SSP) at 150 kg/ha at planting; avoid excessive nitrogen.
-- **Rosette Virus:** Plant early at close spacing (50cm x 15cm) to create dense canopy coverage that repels aphid vectors.`
+    triggers: ['groundnut', 'garnut', 'arachide', 'peanut', 'maroua', 'garoua'],
+    response: `🥜 **Groundnut / Garnut Production & Disease Shield (Cameroon Best Practices):**
+- **Soil & Bed Prep:** Till soil deeply (20-25cm) until light and friable so gynophores (pegs) can easily penetrate the earth for pod development.
+- **Spacing & Planting:** 50cm x 15cm (1 seed per hole at 3-5cm depth) at the onset of regular rains.
+- **Fertilizer Program:** Apply Single Super Phosphate (SSP) at 150 kg/ha at planting for strong roots and nodules; apply Gypsum (200 kg/ha) at flowering to guarantee full pods and avoid empty shells. Avoid excess nitrogen.
+- **Rosette Virus & Aphid Shield:** Plant early and at high density so canopy rapidly shades the soil, repelling aphid vectors. Spray neem seed extract or registered systemic insecticide at first aphid sightings.
+- **Leaf Spot (Cercospora):** Spray Copper Oxychloride or Mancozeb if dark circular leaf spots appear during wet intervals.`
   },
   {
     triggers: ['rice', 'riz', 'semry', 'ndop', 'yagoua'],
@@ -208,6 +215,133 @@ const OFFLINE_KNOWLEDGE = [
 - **Acidic Lateritic Red Soils (Centre, South, Littoral):** Apply Agricultural Lime or wood ash (1-2 Tons/ha) 3 weeks before planting to correct pH (ideal: 6.2 - 6.8) and unlock Phosphorus.
 - **Volcanic Highland Soils (West, North-West, South-West):** Naturally fertile but benefit from balanced NPK 20-10-10 and heavy organic mulching.
 - **Sandy Savanna Soils (North, Far North):** Low water retention. Incorporate compost and cow manure generously.`
+  },
+  {
+    triggers: ['center', 'centre', 'yaounde', 'yaoundé', 'bafia', 'mbalmayo', 'obala', 'monatele', 'monatélé', 'lekie', 'lékié', 'nyong', 'mfoumou'],
+    response: `🌿 **Best Crops & Agronomic Guide for the CENTRE REGION of Cameroon:**
+
+📍 **Agro-Ecological Zone:** Bimodal Humid Forest Zone (1500 - 2000 mm rainfall).
+🗓️ **Dual Growing Seasons:** Season 1 (March – June) & Season 2 (August – November).
+
+🌾 **Top Crops Really Produced in the Centre Region:**
+1. **Cassava (Manioc):** The #1 staple and commercial tuber crop (Bafia, Obala, Bokito are national cassava hubs).
+   - *Yield:* 25 - 35 Tons/Hectare.
+   - *Varieties:* Plant CMD-resistant stem cuttings (TME 419, TMS 98/0505).
+   - *Spacing:* 1m x 1m on 40-50cm ridges.
+2. **Cocoa (Cacao):** Major historical cash crop (Mbalmayo, Monatélé, Ayos, Nyong-et-Mfoumou).
+   - *Best Practice:* Nurse with plantain shade during establishment; apply copper fungicide every 21 days against Black Pod during heavy rains.
+3. **Yam (Igname / Bafia White Yam):** Highly prized in Mbam & Inoubou.
+   - *Practice:* Large mounds (60-80cm high) with 3-4m sturdy wooden stakes for maximum leaf sun exposure.
+4. **Maize (Maïs):** Advantage of two full harvests per year thanks to bimodal rains.
+   - *Fertilizer:* Basal NPK 20-10-10 (200 kg/ha) + Top-dress Urea (100 kg/ha) at 4 weeks.
+5. **Plantain (Banane Plantain):** Grown in moist valleys and intercropped with young cocoa.
+6. **Groundnuts & Okra:** Ideal for intercropping with maize and cassava on well-drained sandy-loam ridges.
+7. **Oil Palm (Palmier à Huile):** High oil yield in river basins and humid southern border zones.
+
+🌱 **Centre Region Soil & Fertility Management:**
+- The Centre features acidic red lateritic / ferralitic soils (pH 4.8 - 5.8) prone to phosphorus fixation.
+- **Key Advisory:** Apply Agricultural Lime or Wood Ash (1 - 2 Tons/ha) 3 weeks before planting to neutralize acidity and unlock phosphorus, and incorporate decomposed compost.`
+  },
+  {
+    triggers: ['littoral', 'douala', 'moungo', 'njombe', 'njombé', 'penja', 'mbanga', 'edea', 'edéa', 'sanaga-maritime'],
+    response: `🍌 **Best Crops & Agronomic Guide for the LITTORAL REGION of Cameroon:**
+
+📍 **Agro-Ecological Zone:** Monomodal Coastal Rain Forest & Volcanic Belt (Moungo Basin, 2500 - 4000 mm rainfall).
+🌾 **Top Crops Produced in Littoral:**
+1. **Plantain & Dessert Banana:** Cameroon's primary production basin (Moungo: Penja, Njombe, Mbanga). Rich volcanic soils produce 20-30 Tons/ha. Manage Black Sigatoka with de-leafing and high-Potassium fertilizer.
+2. **Penja Pepper (Poivre de Penja - PGI):** World-renowned white and black pepper on volcanic foothills. Requires sturdy live stakes and mulch.
+3. **Pineapple (Ananas):** High brix sugar content (Penja & Mbanga). Plant double rows on raised beds (50,000 plants/ha).
+4. **Oil Palm (Palmier à Huile):** Ideal climate across Sanaga-Maritime and Moungo.
+5. **Cocoa & Cassava:** Grown extensively throughout rural coastal zones.`
+  },
+  {
+    triggers: ['west region', 'ouest', 'bafoussam', 'foumbot', 'dschang', 'bamboutos', 'noun', 'mifi', 'menoua'],
+    response: `🍅 **Best Crops & Agronomic Guide for the WEST REGION (Région de l'Ouest):**
+
+📍 **Agro-Ecological Zone:** Western Volcanic Highlands & Valleys (>1400m altitude, 1600 - 2200 mm rainfall).
+🌾 **Top Crops Produced in West Region:**
+1. **Tomato (Tomate):** The Noun Valley (Foumbot) is Cameroon's tomato capital (25-45 Tons/ha). Bamboo staking and furrow irrigation are mandatory to prevent blight.
+2. **Irish Potato (Pomme de Terre):** Santa, Dschang, and Bamboutos Highlands produce 18-30 T/ha. Certified sprouted seed (Cipira, Tubira) with hilling at 4 weeks.
+3. **Arabica Coffee (Café Arabica):** High-altitude slopes around Dschang and Bafoussam. Prune suckers and spray copper before flowering.
+4. **Maize & French Beans:** Highly productive bimodal cereal-legume rotation in volcanic loam.
+5. **Cabbage, Carrots & Bell Peppers:** Thriving market gardening across high-plateau valleys.`
+  },
+  {
+    triggers: ['north-west', 'nord-ouest', 'bamenda', 'ndop', 'santa', 'kumbo', 'wum', 'donga-mantung', 'bui'],
+    response: `🥔 **Best Crops & Agronomic Guide for the NORTH-WEST REGION:**
+
+📍 **Agro-Ecological Zone:** High Altitude Western Highlands (>1500m altitude, 1800 - 2400 mm rainfall).
+🌾 **Top Crops Produced in North-West:**
+1. **Irish Potato (Pomme de Terre):** Santa and Kumbo highlands. Excellent cool-weather yields (18-28 T/ha).
+2. **Padi Rice (Riz irrigué):** Ndop Floodplains produce premium upland and lowland rice. Level paddies and split Urea into 2-3 dressings.
+3. **Highland Maize & Climbing Beans:** Traditional high-yield intercrop replenishing soil nitrogen naturally.
+4. **Arabica Coffee:** Cultivated on volcanic ridges with shade trees.
+5. **Sweet Potato & Yam:** Grown on terraces and deep ridges across mid-altitude valleys.`
+  },
+  {
+    triggers: ['south-west', 'sud-ouest', 'buea', 'kumba', 'limbe', 'limbée', 'fako', 'meme', 'ndian', 'manyu'],
+    response: `🍫 **Best Crops & Agronomic Guide for the SOUTH-WEST REGION:**
+
+📍 **Agro-Ecological Zone:** Coastal Volcanic Belt & Mount Cameroon Foothills (2000 - 4500 mm rainfall).
+🌾 **Top Crops Produced in South-West:**
+1. **Cocoa (Cacao):** Kumba is Cameroon's largest cocoa trading hub ("Kumba Cocoa"). Volcanic soils yield superior bean quality. Maintain 3m x 3m spacing and treat Black Pod every 21 days during heavy rains.
+2. **Plantain & Banana:** Vast plantations across Fako and Meme. Hot-water dip suckers at 55°C to kill nematodes.
+3. **Oil Palm (Palmier à Huile):** CDC and smallholder estates thrive in Ndian and Fako.
+4. **Cameroon Pepper & Cassava:** Thriving commercial food crops across the coastal belt.`
+  },
+  {
+    triggers: ['south region', 'région du sud', 'ebolowa', 'sangmelima', 'sangmélima', 'kribi', 'mvomeka', 'dja'],
+    response: `🌱 **Best Crops & Agronomic Guide for the SOUTH REGION (Région du Sud):**
+
+📍 **Agro-Ecological Zone:** Dense Equatorial Rain Forest (1600 - 2200 mm rainfall, high humidity).
+🌾 **Top Crops Produced in South Region:**
+1. **Cassava (Manioc):** Sangmélima is a premier processing hub. Plant CMD-resistant varieties (TME 419) on 60cm ridges.
+2. **Cocoa (Cacao):** Shaded equatorial cocoa agroforestry with native forest canopy.
+3. **Plantain & Cocoyam (Macabo):** High moisture and rich organic forest litter favor vigorous vegetative growth.
+4. **Oil Palm & Rubber (Hévéa):** Major industrial and smallholder plantations along coastal-forest plains.`
+  },
+  {
+    triggers: ['east region', 'région de l\'est', 'bertoua', 'batouri', 'yokadouma', 'abong-mbang', 'lom-et-djerem'],
+    response: `🌿 **Best Crops & Agronomic Guide for the EAST REGION (Région de l'Est):**
+
+📍 **Agro-Ecological Zone:** Guineo-Congolian Forest & Savanna Transition (1400 - 1800 mm rainfall).
+🌾 **Top Crops Produced in East Region:**
+1. **Cassava & Plantain:** Primary staples thriving in deep organic forest soils. Construct high mounds.
+2. **Cocoa & Robusta Coffee:** Extensive agroforestry plantations across Bertoua, Batouri, and Abong-Mbang.
+3. **Maize & Groundnut:** Savanna transition zones in the north of the East region provide ideal conditions for two cereal-legume harvests per year.`
+  },
+  {
+    triggers: ['adamawa', 'adamaoua', 'ngaoundere', 'ngaoundéré', 'tibati', 'meiganga', 'banyo', 'vina', 'mbere'],
+    response: `🌽 **Best Crops & Agronomic Guide for the ADAMAWA REGION (Région de l'Adamaoua):**
+
+📍 **Agro-Ecological Zone:** High Guinea Savanna Plateau (>1000m altitude, 1200 - 1600 mm rainfall).
+🌾 **Top Crops Produced in Adamawa:**
+1. **Maize (Maïs):** Major commercial grain belt. High-yielding hybrid varieties with basal NPK 20-10-10.
+2. **Yam (Igname) & Sweet Potato:** Thrives on loose savanna mounds.
+3. **Groundnut (Arachide) & Soybean (Soja):** Excellent legume rotation that fixes atmospheric nitrogen.
+4. **Sorghum (Sorgho de saison):** Drought-resilient cereal for savanna plateaus.`
+  },
+  {
+    triggers: ['north region', 'région du nord', 'garoua', 'guider', 'poli', 'mayo-louti', 'benoue', 'bénoué'],
+    response: `🌱 **Best Crops & Agronomic Guide for the NORTH REGION (Région du Nord):**
+
+📍 **Agro-Ecological Zone:** Sudanian Savanna Basin (700 - 1000 mm rainfall, single rainy season May - October).
+🌾 **Top Crops Produced in North Region:**
+1. **Cotton (Coton - SODECOTON White Gold):** Primary economic cash crop of the Benue basin. NPK-SB (14-18-18 + Boron) and weekly pest scouting.
+2. **Groundnut (Arachide):** Highly adapted to sandy-clay savanna soils. Single Super Phosphate (SSP) at planting.
+3. **Sorghum / Mil (Sorgho):** Core food security cereal with deep drought-resistant root systems.
+4. **Maize & Cowpea (Niébé):** Intercropping provides cereal grain plus protein-rich legumes.`
+  },
+  {
+    triggers: ['far north', 'extrême nord', 'extreme nord', 'maroua', 'kousseri', 'yagoua', 'diamare', 'diamaré', 'mayo-danay', 'logone', 'semry'],
+    response: `🌾 **Best Crops & Agronomic Guide for the FAR NORTH REGION (Extrême-Nord):**
+
+📍 **Agro-Ecological Zone:** Sudano-Sahelian Semi-Arid Plains & River Valleys (350 - 650 mm rainfall).
+🌾 **Top Crops Produced in Far North:**
+1. **Sorghum & Muskuwaari:** Rainy-season mil and flood-retreat transplanted Muskuwaari sorghum on heavy Karal vertisols.
+2. **Onion (Oignon Violet de Maroua):** World-famous violet onions grown in river valleys with furrow irrigation (25-35 T/ha).
+3. **Irrigated Rice (Riz SEMRY):** SEMRY Yagoua & Maga polders along the Logone river provide controlled flood basins.
+4. **Cotton & Cowpeas (Niébé):** Essential cash and drought-resilient protein crops.`
   }
 ];
 
@@ -254,6 +388,34 @@ async function chatAgronomist({ message, history = [], farmerContext = {}, langu
   // Known crop and disease questions use the verified local knowledge base immediately.
   // This keeps farmer answers available even when Ollama is still loading a model.
   const lowerMsg = message.toLowerCase();
+  const agricultureTerms = [
+    'agriculture', 'agricultural', 'agronomy', 'agronomist', 'farmer', 'farming',
+    'farm', 'crop', 'soil', 'seed', 'planting', 'harvest', 'yield', 'irrigation',
+    'fertilizer', 'fertiliser', 'manure', 'compost', 'npk', 'urea', 'pest',
+    'insecticide', 'fungicide', 'weed', 'livestock', 'cattle', 'goat', 'poultry',
+    'chicken', 'pig', 'rice', 'maize', 'corn', 'cassava', 'manioc', 'cocoa',
+    'cacao', 'tomato', 'plantain', 'banana', 'potato', 'yam', 'coffee',
+    'groundnut', 'peanut', 'cowpea', 'sorghum', 'millet', 'cotton', 'onion',
+    'okra', 'pepper', 'pineapple', 'oil palm', 'engrais', 'récolte', 'ravageur',
+    'culture agricole', 'semence', 'maladie des plantes'
+  ];
+  const agricultureContext = ['plant', 'plants', 'leaf', 'leaves', 'root', 'tuber', 'fruit', 'garden', 'orchard', 'water', 'rain', 'disease', 'fungus', 'blight', 'mosaic', 'worm', 'aphid', 'cultiv', 'sol', 'plante', 'champ', 'semis', 'maladie', 'terre', 'eau', 'pluie'];
+  const plantSymptoms = ['yellow', 'brown', 'spot', 'spots', 'curl', 'wilting', 'wilt', 'rot', 'lesion', 'mosaic', 'blight', 'stunt', 'pustule', 'hole', 'holes'];
+  const hasAgricultureTerm = agricultureTerms.some(term => lowerMsg.includes(term));
+  const contextMatches = agricultureContext.filter(term => lowerMsg.includes(term)).length;
+  const hasPlantSymptom = lowerMsg.includes('plant') && plantSymptoms.some(term => lowerMsg.includes(term));
+  const isAgricultureQuestion = hasAgricultureTerm || (contextMatches >= 2 && (agricultureContext.some(term => ['farm', 'crop', 'soil', 'planting', 'harvest', 'garden', 'orchard', 'irrigat', 'fertili', 'pest', 'disease', 'cultiv', 'champ', 'semis', 'maladie'].includes(term) && lowerMsg.includes(term)) || hasPlantSymptom));
+  if (!isAgricultureQuestion) {
+    return {
+      success: true,
+      reply: language === 'Français' || language === 'French'
+        ? 'Je suis Agro-Vission AI et je réponds uniquement aux questions d’agriculture, de cultures, de sols, de ravageurs et de maladies des plantes au Cameroun.'
+        : 'I am Agro-Vission AI and I answer only agriculture questions about crops, soil, irrigation, pests, plant diseases, farm planning, and Cameroon farming. Please ask an agriculture-related question.',
+      source: 'Agro-Vission Agriculture Scope Guard',
+      isOfflineFallback: true,
+      modelUsed: 'Agriculture Scope Guard'
+    };
+  }
   for (const item of OFFLINE_KNOWLEDGE) {
     if (item.triggers.some(t => lowerMsg.includes(t))) {
       return {
@@ -308,8 +470,11 @@ Gardez un ton encourageant, pratique, scientifique et direct. Répondez toujours
         model: candidateModel,
         messages: formattedMessages,
         stream: false,
+        keep_alive: OLLAMA_KEEP_ALIVE,
         options: {
           num_ctx: OLLAMA_NUM_CTX,
+          num_threads: OLLAMA_NUM_THREADS,
+          num_predict: 400,
           temperature: 0.6,
           top_p: 0.9
         }

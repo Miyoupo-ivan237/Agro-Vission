@@ -2,30 +2,29 @@
   "expo": {
     "name": "AGROVISSION",
     "slug": "agrovission",
+    "scheme": "agrovission",
     "version": "1.0.0",
     "orientation": "portrait",
-    "platforms": ["ios", "android", "web"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "icon": "./assets/logo.png",
     "splash": {
       "image": "./assets/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "plugins": [
       [
         "expo-image-picker",
         {
           "photosPermission": "Allow $(PRODUCT_NAME) to access your photos.",
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/logo.png",
-          "color": "#1B5E20",
-          "defaultChannel": "ai-results"
         }
       ]
     ],
@@ -39,11 +38,19 @@
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.agrovision.app"
+      "package": "com.agrovision.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.agrovision.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e3b3f091-f702-4adf-b342-550f21ca3fe1"
+      }
     }
   }
 }

@@ -1,0 +1,8 @@
+$kind: collection
+name: Agro-Vission API
+description: API collection for the Agro-Vission agricultural AI platform. Covers authentication and AI-powered crop recommendation, disease diagnosis, and agronomist chat.
+variables:
+  - key: baseUrl
+    value: 'http://localhost:5000'
+  - key: authToken
+    value: ''

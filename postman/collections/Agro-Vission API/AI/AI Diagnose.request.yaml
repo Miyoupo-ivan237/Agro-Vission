@@ -1,0 +1,43 @@
+$kind: http-request
+method: POST
+url: '{{baseUrl}}/api/ai/diagnose'
+order: 2000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{authToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "crop": "Maize",
+      "symptomsText": "Yellow leaves with brown spots, wilting",
+      "imageUri": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AJQAB/9k=",
+      "additionalNotes": "Noticed after heavy rain",
+      "language": "English"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Response has success flag", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("success");
+      });
+      pm.test("Response has diagnosis", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("diagnosis");
+      });
+      pm.test("Diagnosis has disease name", function () {
+          const json = pm.response.json();
+          if (json.success && json.diagnosis) {
+              pm.expect(json.diagnosis).to.have.property("name");
+          }
+      });

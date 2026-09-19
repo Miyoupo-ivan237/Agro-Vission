@@ -1,4 +1,5 @@
 import React from 'react';
+import LanguageSelectionScreen from '../screens/auth/LanguageSelectionScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
@@ -13,15 +14,23 @@ import NotificationCenterScreen from '../screens/notifications/NotificationCente
 export default function AppNavigator({ route, setRoute, language, setLanguage, userEmail, setUserEmail }) {
   const goTo = setRoute;
 
+  // Protected features require user account creation / login first
+  const isProtected = ['home', 'admin', 'diagnosis', 'cropAdvice', 'aiChat', 'survey', 'notifications'].includes(route);
+  if (isProtected && !userEmail) {
+    return <WelcomeScreen goTo={goTo} currentLanguage={language} setLanguage={setLanguage} userEmail={userEmail} setUserEmail={setUserEmail} />;
+  }
+
   switch (route) {
+    case 'language':
+      return <LanguageSelectionScreen language={language} setLanguage={setLanguage} goTo={goTo} />;
     case 'welcome':
-      return <WelcomeScreen goTo={goTo} setLanguage={setLanguage} currentLanguage={language} />;
+      return <WelcomeScreen goTo={goTo} currentLanguage={language} setLanguage={setLanguage} userEmail={userEmail} setUserEmail={setUserEmail} />;
     case 'login':
       return <LoginScreen goTo={goTo} userEmail={userEmail} setUserEmail={setUserEmail} language={language} />;
     case 'register':
       return <RegisterScreen goTo={goTo} setUserEmail={setUserEmail} language={language} />;
     case 'home':
-      return <FarmerDashboard goTo={goTo} language={language} />;
+      return <FarmerDashboard goTo={goTo} language={language} userEmail={userEmail} setUserEmail={setUserEmail} />;
     case 'admin':
       return <AdminDashboard goTo={goTo} language={language} />;
     case 'diagnosis':
@@ -35,6 +44,6 @@ export default function AppNavigator({ route, setRoute, language, setLanguage, u
     case 'notifications':
       return <NotificationCenterScreen goTo={goTo} language={language} />;
     default:
-      return <WelcomeScreen goTo={goTo} setLanguage={setLanguage} currentLanguage={language} />;
+      return <WelcomeScreen goTo={goTo} currentLanguage={language} setLanguage={setLanguage} userEmail={userEmail} setUserEmail={setUserEmail} />;
   }
 }

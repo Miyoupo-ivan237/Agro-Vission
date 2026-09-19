@@ -11,7 +11,8 @@ const {
   getCropRecommendation,
   chatAgronomist,
   checkOllamaStatus,
-  getSupportedDiseases
+  getSupportedDiseases,
+  diagnoseImage
 } = require('../model');
 
 // Import notification service
@@ -82,7 +83,8 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existing) {
       return res.status(409).json({ error: 'Email is already registered' });
     }
@@ -91,7 +93,7 @@ app.post('/api/register', async (req, res) => {
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: normalizedEmail,
         phone: phone || '',
         passwordHash,
         role: role || 'farmer',
@@ -118,7 +120,8 @@ app.post('/api/register', async (req, res) => {
 // Login (Visitor -> Farmer/Admin)
 app.post('/api/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = (req.body.email || '').trim().toLowerCase();
+    const { password } = req.body;
     
     // Ensure the configured admin is also a real database user for dashboard actions.
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
@@ -247,6 +250,83 @@ app.put('/api/users/push-token', authenticateToken, async (req, res) => {
 });
 
 // ==========================================
+// ADMIN USER MANAGEMENT (LIST, BLOCK, UNBLOCK, DELETE)
+// ==========================================
+
+// Get All Users (Admin)
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        location: true,
+        farmSize: true,
+        preferredCrop: true,
+        isBlocked: true,
+        createdAt: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    return res.json({ success: true, users });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Block User (Admin)
+app.put('/api/admin/users/:id/block', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.update({
+      where: { id },
+      data: { isBlocked: true },
+      select: { id: true, email: true, name: true, isBlocked: true }
+    });
+    return res.json({ success: true, message: `User ${user.name} blocked successfully`, user });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Unblock User (Admin)
+app.put('/api/admin/users/:id/unblock', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.update({
+      where: { id },
+      data: { isBlocked: false },
+      select: { id: true, email: true, name: true, isBlocked: true }
+    });
+    return res.json({ success: true, message: `User ${user.name} unblocked successfully`, user });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete User (Admin)
+app.delete('/api/admin/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    try {
+      await prisma.notification.deleteMany({ where: { userId: id } });
+      await prisma.diagnosis.deleteMany({ where: { userId: id } });
+      await prisma.cropRecommendation.deleteMany({ where: { userId: id } });
+      await prisma.survey.deleteMany({ where: { userId: id } });
+      await prisma.chatMessage.deleteMany({ where: { userId: id } });
+    } catch (_) {}
+
+    await prisma.user.delete({ where: { id } });
+    return res.json({ success: true, message: 'User deleted successfully' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================
 // 2. AI SERVICES (DIAGNOSIS, RECOMMENDATION, CHAT)
 // ==========================================
 
@@ -266,8 +346,21 @@ app.get('/api/ai/status', async (req, res) => {
 // AI Crop Disease Diagnosis
 app.post('/api/ai/diagnose', optionalAuth, async (req, res) => {
   try {
-    const { crop, symptomsText, imageUri, additionalNotes, farmerContext = {}, language = 'English' } = req.body;
-    const result = diagnoseCrop({ crop, symptomsText, imageUri, additionalNotes, farmerContext, language });
+    const { crop, symptomsText, imageUri, imageBase64, additionalNotes, farmerContext = {}, language = 'English' } = req.body;
+    let result;
+    if (imageBase64) {
+      try {
+        const visionDiagnosis = await diagnoseImage({ crop, imageBase64, symptomsText, language });
+        result = visionDiagnosis
+          ? { success: true, diagnosis: { ...visionDiagnosis, imageUri: imageUri || null } }
+          : null;
+      } catch (visionError) {
+        console.warn('Image diagnosis unavailable; using symptom diagnosis:', visionError.message);
+      }
+    }
+    if (!result) {
+      result = diagnoseCrop({ crop, symptomsText, imageUri, additionalNotes, farmerContext, language });
+    }
 
     try {
       if (result.success && result.diagnosis) {
