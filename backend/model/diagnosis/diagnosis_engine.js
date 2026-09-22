@@ -665,6 +665,36 @@ const CROP_DISEASES_DB = {
   ]
 };
 
+// Additional priority Cameroon crops covered by the same image/symptom workflow.
+const ADDITIONAL_CAMEROON_CROPS = {
+  banana: ['Banana Black Sigatoka', 'Pseudocercospora fijiensis'],
+  sweet_potato: ['Sweet Potato Weevil Damage', 'Cylas formicarius'],
+  beans: ['Common Bean Angular Leaf Spot', 'Pseudocercospora griseola'],
+  cowpea: ['Cowpea Aphid Damage', 'Aphis craccivora'],
+  soybean: ['Soybean Rust', 'Phakopsora pachyrhizi'],
+  pineapple: ['Pineapple Mealybug Wilt', 'Dysmicoccus brevipes'],
+  cabbage: ['Cabbage Diamondback Moth Damage', 'Plutella xylostella'],
+  avocado: ['Avocado Anthracnose', 'Colletotrichum gloeosporioides']
+};
+
+for (const [key, [name, scientificName]] of Object.entries(ADDITIONAL_CAMEROON_CROPS)) {
+  const cropName = key.replace('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase());
+  CROP_DISEASES_DB[key] = [{
+    id: `${key}_priority_diagnosis`,
+    name,
+    scientificName,
+    crop: cropName,
+    severity: 'Moderate',
+    confidence: 0.78,
+    keywords: [key, cropName.toLowerCase(), 'spot', 'yellow', 'brown', 'wilt', 'damage', 'leaf'],
+    symptoms: [`Visible symptoms associated with ${name} on ${cropName}.`],
+    cause: `${scientificName} or the named pest can cause these symptoms; confirm with an extension officer when the image is unclear.`,
+    organicTreatment: ['Remove badly affected plant material and keep the field clean.', 'Use healthy planting material and improve airflow.'],
+    chemicalTreatment: ['Use only a locally registered product labelled for this crop and follow its label and pre-harvest interval.'],
+    prevention: ['Scout twice weekly and avoid moving infected planting material between fields.']
+  }];
+}
+
 /**
  * French Translation Utilities for Disease Names and Treatments
  */
@@ -726,13 +756,29 @@ function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNote
   ].filter(Boolean).join(' ');
   const combinedText = `${crop || ''} ${symptomsText} ${additionalNotes} ${contextText}`.toLowerCase();
   
+  // Crop alias normalization
+  const rawCrop = (crop || '').toLowerCase().trim();
+  let normalizedCrop = rawCrop;
+  if (rawCrop === 'corn' || rawCrop === 'maïs' || rawCrop === 'mais') normalizedCrop = 'maize';
+  else if (rawCrop === 'manioc') normalizedCrop = 'cassava';
+  else if (rawCrop === 'tomate') normalizedCrop = 'tomato';
+  else if (rawCrop === 'banane' || rawCrop === 'plantain') normalizedCrop = 'banana';
+  else if (rawCrop === 'cacao') normalizedCrop = 'cocoa';
+  else if (rawCrop === 'pomme de terre') normalizedCrop = 'potato';
+  else if (rawCrop === 'piment') normalizedCrop = 'pepper';
+  else if (rawCrop === 'arachide' || rawCrop === 'garnut' || rawCrop === 'peanut' || rawCrop === 'groundnut') normalizedCrop = 'groundnut';
+  else if (rawCrop === 'riz') normalizedCrop = 'rice';
+  else if (rawCrop === 'igname') normalizedCrop = 'yam';
+  else if (rawCrop === 'café' || rawCrop === 'cafe') normalizedCrop = 'coffee';
+  else if (rawCrop === 'oignon') normalizedCrop = 'onion';
+
   let targetCrops = [];
-  if (crop && CROP_DISEASES_DB[crop.toLowerCase()]) {
-    targetCrops = [crop.toLowerCase()];
+  if (normalizedCrop && normalizedCrop !== 'auto' && CROP_DISEASES_DB[normalizedCrop]) {
+    targetCrops = [normalizedCrop];
   } else {
     const knownCrops = Object.keys(CROP_DISEASES_DB);
-    const matched = knownCrops.filter(c => combinedText.includes(c));
-    targetCrops = matched.length > 0 ? matched : knownCrops;
+    const matched = knownCrops.filter(c => combinedText.includes(c) || (c === 'groundnut' && /garnut|arachide|peanut/i.test(combinedText)) || (c === 'maize' && /corn|maïs|mais|whorl|ear/i.test(combinedText)));
+    targetCrops = matched.length > 0 ? matched : ['maize'];
   }
 
   let bestMatch = null;
@@ -758,11 +804,8 @@ function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNote
   }
 
   if (!bestMatch || highestScore < 1) {
-    if (targetCrops.length > 0 && CROP_DISEASES_DB[targetCrops[0]]) {
-      bestMatch = CROP_DISEASES_DB[targetCrops[0]][0];
-    } else {
-      bestMatch = CROP_DISEASES_DB.cassava[0];
-    }
+    const defaultCropKey = targetCrops[0] || 'maize';
+    bestMatch = CROP_DISEASES_DB[defaultCropKey] ? CROP_DISEASES_DB[defaultCropKey][0] : CROP_DISEASES_DB.maize[0];
   }
 
   return {
@@ -793,4 +836,3 @@ module.exports = {
   getSupportedDiseases,
   CROP_DISEASES_DB
 };
-

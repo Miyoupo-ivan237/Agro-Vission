@@ -3,7 +3,10 @@
 
 import { offlineDiagnoseCrop, offlineRecommendCrop, offlineChatAgronomist } from './offline_ai.js';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.81:5000';
+// Keep crop recommendations independent from the optional TensorFlow vision model.
+// Recommendations use the local agronomy rules immediately, even while the model is unavailable.
+
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.42.199:5000';
 let sessionToken = null;
 
 function getFarmerContext(context = {}) {
@@ -19,6 +22,9 @@ function getFarmerContext(context = {}) {
 // Local offline memory stores
 const offlineStorage = {
   user: { name: 'Demo Farmer', email: 'farmer@agrovission.cm', role: 'farmer', location: 'Cameroon' },
+  accounts: [
+    { email: 'farmer@agrovission.cm', password: 'farmer123', name: 'Demo Farmer', role: 'farmer', location: 'Cameroon' }
+  ],
   diagnoses: [
     {
       id: 1,
@@ -93,41 +99,49 @@ async function request(path, body, token, timeoutMs = 2500, method = 'AUTO') {
 
 // 1. Auth
 export async function registerUser({ name, email, phone, password, location }) {
+  const cleanEmail = email.trim().toLowerCase();
   try {
-    const data = await request('/api/register', { name, email, phone, password, location });
+    const data = await request('/api/register', { name, email: cleanEmail, phone, password, location });
     offlineStorage.user = { name, email, phone, location };
     sessionToken = data.token || null;
     return data;
   } catch (err) {
-    const dummyUser = { id: 999, name, email, phone, location: location || 'Cameroon', token: 'offline-token' };
+    if (err.info) throw err;
+    const account = { email: cleanEmail, password, name, phone, location: location || 'Cameroon', role: 'farmer' };
+    offlineStorage.accounts = offlineStorage.accounts.filter((item) => item.email !== cleanEmail);
+    offlineStorage.accounts.push(account);
+    const dummyUser = { id: 999, name, email: cleanEmail, phone, location: location || 'Cameroon', role: 'farmer', token: 'offline-token' };
     offlineStorage.user = dummyUser;
     return dummyUser;
   }
 }
 
 export async function loginUser({ email, password }) {
+  const cleanEmail = email.trim().toLowerCase();
   try {
-    const data = await request('/api/login', { email, password });
+    const data = await request('/api/login', { email: cleanEmail, password });
     offlineStorage.user = data;
     sessionToken = data.token || null;
     return data;
   } catch (err) {
-    return {
-      id: 1,
-      name: offlineStorage.user.name || 'Farmer',
-      email: email || 'farmer@agrovission.cm',
+    if (err.info) throw err;
+
+    const account = offlineStorage.accounts.find(
+      (item) => item.email === cleanEmail && item.password === password
+    );
+    if (!account) throw new Error('Invalid email or password');
+
+    const offlineUser = {
+      id: 999,
+      name: account.name,
+      email: account.email,
+      role: account.role || 'farmer',
+      location: account.location || 'Cameroon',
       token: 'offline-session-token',
       isOffline: true
     };
-  }
-}
-
-export async function registerPushToken(pushToken, token) {
-  if (!pushToken) return { success: false };
-  try {
-    return await request('/api/users/push-token', { pushToken }, token, 4000, 'PUT');
-  } catch (err) {
-    return { success: false };
+    offlineStorage.user = offlineUser;
+    return offlineUser;
   }
 }
 
@@ -149,26 +163,29 @@ export async function updateProfile(payload, token) {
 }
 
 // 2. AI Crop Diagnosis
-export async function diagnosePlant({ crop, symptomsText, imageUri, additionalNotes, farmerContext, language = 'English' }) {
+export async function diagnosePlant({ crop, symptomsText, imageUri, imageBase64, additionalNotes, farmerContext, language = 'English' }) {
   try {
-    const data = await request('/api/ai/diagnose', { crop, symptomsText, imageUri, additionalNotes, farmerContext: getFarmerContext({ ...farmerContext, crop }), language }, sessionToken, 3000);
+    const data = await request('/api/ai/diagnose', { crop, symptomsText, imageUri, imageBase64, additionalNotes, farmerContext: getFarmerContext({ ...farmerContext, crop }), language }, sessionToken, 180000);
     if (data && data.success && data.diagnosis) {
       offlineStorage.diagnoses.unshift(data.diagnosis);
       return data;
     }
   } catch (err) {
-    // Silent on-device fallback
+    if (imageUri) throw err;
   }
 
   const offlineRes = offlineDiagnoseCrop({ crop, symptomsText, imageUri, language });
-  offlineStorage.diagnoses.unshift(offlineRes.diagnosis);
+  if (offlineRes && offlineRes.diagnosis) {
+    offlineStorage.diagnoses.unshift(offlineRes.diagnosis);
+    return offlineRes;
+  }
   return offlineRes;
 }
 
 // 3. AI Crop Recommendation
 export async function getRecommendation({ location, season, soilCondition, landSize, priority, farmerContext, language = 'English' }) {
   try {
-    const data = await request('/api/ai/recommend', { location, season, soilCondition, landSize, priority, farmerContext: getFarmerContext({ ...farmerContext, location, season, soilCondition, landSize, priority }), language }, sessionToken, 3000);
+    const data = await request('/api/ai/recommend', { location, season, soilCondition, landSize, priority, farmerContext: getFarmerContext({ ...farmerContext, location, season, soilCondition, landSize, priority }), language }, sessionToken, 30000);
     if (data && data.success && data.recommendation) {
       offlineStorage.recommendations.unshift(data.recommendation);
       return data;
@@ -177,7 +194,15 @@ export async function getRecommendation({ location, season, soilCondition, landS
     // Silent on-device fallback
   }
 
-  const offlineRec = offlineRecommendCrop({ location, season, soilCondition, landSize, language });
+  const offlineRec = offlineRecommendCrop({
+    location,
+    season,
+    soilCondition,
+    landSize,
+    priority,
+    farmerContext: getFarmerContext({ ...farmerContext, location, season, soilCondition, landSize, priority }),
+    language
+  });
   offlineStorage.recommendations.unshift(offlineRec.recommendation);
   return offlineRec;
 }
@@ -185,7 +210,7 @@ export async function getRecommendation({ location, season, soilCondition, landS
 // 4. AI Agronomist Chat
 export async function sendAgronomistChat({ message, history, farmerContext, language = 'English' }) {
   try {
-    const data = await request('/api/ai/chat', { message, history, farmerContext: getFarmerContext(farmerContext), language }, sessionToken, 4000);
+    const data = await request('/api/ai/chat', { message, history, farmerContext: getFarmerContext(farmerContext), language }, sessionToken, 180000);
     if (data && data.reply) {
       return data;
     }
@@ -212,6 +237,15 @@ export async function getRecommendationHistory(token) {
     return data;
   } catch (err) {
     return offlineStorage.recommendations;
+  }
+}
+
+export async function getChatHistory(token) {
+  try {
+    const data = await request('/api/history/chats', null, token);
+    return data;
+  } catch (err) {
+    return [];
   }
 }
 
@@ -282,6 +316,38 @@ export async function trackAppUsage(language = 'English', token) {
   }
 }
 
+export async function adminGetUsers(token) {
+  try {
+    return await request('/api/admin/users', null, token, 3500);
+  } catch (err) {
+    return { success: false, users: [] };
+  }
+}
+
+export async function adminBlockUser(userId, token) {
+  try {
+    return await request(`/api/admin/users/${userId}/block`, {}, token, 3500, 'PUT');
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function adminUnblockUser(userId, token) {
+  try {
+    return await request(`/api/admin/users/${userId}/unblock`, {}, token, 3500, 'PUT');
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function adminDeleteUser(userId, token) {
+  try {
+    return await request(`/api/admin/users/${userId}`, {}, token, 3500, 'DELETE');
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
 export default {
   registerUser,
   loginUser,
@@ -292,6 +358,7 @@ export default {
   sendAgronomistChat,
   getDiagnosisHistory,
   getRecommendationHistory,
+  getChatHistory,
   submitCropSurvey,
   getSurveys,
   getNotifications,
@@ -299,5 +366,8 @@ export default {
   markAllNotificationsAsRead,
   getUnreadNotificationCount,
   trackAppUsage,
-  registerPushToken
+  adminGetUsers,
+  adminBlockUser,
+  adminUnblockUser,
+  adminDeleteUser
 };

@@ -61,21 +61,19 @@ echo ║                                                              ║
 echo ║   🖥️   2. BACKEND - API Server (Green)                     ║
 echo ║      Shows: Server running on port 5000                    ║
 echo ║      Shows: API requests and database logs                 ║
-echo ║   📱 3. EXPO MOBILE - AGRO-VISSION QR CODE (Cyan/Blue)     ║
-echo ║      🔍 THIS WINDOW SHOWS THE QR CODE!                     ║
+echo ║   📱 3. EXPO MOBILE - DEVELOPMENT APP (Cyan/Blue)         ║
+echo ║      🔍 Open the installed AGROVISSION development app    ║
 echo ║      Look for the ASCII QR code in this window             ║
 echo ║                                                              ║
 echo ╠══════════════════════════════════════════════════════════════╣
 echo ║   WHAT TO DO NEXT:                                          ║
 echo ║                                                              ║
-echo ║   1. LOOK at the "EXPO MOBILE" window for QR CODE          ║
-echo ║   2. Install Expo Go app on your phone                     ║
-echo ║   3. Open Expo Go and tap "Scan QR Code"                   ║
-echo ║   4. Point phone camera at the QR code                      ║
-echo ║   5. Wait 30-45 seconds for app to load                    ║
+echo ║   1. Open the installed AGROVISSION development app        ║
+echo ║   2. Keep the phone and PC on the same network             ║
+echo ║   3. Wait for Metro to connect to the development app      ║
 echo ║                                                              ║
 echo ║   ✓ Phone must be on same WiFi as this PC                  ║
-echo ║   ✓ PC IP: 192.168.1.81                                    ║
+echo ║   ✓ PC IP: 192.168.42.199                                  ║
 echo ║                                                              ║
 echo ╚══════════════════════════════════════════════════════════════╝
 echo.

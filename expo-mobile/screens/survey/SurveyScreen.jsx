@@ -6,41 +6,77 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
-  Alert
+  Alert,
+  Image
 } from 'react-native';
 import { submitCropSurvey } from '../../src/api';
 import { CAMEROON_20_CROPS } from '../../src/cameroon_crops';
 
+import { notifySurveySubmitted } from '../../services/notificationService';
+
 const TARGET_PROBLEMS = [
-  'Yellowing & Leaf Curling (Mosaic / Virus)',
-  'Brown Rust Spots / Powdery Lesions (Fungal)',
-  'Caterpillar & Hole Chewing (Fall Armyworm / Borers)',
-  'Wilting & Stem Collapse (Bacterial / Fungal Wilt)',
-  'Whitefly / Aphid Infestation',
-  'Nutrient Deficiency (Stunted / Pale Leaves)',
-  'Routine Health Scouting (No Active Disease)'
+  { id: 'mosaic', en: 'Yellowing & Leaf Curling (Mosaic / Virus)', fr: 'Jaunissement & Enroulement foliaire (Mosaïque / Virus)' },
+  { id: 'fungal', en: 'Brown Rust Spots / Powdery Lesions (Fungal)', fr: 'Taches de Rouille Brunes / Lésions poudreuses (Fongique)' },
+  { id: 'armyworm', en: 'Caterpillar & Hole Chewing (Fall Armyworm / Borers)', fr: 'Chenilles & Trous rongés (Chenille Légionnaire / Foreurs)' },
+  { id: 'wilt', en: 'Wilting & Stem Collapse (Bacterial / Fungal Wilt)', fr: 'Flétrissement & Affaissement de tige (Bactérien / Fusariose)' },
+  { id: 'insects', en: 'Whitefly / Aphid Infestation', fr: 'Infestation d\'Aleurodes / Pucerons' },
+  { id: 'nutrient', en: 'Nutrient Deficiency (Stunted / Pale Leaves)', fr: 'Carence nutritionnelle (Feuilles pâles / Rabougrissement)' },
+  { id: 'healthy', en: 'Routine Health Scouting (No Active Disease)', fr: 'Inspection de routine (Aucune maladie apparente)' }
 ];
 
-const SCOUTING_ZONES = ['Field Border', 'Central Canopy', 'Lower Leaves', 'Soil / Base Roots'];
+const SCOUTING_ZONES = [
+  { id: 'border', en: 'Field Border', fr: 'Bordure de Champ' },
+  { id: 'canopy', en: 'Central Canopy', fr: 'Canopée Centrale' },
+  { id: 'lower', en: 'Lower Leaves', fr: 'Feuilles Basses' },
+  { id: 'roots', en: 'Soil / Base Roots', fr: 'Sol & Base des Racines' }
+];
 
-export default function SurveyScreen({ goTo }) {
+const GROWTH_STAGES = [
+  { id: 'seedling', en: 'Seedling / Emergence', fr: 'Semis / Levée' },
+  { id: 'vegetative', en: 'Vegetative Canopy', fr: 'Croissance Végétative' },
+  { id: 'flowering', en: 'Flowering / Tasseling', fr: 'Floraison / Épiaison' },
+  { id: 'maturity', en: 'Maturity / Harvest', fr: 'Maturation / Récolte' }
+];
+
+const SOIL_MOISTURES = [
+  { id: 'dry', en: 'Dry (Needs Water)', fr: 'Sec (Besoin d\'eau)' },
+  { id: 'optimal', en: 'Optimal Moisture', fr: 'Humidité Optimale' },
+  { id: 'waterlogged', en: 'Waterlogged (Risk of Rot)', fr: 'Saturé / Inondé (Risque de pourriture)' }
+];
+
+export default function SurveyScreen({ goTo, language = 'English' }) {
+  const isFr = language === 'Français' || language === 'Francais';
+
   // Survey State corresponding to Class Diagram
   const [surveyStep, setSurveyStep] = useState(1); // 1: startSurvey, 2: scoutField, 3: inspectProblem, 4: submit
   const [farmName, setFarmName] = useState('');
-  const [region, setRegion] = useState('West (Foumbot)');
+  const [region, setRegion] = useState(isFr ? 'Ouest (Foumbot)' : 'West (Foumbot)');
   const [selectedCrop, setSelectedCrop] = useState(CAMEROON_20_CROPS[0].name);
-  const [growthStage, setGrowthStage] = useState('Vegetative');
-  const [targetProblem, setTargetProblem] = useState(TARGET_PROBLEMS[0]);
+  const [growthStage, setGrowthStage] = useState(GROWTH_STAGES[1].id);
+  const [targetProblem, setTargetProblem] = useState(TARGET_PROBLEMS[0].id);
   const [healthScore, setHealthScore] = useState('85');
   const [pestPresent, setPestPresent] = useState(false);
-  const [soilMoisture, setSoilMoisture] = useState('Optimal');
-  const [scoutedZone, setScoutedZone] = useState(SCOUTING_ZONES[0]);
+  const [soilMoisture, setSoilMoisture] = useState(SOIL_MOISTURES[1].id);
+  const [scoutedZone, setScoutedZone] = useState(SCOUTING_ZONES[0].id);
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
+  const selectedCropObj = CAMEROON_20_CROPS.find(c => c.name === selectedCrop) || CAMEROON_20_CROPS[0];
+  const cropDisplayName = isFr ? (selectedCropObj.frenchName || selectedCropObj.name) : selectedCropObj.name;
+
+  const currentStageObj = GROWTH_STAGES.find(s => s.id === growthStage) || GROWTH_STAGES[0];
+  const currentProblemObj = TARGET_PROBLEMS.find(p => p.id === targetProblem) || TARGET_PROBLEMS[0];
+  const currentZoneObj = SCOUTING_ZONES.find(z => z.id === scoutedZone) || SCOUTING_ZONES[0];
+  const currentMoistureObj = SOIL_MOISTURES.find(m => m.id === soilMoisture) || SOIL_MOISTURES[0];
+
   const handleStartSurvey = () => {
     if (!farmName.trim()) {
-      Alert.alert('Farm Plot Name', 'Please enter your farm or plot name to start the survey.');
+      Alert.alert(
+        isFr ? 'Nom de la Parcelle' : 'Farm Plot Name',
+        isFr
+          ? 'Veuillez saisir le nom de votre exploitation pour commencer.'
+          : 'Please enter your farm or plot name to start the survey.'
+      );
       return;
     }
     setSurveyStep(2);
@@ -55,16 +91,17 @@ export default function SurveyScreen({ goTo }) {
       await submitCropSurvey({
         farmName,
         region,
-        cropType: selectedCrop,
-        growthStage,
-        targetProblem,
+        cropType: cropDisplayName,
+        growthStage: isFr ? currentStageObj.fr : currentStageObj.en,
+        targetProblem: isFr ? currentProblemObj.fr : currentProblemObj.en,
         healthScore: parseInt(healthScore) || 85,
         pestPresent,
-        soilMoisture,
-        scoutedZone,
+        soilMoisture: isFr ? currentMoistureObj.fr : currentMoistureObj.en,
+        scoutedZone: isFr ? currentZoneObj.fr : currentZoneObj.en,
         status: 'Submitted',
         notes
       });
+      await notifySurveySubmitted(language);
       setSubmitted(true);
     } catch (e) {
       setSubmitted(true);
@@ -82,12 +119,21 @@ export default function SurveyScreen({ goTo }) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Top Header with Plant Leaf Brand */}
       <View style={styles.headerRow}>
+        <Pressable style={styles.topBackBtn} onPress={() => goTo('home')}>
+          <Text style={styles.topBackArrow}>←</Text>
+        </Pressable>
         <View style={styles.leafIconBadge}>
           <Text style={styles.leafIconText}>🍃</Text>
         </View>
-        <View>
-          <Text style={styles.screenTitle}>Plant Village Survey</Text>
-          <Text style={styles.screenSubtitle}>Crop Health Inspection & Field Scouting Tool</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.screenTitle}>
+            {isFr ? 'Enquête Phytosanitaire' : 'Plant Village Survey'}
+          </Text>
+          <Text style={styles.screenSubtitle}>
+            {isFr
+              ? 'Suivi de Santé des Cultures & Inspection au Champ'
+              : 'Crop Health Inspection & Field Scouting Tool'}
+          </Text>
         </View>
       </View>
 
@@ -108,7 +154,11 @@ export default function SurveyScreen({ goTo }) {
                 surveyStep >= s && styles.stepDotTextActive
               ]}
             >
-              {s === 1 ? '1. Plot' : s === 2 ? '2. Scout' : '3. Inspect'}
+              {s === 1
+                ? (isFr ? '1. Parcelle' : '1. Plot')
+                : s === 2
+                  ? (isFr ? '2. Suivi' : '2. Scout')
+                  : (isFr ? '3. Diagnostic' : '3. Inspect')}
             </Text>
           </View>
         ))}
@@ -117,26 +167,34 @@ export default function SurveyScreen({ goTo }) {
       {submitted ? (
         <View style={styles.card}>
           <Text style={styles.successIcon}>✅</Text>
-          <Text style={styles.cardTitle}>Survey Successfully Logged!</Text>
+          <Text style={styles.cardTitle}>
+            {isFr ? 'Enquête Enregistrée avec Succès !' : 'Survey Successfully Logged!'}
+          </Text>
           <Text style={styles.cardText}>
-            Inspection record for plot "{farmName}" ({selectedCrop}) has been safely stored in your offline database.
+            {isFr
+              ? `Le relevé d'inspection pour la parcelle "${farmName}" (${cropDisplayName}) a été enregistré dans votre base hors-ligne.`
+              : `Inspection record for plot "${farmName}" (${cropDisplayName}) has been safely stored in your offline database.`}
           </Text>
 
           <View style={styles.summaryBox}>
-            <Text style={styles.summaryItem}>• Crop: {selectedCrop}</Text>
-            <Text style={styles.summaryItem}>• Region: {region}</Text>
-            <Text style={styles.summaryItem}>• Growth Stage: {growthStage}</Text>
-            <Text style={styles.summaryItem}>• Target Problem: {targetProblem}</Text>
-            <Text style={styles.summaryItem}>• Health Score: {healthScore}%</Text>
-            <Text style={styles.summaryItem}>• Soil Moisture: {soilMoisture}</Text>
+            <Text style={styles.summaryItem}>• {isFr ? 'Culture :' : 'Crop:'} {cropDisplayName}</Text>
+            <Text style={styles.summaryItem}>• {isFr ? 'Région :' : 'Region:'} {region}</Text>
+            <Text style={styles.summaryItem}>• {isFr ? 'Stade Végétatif :' : 'Growth Stage:'} {isFr ? currentStageObj.fr : currentStageObj.en}</Text>
+            <Text style={styles.summaryItem}>• {isFr ? 'Problème Observé :' : 'Target Problem:'} {isFr ? currentProblemObj.fr : currentProblemObj.en}</Text>
+            <Text style={styles.summaryItem}>• {isFr ? 'Score de Santé :' : 'Health Score:'} {healthScore}%</Text>
+            <Text style={styles.summaryItem}>• {isFr ? 'Humidité du Sol :' : 'Soil Moisture:'} {isFr ? currentMoistureObj.fr : currentMoistureObj.en}</Text>
           </View>
 
           <Pressable style={styles.primaryButton} onPress={resetSurvey}>
-            <Text style={styles.primaryButtonText}>+ Conduct New Survey</Text>
+            <Text style={styles.primaryButtonText}>
+              {isFr ? '+ Réaliser une Nouvelle Enquête' : '+ Conduct New Survey'}
+            </Text>
           </Pressable>
 
           <Pressable style={styles.secondaryButton} onPress={() => goTo('home')}>
-            <Text style={styles.secondaryButtonText}>Back to Dashboard</Text>
+            <Text style={styles.secondaryButtonText}>
+              {isFr ? 'Retour au Tableau de Bord' : 'Back to Dashboard'}
+            </Text>
           </Pressable>
         </View>
       ) : (
@@ -144,25 +202,33 @@ export default function SurveyScreen({ goTo }) {
           {/* STEP 1: START SURVEY / FARM INFO */}
           {surveyStep === 1 && (
             <View>
-              <Text style={styles.stepTitle}>Step 1: Plot Identification</Text>
+              <Text style={styles.stepTitle}>
+                {isFr ? 'Étape 1 : Identification de la Parcelle' : 'Step 1: Plot Identification'}
+              </Text>
 
-              <Text style={styles.label}>Farm / Plot Name *</Text>
+              <Text style={styles.label}>
+                {isFr ? 'Nom de l\'Exploitation / Parcelle *' : 'Farm / Plot Name *'}
+              </Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. Foumbot Valley Plot #3, Moungo Plantain Farm"
+                placeholder={isFr ? 'ex. Vallée de Foumbot Parcelle #3, Cacaoyère Obala' : 'e.g. Foumbot Valley Plot #3, Moungo Plantain Farm'}
                 value={farmName}
                 onChangeText={setFarmName}
               />
 
-              <Text style={styles.label}>Cameroon Farming Region *</Text>
+              <Text style={styles.label}>
+                {isFr ? 'Région Agricole du Cameroun *' : 'Cameroon Farming Region *'}
+              </Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. West (Foumbot / Bafoussam)"
+                placeholder={isFr ? 'ex. Ouest (Foumbot / Bafoussam)' : 'e.g. West (Foumbot / Bafoussam)'}
                 value={region}
                 onChangeText={setRegion}
               />
 
-              <Text style={styles.label}>Target Crop (From 20 Cameroon Produce) *</Text>
+              <Text style={styles.label}>
+                {isFr ? 'Culture Cible (Parmi les 20 Cultures CMR) *' : 'Target Crop (From 20 Cameroon Produce) *'}
+              </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillRow}>
                 {CAMEROON_20_CROPS.map((c) => (
                   <Pressable
@@ -179,14 +245,16 @@ export default function SurveyScreen({ goTo }) {
                         selectedCrop === c.name && styles.cropPillTextActive
                       ]}
                     >
-                      {c.name}
+                      {isFr ? (c.frenchName || c.name) : c.name}
                     </Text>
                   </Pressable>
                 ))}
               </ScrollView>
 
               <Pressable style={styles.primaryButton} onPress={handleStartSurvey}>
-                <Text style={styles.primaryButtonText}>Proceed to Field Scouting →</Text>
+                <Text style={styles.primaryButtonText}>
+                  {isFr ? 'Passer au Suivi du Champ →' : 'Proceed to Field Scouting →'}
+                </Text>
               </Pressable>
             </View>
           )}
@@ -194,48 +262,57 @@ export default function SurveyScreen({ goTo }) {
           {/* STEP 2: SCOUT FIELD / CANOPY INSPECTION */}
           {surveyStep === 2 && (
             <View>
-              <Text style={styles.stepTitle}>Step 2: Field Scouting & Canopy Stage</Text>
+              <Image source={require('../../assets/logo.png')} style={styles.inspectionImage} resizeMode="contain" />
+              <Text style={styles.stepTitle}>
+                {isFr ? 'Étape 2 : Suivi au Champ & Stade Végétatif' : 'Step 2: Field Scouting & Canopy Stage'}
+              </Text>
 
-              <Text style={styles.label}>Crop Growth Stage</Text>
+              <Text style={styles.label}>
+                {isFr ? 'Stade de Croissance de la Culture' : 'Crop Growth Stage'}
+              </Text>
               <View style={styles.pillGrid}>
-                {['Seedling / Emergence', 'Vegetative Canopy', 'Flowering / Tasseling', 'Maturity / Harvest'].map((st) => (
+                {GROWTH_STAGES.map((st) => (
                   <Pressable
-                    key={st}
-                    style={[styles.stagePill, growthStage === st && styles.stagePillActive]}
-                    onPress={() => setGrowthStage(st)}
+                    key={st.id}
+                    style={[styles.stagePill, growthStage === st.id && styles.stagePillActive]}
+                    onPress={() => setGrowthStage(st.id)}
                   >
-                    <Text style={[styles.stagePillText, growthStage === st && styles.stagePillTextActive]}>
-                      {st}
+                    <Text style={[styles.stagePillText, growthStage === st.id && styles.stagePillTextActive]}>
+                      {isFr ? st.fr : st.en}
                     </Text>
                   </Pressable>
                 ))}
               </View>
 
-              <Text style={styles.label}>Field Inspection Zone</Text>
+              <Text style={styles.label}>
+                {isFr ? 'Zone d\'Inspection du Champ' : 'Field Inspection Zone'}
+              </Text>
               <View style={styles.pillGrid}>
                 {SCOUTING_ZONES.map((z) => (
                   <Pressable
-                    key={z}
-                    style={[styles.stagePill, scoutedZone === z && styles.stagePillActive]}
-                    onPress={() => setScoutedZone(z)}
+                    key={z.id}
+                    style={[styles.stagePill, scoutedZone === z.id && styles.stagePillActive]}
+                    onPress={() => setScoutedZone(z.id)}
                   >
-                    <Text style={[styles.stagePillText, scoutedZone === z && styles.stagePillTextActive]}>
-                      {z}
+                    <Text style={[styles.stagePillText, scoutedZone === z.id && styles.stagePillTextActive]}>
+                      {isFr ? z.fr : z.en}
                     </Text>
                   </Pressable>
                 ))}
               </View>
 
-              <Text style={styles.label}>Soil Moisture Observation</Text>
+              <Text style={styles.label}>
+                {isFr ? 'Observation de l\'Humidité du Sol' : 'Soil Moisture Observation'}
+              </Text>
               <View style={styles.pillGrid}>
-                {['Dry (Needs Water)', 'Optimal Moisture', 'Waterlogged (Risk of Rot)'].map((m) => (
+                {SOIL_MOISTURES.map((m) => (
                   <Pressable
-                    key={m}
-                    style={[styles.stagePill, soilMoisture === m && styles.stagePillActive]}
-                    onPress={() => setSoilMoisture(m)}
+                    key={m.id}
+                    style={[styles.stagePill, soilMoisture === m.id && styles.stagePillActive]}
+                    onPress={() => setSoilMoisture(m.id)}
                   >
-                    <Text style={[styles.stagePillText, soilMoisture === m && styles.stagePillTextActive]}>
-                      {m}
+                    <Text style={[styles.stagePillText, soilMoisture === m.id && styles.stagePillTextActive]}>
+                      {isFr ? m.fr : m.en}
                     </Text>
                   </Pressable>
                 ))}
@@ -243,10 +320,14 @@ export default function SurveyScreen({ goTo }) {
 
               <View style={styles.navRow}>
                 <Pressable style={styles.backStepBtn} onPress={() => setSurveyStep(1)}>
-                  <Text style={styles.backStepText}>← Back</Text>
+                  <Text style={styles.backStepText}>
+                    {isFr ? '← Précédent' : '← Back'}
+                  </Text>
                 </Pressable>
                 <Pressable style={styles.nextStepBtn} onPress={handleScoutField}>
-                  <Text style={styles.primaryButtonText}>Next: Inspect Health →</Text>
+                  <Text style={styles.primaryButtonText}>
+                    {isFr ? 'Suivant : Examiner l\'État →' : 'Next: Inspect Health →'}
+                  </Text>
                 </Pressable>
               </View>
             </View>
@@ -255,25 +336,32 @@ export default function SurveyScreen({ goTo }) {
           {/* STEP 3: PROBLEM INSPECTION & SUBMIT */}
           {surveyStep === 3 && (
             <View>
-              <Text style={styles.stepTitle}>Step 3: Disease & Pest Assessment</Text>
+              <Image source={require('../../assets/logo.png')} style={styles.inspectionImage} resizeMode="contain" />
+              <Text style={styles.stepTitle}>
+                {isFr ? 'Étape 3 : Évaluation Sanitaire & Ravageurs' : 'Step 3: Disease & Pest Assessment'}
+              </Text>
 
-              <Text style={styles.label}>Target Symptom / Problem Observed</Text>
+              <Text style={styles.label}>
+                {isFr ? 'Symptôme Cible / Problème Observé' : 'Target Symptom / Problem Observed'}
+              </Text>
               {TARGET_PROBLEMS.map((prob) => {
-                const isSelected = targetProblem === prob;
+                const isSelected = targetProblem === prob.id;
                 return (
                   <Pressable
-                    key={prob}
+                    key={prob.id}
                     style={[styles.problemCard, isSelected && styles.problemCardSelected]}
-                    onPress={() => setTargetProblem(prob)}
+                    onPress={() => setTargetProblem(prob.id)}
                   >
                     <Text style={[styles.problemText, isSelected && styles.problemTextSelected]}>
-                      {prob}
+                      {isFr ? prob.fr : prob.en}
                     </Text>
                   </Pressable>
                 );
               })}
 
-              <Text style={styles.label}>Overall Crop Health Score (0 - 100%)</Text>
+              <Text style={styles.label}>
+                {isFr ? 'Score Global de Santé (0 - 100%)' : 'Overall Crop Health Score (0 - 100%)'}
+              </Text>
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
@@ -281,14 +369,16 @@ export default function SurveyScreen({ goTo }) {
                 onChangeText={setHealthScore}
               />
 
-              <Text style={styles.label}>Are Active Pests / Insects Present?</Text>
+              <Text style={styles.label}>
+                {isFr ? 'Présence de Ravageurs / Insectes Actifs ?' : 'Are Active Pests / Insects Present?'}
+              </Text>
               <View style={styles.pillGrid}>
                 <Pressable
                   style={[styles.stagePill, pestPresent === false && styles.stagePillActive]}
                   onPress={() => setPestPresent(false)}
                 >
                   <Text style={[styles.stagePillText, pestPresent === false && styles.stagePillTextActive]}>
-                    🟢 No Pests Detected
+                    {isFr ? '🟢 Aucun Ravageur Détecté' : '🟢 No Pests Detected'}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -296,34 +386,42 @@ export default function SurveyScreen({ goTo }) {
                   onPress={() => setPestPresent(true)}
                 >
                   <Text style={[styles.stagePillText, pestPresent === true && styles.stagePillTextActive]}>
-                    ⚠️ Active Pests Observed
+                    {isFr ? '⚠️ Ravageurs Actifs Observés' : '⚠️ Active Pests Observed'}
                   </Text>
                 </Pressable>
               </View>
 
-              <Text style={styles.label}>Field Inspection Notes</Text>
+              <Text style={styles.label}>
+                {isFr ? 'Notes d\'Inspection au Champ' : 'Field Inspection Notes'}
+              </Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
                 multiline
                 numberOfLines={3}
-                placeholder="Notes on fertilizer applied, weed density, rain conditions..."
+                placeholder={isFr ? 'Notes sur engrais apporté, densité des mauvaises herbes, pluviométrie...' : 'Notes on fertilizer applied, weed density, rain conditions...'}
                 value={notes}
                 onChangeText={setNotes}
               />
 
               <View style={styles.navRow}>
                 <Pressable style={styles.backStepBtn} onPress={() => setSurveyStep(2)}>
-                  <Text style={styles.backStepText}>← Back</Text>
+                  <Text style={styles.backStepText}>
+                    {isFr ? '← Précédent' : '← Back'}
+                  </Text>
                 </Pressable>
                 <Pressable style={styles.nextStepBtn} onPress={handleSubmitSurvey}>
-                  <Text style={styles.primaryButtonText}>💾 Submit Survey</Text>
+                  <Text style={styles.primaryButtonText}>
+                    {isFr ? '💾 Enregistrer l\'Enquête' : '💾 Submit Survey'}
+                  </Text>
                 </Pressable>
               </View>
             </View>
           )}
 
           <Pressable style={styles.cancelBtn} onPress={() => goTo('home')}>
-            <Text style={styles.cancelBtnText}>Back to Dashboard</Text>
+            <Text style={styles.cancelBtnText}>
+              {isFr ? 'Retour au Tableau de Bord' : 'Back to Dashboard'}
+            </Text>
           </Pressable>
         </View>
       )}
@@ -346,6 +444,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     marginBottom: 16,
+  },
+  topBackBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#C8E6C9',
+    elevation: 2,
+  },
+  topBackArrow: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+  },
+  inspectionImage: {
+    width: 112,
+    height: 72,
+    alignSelf: 'center',
+    marginBottom: 12,
+    borderRadius: 14,
+    backgroundColor: '#F8FAFC',
   },
   leafIconBadge: {
     backgroundColor: '#ffffff',

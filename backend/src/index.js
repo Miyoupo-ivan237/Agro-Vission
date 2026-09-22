@@ -11,7 +11,8 @@ const {
   getCropRecommendation,
   chatAgronomist,
   checkOllamaStatus,
-  getSupportedDiseases
+  getSupportedDiseases,
+  diagnoseImage
 } = require('../model');
 
 // Import notification service
@@ -247,6 +248,83 @@ app.put('/api/users/push-token', authenticateToken, async (req, res) => {
 });
 
 // ==========================================
+// ADMIN USER MANAGEMENT (LIST, BLOCK, UNBLOCK, DELETE)
+// ==========================================
+
+// Get All Users (Admin)
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        location: true,
+        farmSize: true,
+        preferredCrop: true,
+        isBlocked: true,
+        createdAt: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    return res.json({ success: true, users });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Block User (Admin)
+app.put('/api/admin/users/:id/block', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.update({
+      where: { id },
+      data: { isBlocked: true },
+      select: { id: true, email: true, name: true, isBlocked: true }
+    });
+    return res.json({ success: true, message: `User ${user.name} blocked successfully`, user });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Unblock User (Admin)
+app.put('/api/admin/users/:id/unblock', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.update({
+      where: { id },
+      data: { isBlocked: false },
+      select: { id: true, email: true, name: true, isBlocked: true }
+    });
+    return res.json({ success: true, message: `User ${user.name} unblocked successfully`, user });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete User (Admin)
+app.delete('/api/admin/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    try {
+      await prisma.notification.deleteMany({ where: { userId: id } });
+      await prisma.diagnosis.deleteMany({ where: { userId: id } });
+      await prisma.cropRecommendation.deleteMany({ where: { userId: id } });
+      await prisma.survey.deleteMany({ where: { userId: id } });
+      await prisma.chatMessage.deleteMany({ where: { userId: id } });
+    } catch (_) {}
+
+    await prisma.user.delete({ where: { id } });
+    return res.json({ success: true, message: 'User deleted successfully' });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================
 // 2. AI SERVICES (DIAGNOSIS, RECOMMENDATION, CHAT)
 // ==========================================
 
@@ -266,8 +344,42 @@ app.get('/api/ai/status', async (req, res) => {
 // AI Crop Disease Diagnosis
 app.post('/api/ai/diagnose', optionalAuth, async (req, res) => {
   try {
-    const { crop, symptomsText, imageUri, additionalNotes, farmerContext = {}, language = 'English' } = req.body;
-    const result = diagnoseCrop({ crop, symptomsText, imageUri, additionalNotes, farmerContext, language });
+    const { crop, symptomsText, imageUri, imageBase64, additionalNotes, farmerContext = {}, language = 'English' } = req.body;
+    let result;
+    if (imageBase64) {
+      try {
+        const visionDiagnosis = await diagnoseImage({ crop, imageBase64, symptomsText, language });
+        if (!visionDiagnosis || !visionDiagnosis.isPlant) {
+          return res.status(422).json({
+            success: false,
+            code: 'IMAGE_NOT_IDENTIFIABLE',
+            error: language === 'Français'
+              ? 'Cette image ne montre pas clairement une plante. Envoyez une photo nette d’une feuille, d’une tige, d’un fruit ou de la plante entière.'
+              : 'This image does not clearly show a plant. Send a clear photo of a leaf, stem, fruit, or the whole plant.'
+          });
+        }
+        if (visionDiagnosis.imageCrop && crop && !visionDiagnosis.imageCrop.toLowerCase().includes(crop.toLowerCase())) {
+          return res.status(422).json({
+            success: false,
+            code: 'IMAGE_CROP_MISMATCH',
+            error: language === 'Français'
+              ? `La photo semble montrer ${visionDiagnosis.imageCrop}, mais la culture sélectionnée est ${crop}. Sélectionnez la bonne culture et réessayez.`
+              : `The image appears to show ${visionDiagnosis.imageCrop}, but the selected crop is ${crop}. Select the correct crop and try again.`
+          });
+        }
+        result = { success: true, diagnosis: { ...visionDiagnosis, imageUri: imageUri || null } };
+      } catch (visionError) {
+        console.warn('Image diagnosis failed:', visionError.message);
+        return res.status(503).json({
+          success: false,
+          code: 'IMAGE_ANALYSIS_UNAVAILABLE',
+          error: 'Image analysis is temporarily unavailable. Confirm Ollama is running with llava:latest and try again.'
+        });
+      }
+    }
+    if (!result) {
+      result = diagnoseCrop({ crop, symptomsText, imageUri, additionalNotes, farmerContext, language });
+    }
 
     try {
       if (result.success && result.diagnosis) {
@@ -394,7 +506,8 @@ app.post('/api/ai/chat', optionalAuth, async (req, res) => {
 // Get Diagnosis History
 app.get('/api/history/diagnoses', optionalAuth, async (req, res) => {
   try {
-    const where = req.user?.id ? { userId: req.user.id } : {};
+    if (!req.user?.id) return res.json([]);
+    const where = { userId: req.user.id };
     const diagnoses = await prisma.diagnosis.findMany({
       where,
       orderBy: { createdAt: 'desc' },
@@ -409,11 +522,27 @@ app.get('/api/history/diagnoses', optionalAuth, async (req, res) => {
 // Get Recommendation History
 app.get('/api/history/recommendations', optionalAuth, async (req, res) => {
   try {
-    const where = req.user?.id ? { userId: req.user.id } : {};
+    if (!req.user?.id) return res.json([]);
+    const where = { userId: req.user.id };
     const recommendations = await prisma.cropRecommendation.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       take: 50
+    });
+
+    app.get('/api/history/chats', optionalAuth, async (req, res) => {
+      try {
+        if (!req.user?.id) return res.json([]);
+        const where = { userId: req.user.id };
+        const chats = await prisma.chatMessage.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          take: 50
+        });
+        return res.json(chats);
+      } catch (err) {
+        return res.status(500).json({ error: err.message });
+      }
     });
     return res.json(recommendations);
   } catch (err) {

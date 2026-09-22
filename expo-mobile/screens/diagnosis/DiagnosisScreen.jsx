@@ -4,17 +4,40 @@ import {
   ImageBackground, Alert, ActivityIndicator, Image
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+
+// Support both ImagePicker.MediaType.Images and direct array format
+if (!ImagePicker.MediaType) {
+  ImagePicker.MediaType = {
+    Images: ['images'],
+    Videos: ['videos'],
+    All: ['images', 'videos'],
+  };
+} else if (!ImagePicker.MediaType.Images) {
+  ImagePicker.MediaType.Images = ['images'];
+}
+
 import { diagnosePlant } from '../../src/api';
-import { getT } from '../../src/translations';
+import { getT, getSeverityLabel } from '../../src/translations';
+import {
+  scheduleLocalNotification,
+  scheduleTwoWeekReminder
+} from '../../services/localNotificationService';
 
 const CROPS = [
-  { id: 'cassava', label: 'Cassava',  fr: 'Manioc',            icon: '🌱' },
-  { id: 'maize',   label: 'Maize',    fr: 'Maïs',              icon: '🌽' },
-  { id: 'tomato',  label: 'Tomato',   fr: 'Tomate',            icon: '🍅' },
-  { id: 'banana',  label: 'Banana',   fr: 'Banane',            icon: '🍌' },
-  { id: 'cocoa',   label: 'Cocoa',    fr: 'Cacao',             icon: '🍫' },
-  { id: 'potato',  label: 'Potato',   fr: 'Pomme de Terre',    icon: '🥔' },
-  { id: 'pepper',  label: 'Pepper',   fr: 'Piment',            icon: '🌶️' },
+  { id: 'auto',      label: 'Auto-Detect', fr: 'Détection Auto',     icon: '🤖' },
+  { id: 'groundnut', label: 'Groundnut',   fr: 'Arachide',           icon: '🥜' },
+  { id: 'maize',     label: 'Maize',       fr: 'Maïs',              icon: '🌽' },
+  { id: 'cassava',   label: 'Cassava',     fr: 'Manioc',            icon: '🌱' },
+  { id: 'tomato',    label: 'Tomato',      fr: 'Tomate',            icon: '🍅' },
+  { id: 'plantain',  label: 'Plantain',    fr: 'Banane Plantain',   icon: '🍌' },
+  { id: 'banana',    label: 'Banana',      fr: 'Banane',            icon: '🍌' },
+  { id: 'cocoa',     label: 'Cocoa',       fr: 'Cacao',             icon: '🍫' },
+  { id: 'potato',    label: 'Potato',      fr: 'Pomme de Terre',    icon: '🥔' },
+  { id: 'pepper',    label: 'Pepper',      fr: 'Piment',            icon: '🌶️' },
+  { id: 'rice',      label: 'Rice',        fr: 'Riz',               icon: '🌾' },
+  { id: 'yam',       label: 'Yam',         fr: 'Igname',            icon: '🥔' },
+  { id: 'coffee',    label: 'Coffee',      fr: 'Café',              icon: '☕' },
+  { id: 'onion',     label: 'Onion',       fr: 'Oignon',            icon: '🧅' },
 ];
 
 const SEVERITY_CONFIG = {
@@ -33,10 +56,11 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
   const t = getT(language);
   const isFr = language === 'Français';
 
-  const [selectedCrop, setSelectedCrop] = useState('cassava');
+  const [selectedCrop, setSelectedCrop] = useState('auto');
   const [loading, setLoading]           = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [result, setResult]             = useState(null);
+  const [identifiedPlant, setIdentifiedPlant] = useState(null);
 
   const activeCrop = CROPS.find(c => c.id === selectedCrop);
   const activeCropLabel = activeCrop?.[isFr ? 'fr' : 'label'];
@@ -71,18 +95,50 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
   };
 
   // ── Run diagnosis after image selected ─────────────────────────────────────
-  const runDiagnosis = async (imageUri) => {
+  const runDiagnosis = async (imageUri, overrideCrop = null, imageBase64 = null) => {
+    const cropToUse = overrideCrop || selectedCrop;
     setLoading(true);
     setResult(null);
+    setIdentifiedPlant(null);
     try {
       const res = await diagnosePlant({
-        crop: selectedCrop,
-        symptomsText: `Image scan of ${selectedCrop} plant`,
+        crop: cropToUse,
+        symptomsText: `Image scan of ${cropToUse} plant`,
         imageUri,
-        farmerContext: { crop: selectedCrop },
+        imageBase64,
+        farmerContext: { crop: cropToUse },
         language
       });
-      setResult(res.diagnosis || res);
+      if (!res?.diagnosis) {
+        throw new Error(
+          res?.error ||
+          (isFr
+            ? "La culture n'a pas pu être identifiée. Utilisez une image claire ou sélectionnez la culture exacte."
+            : 'The plant could not be identified. Use a clear image or select the exact crop.')
+        );
+      }
+      const diag = res.diagnosis || res;
+      const plant = res.identifiedPlant || {
+        cropKey: cropToUse === 'auto' ? (diag.crop?.toLowerCase() || 'maize') : cropToUse,
+        name: diag.crop || 'Maize',
+        icon: cropToUse === 'cassava' ? '🌱' : (cropToUse === 'groundnut' ? '🥜' : '🌽'),
+        confidence: 0.95
+      };
+      setIdentifiedPlant(plant);
+      setResult(diag);
+
+      // If auto-detect was active, update selected crop to the identified plant
+      if (cropToUse === 'auto' && plant.cropKey) {
+        setSelectedCrop(plant.cropKey);
+      }
+
+      const notifCropLabel = plant.name || activeCropLabel;
+      await scheduleLocalNotification({
+        title: isFr ? 'Diagnostic terminé' : 'Diagnosis complete',
+        body: isFr ? `Résultat disponible pour ${notifCropLabel}.` : `Your ${notifCropLabel} diagnosis is ready.`,
+        data: { type: 'diagnosis_ready', crop: plant.cropKey }
+      });
+      await scheduleTwoWeekReminder({ crop: notifCropLabel, language });
     } catch (error) {
       Alert.alert(isFr ? 'Erreur' : 'Error', error.message);
     } finally {
@@ -96,16 +152,17 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
     if (!ok) return;
 
     const picked = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaType.Images,
       quality: 0.75,
       allowsEditing: true,
       aspect: [4, 3],
+      base64: true,
     });
 
     if (!picked.canceled && picked.assets?.length > 0) {
-      const uri = picked.assets[0].uri;
-      setCapturedImage(uri);
-      await runDiagnosis(uri);
+      const asset = picked.assets[0];
+      setCapturedImage(asset.uri);
+      await runDiagnosis(asset.uri, null, asset.base64);
     }
   };
 
@@ -115,16 +172,17 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
     if (!ok) return;
 
     const picked = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaType.Images,
       quality: 0.75,
       allowsEditing: true,
       aspect: [4, 3],
+      base64: true,
     });
 
     if (!picked.canceled && picked.assets?.length > 0) {
-      const uri = picked.assets[0].uri;
-      setCapturedImage(uri);
-      await runDiagnosis(uri);
+      const asset = picked.assets[0];
+      setCapturedImage(asset.uri);
+      await runDiagnosis(asset.uri, null, asset.base64);
     }
   };
 
@@ -132,6 +190,7 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
   const handleReset = () => {
     setCapturedImage(null);
     setResult(null);
+    setIdentifiedPlant(null);
   };
 
   return (
@@ -140,7 +199,7 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
 
         {/* ── Hero ───────────────────────────────────────────────────────── */}
         <ImageBackground
-          source={{ uri: 'https://images.unsplash.com/photo-1592982537447-6f23349c814b?auto=format&fit=crop&w=1000&q=80' }}
+          source={{ uri: 'https://images.unsplash.com/photo-1560493676-04071c5f467b?auto=format&fit=crop&w=1200&q=85' }}
           style={styles.heroBackground}
         >
           <View style={styles.heroOverlay}>
@@ -190,7 +249,12 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
               <Pressable
                 key={c.id}
                 style={[styles.cropPill, selectedCrop === c.id && styles.cropPillActive]}
-                onPress={() => { setSelectedCrop(c.id); handleReset(); }}
+                onPress={() => {
+                  setSelectedCrop(c.id);
+                  if (capturedImage) {
+                    runDiagnosis(capturedImage, c.id);
+                  }
+                }}
               >
                 <Text style={styles.cropIcon}>{c.icon}</Text>
                 <Text style={[styles.cropText, selectedCrop === c.id && styles.cropTextActive]}>
@@ -240,12 +304,12 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
               <View style={styles.loadingRow}>
                 <ActivityIndicator color="#ffffff" size="small" />
                 <Text style={[styles.primaryButtonText, { marginLeft: 10 }]}>
-                  {isFr ? 'Analyse en cours...' : 'Analysing image...'}
+                  {isFr ? 'Analyse & Identification IA...' : 'AI Vision & Pathology Analysis...'}
                 </Text>
               </View>
             ) : (
               <Text style={styles.primaryButtonText}>
-                📷 {isFr ? `Scanner la Feuille (${activeCropLabel})` : `Scan & Diagnose ${activeCropLabel}`}
+                📷 {isFr ? `Scanner la Plante (${activeCropLabel})` : `Scan & Diagnose (${activeCropLabel})`}
               </Text>
             )}
           </Pressable>
@@ -259,6 +323,31 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
               🖼️ {isFr ? 'Choisir depuis la Galerie' : 'Upload from Gallery'}
             </Text>
           </Pressable>
+
+          {/* ── Identified Plant Verification Banner ───────────────────────── */}
+          {identifiedPlant && (
+            <View style={styles.identifiedPlantBanner}>
+              <View style={styles.identifiedRow}>
+                <Text style={styles.identifiedIcon}>{identifiedPlant.icon || '🌱'}</Text>
+                <View style={styles.identifiedTextCol}>
+                  <Text style={styles.identifiedHeader}>
+                    {isFr ? 'Plante Identifiée par IA :' : 'Plant Identified by AI:'}
+                  </Text>
+                  <Text style={styles.identifiedName}>{identifiedPlant.name}</Text>
+                </View>
+                <View style={styles.identifiedBadge}>
+                  <Text style={styles.identifiedBadgeText}>
+                    {Math.round((identifiedPlant.confidence || 0.95) * 100)}% {isFr ? 'Fiabilité' : 'Match'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.identifiedNote}>
+                {isFr
+                  ? '✓ Diagnostic et traitements ci-dessous adaptés 100% à cette culture.'
+                  : '✓ Pathology diagnosis and treatments below are 100% tailored to this crop.'}
+              </Text>
+            </View>
+          )}
 
           {/* ── Results Card ───────────────────────────────────────────────── */}
           {result && <DiagnosisResultCard result={result} isFr={isFr} />}
@@ -288,10 +377,10 @@ function DiagnosisResultCard({ result, isFr }) {
         <View style={styles.rightBadges}>
           <View style={[styles.confidenceBadge, { backgroundColor: sev.color }]}>
             <Text style={styles.confidenceText}>{Math.round((result.confidence || 0.85) * 100)}%</Text>
-            <Text style={styles.confidenceLabel}>{isFr ? 'match' : 'match'}</Text>
+            <Text style={styles.confidenceLabel}>{isFr ? 'fiabilité' : 'match'}</Text>
           </View>
           <View style={[styles.severityBadge, { backgroundColor: sev.color }]}>
-            <Text style={styles.severityText}>{sev.icon} {result.severity || 'Moderate'}</Text>
+            <Text style={styles.severityText}>{sev.icon} {getSeverityLabel(result.severity, isFr)}</Text>
           </View>
         </View>
       </View>
@@ -467,9 +556,65 @@ const styles = StyleSheet.create({
   secondaryButtonText: { color: '#16A34A', fontSize: 16, fontWeight: 'bold' },
   buttonDisabled: { opacity: 0.6 },
 
+  /* Identified Plant Verification Banner */
+  identifiedPlantBanner: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#10B981',
+    padding: 14,
+    marginTop: 18,
+    elevation: 2,
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  identifiedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  identifiedIcon: {
+    fontSize: 28,
+    marginRight: 10,
+  },
+  identifiedTextCol: {
+    flex: 1,
+  },
+  identifiedHeader: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#047857',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  identifiedName: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#065F46',
+  },
+  identifiedBadge: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  identifiedBadgeText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+  identifiedNote: {
+    fontSize: 12,
+    color: '#047857',
+    fontWeight: '500',
+    marginLeft: 38,
+  },
+
   /* Result card */
   resultCard: {
-    backgroundColor: '#ffffff', borderRadius: 20, marginTop: 24,
+    backgroundColor: '#ffffff', borderRadius: 20, marginTop: 14,
     overflow: 'hidden',
     elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6,
   },

@@ -1,26 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
-import { getDiagnosisHistory, getRecommendationHistory } from '../../src/api';
+import { getDiagnosisHistory, getRecommendationHistory, getChatHistory } from '../../src/api';
 
-export default function HistoryScreen({ goTo }) {
+export default function HistoryScreen({ goTo, language = 'English' }) {
+  const isFr = language === 'Français' || language === 'Francais';
   const [tab, setTab] = useState('diagnoses');
   const [diagnoses, setDiagnoses] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+  const [chats, setChats] = useState([]);
 
   useEffect(() => {
     async function loadHistory() {
       const diagList = await getDiagnosisHistory();
       const recList = await getRecommendationHistory();
+      const chatList = await getChatHistory();
       setDiagnoses(diagList || []);
       setRecommendations(recList || []);
+      setChats(chatList || []);
     }
     loadHistory();
   }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>📜 Account & History</Text>
-      <Text style={styles.subtitle}>View your offline & synchronized agricultural records.</Text>
+      <Text style={styles.title}>📜 {isFr ? 'Compte & Historique' : 'Account & History'}</Text>
+      <Text style={styles.subtitle}>
+        {isFr ? 'Consultez vos données agricoles hors-ligne et synchronisées.' : 'View your offline & synchronized agricultural records.'}
+      </Text>
 
       {/* Tabs */}
       <View style={styles.tabRow}>
@@ -29,7 +35,7 @@ export default function HistoryScreen({ goTo }) {
           onPress={() => setTab('diagnoses')}
         >
           <Text style={[styles.tabText, tab === 'diagnoses' && styles.tabTextActive]}>
-            🌿 Diagnoses ({diagnoses.length})
+            {isFr ? '🌿 Diagnostics' : '🌿 Diagnoses'} ({diagnoses.length})
           </Text>
         </Pressable>
         <Pressable
@@ -37,7 +43,15 @@ export default function HistoryScreen({ goTo }) {
           onPress={() => setTab('recommendations')}
         >
           <Text style={[styles.tabText, tab === 'recommendations' && styles.tabTextActive]}>
-            🌱 Advice ({recommendations.length})
+            {isFr ? '🌱 Conseils' : '🌱 Advice'} ({recommendations.length})
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[styles.tab, tab === 'chats' && styles.tabActive]}
+          onPress={() => setTab('chats')}
+        >
+          <Text style={[styles.tabText, tab === 'chats' && styles.tabTextActive]}>
+            {isFr ? '💬 Questions' : '💬 Q&A'} ({chats.length})
           </Text>
         </Pressable>
       </View>
@@ -45,7 +59,7 @@ export default function HistoryScreen({ goTo }) {
       {tab === 'diagnoses' ? (
         <View style={styles.listSection}>
           {diagnoses.length === 0 ? (
-            <Text style={styles.emptyText}>No diagnoses recorded yet.</Text>
+            <Text style={styles.emptyText}>{isFr ? 'Aucun diagnostic enregistré.' : 'No diagnoses recorded yet.'}</Text>
           ) : (
             diagnoses.map((d, index) => (
               <View key={d.id || index} style={styles.itemCard}>
@@ -53,9 +67,9 @@ export default function HistoryScreen({ goTo }) {
                   <Text style={styles.itemTitle}>{d.diseaseName || d.name}</Text>
                   <Text style={styles.cropBadge}>{d.crop}</Text>
                 </View>
-                <Text style={styles.symptomsText}>Symptoms: {d.symptoms}</Text>
+                <Text style={styles.symptomsText}>{isFr ? 'Symptômes' : 'Symptoms'}: {d.symptoms}</Text>
                 {d.treatment ? (
-                  <Text style={styles.treatmentText}>Treatment: {d.treatment}</Text>
+                  <Text style={styles.treatmentText}>{isFr ? 'Traitement' : 'Treatment'}: {d.treatment}</Text>
                 ) : null}
                 <Text style={styles.timestamp}>
                   {new Date(d.createdAt || d.diagnosedAt || Date.now()).toLocaleDateString()} • {d.source || 'Offline AI'}
@@ -64,20 +78,20 @@ export default function HistoryScreen({ goTo }) {
             ))
           )}
         </View>
-      ) : (
+      ) : tab === 'recommendations' ? (
         <View style={styles.listSection}>
           {recommendations.length === 0 ? (
-            <Text style={styles.emptyText}>No crop recommendations recorded yet.</Text>
+            <Text style={styles.emptyText}>{isFr ? 'Aucune recommandation enregistrée.' : 'No crop recommendations recorded yet.'}</Text>
           ) : (
             recommendations.map((r, index) => (
               <View key={r.id || index} style={styles.itemCard}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.itemTitle}>Crop: {r.primaryCrop}</Text>
-                  <Text style={styles.cropBadge}>{r.season || 'Season'}</Text>
+                  <Text style={styles.itemTitle}>{isFr ? 'Culture' : 'Crop'}: {r.primaryCrop}</Text>
+                  <Text style={styles.cropBadge}>{r.season || (isFr ? 'Saison' : 'Season')}</Text>
                 </View>
-                <Text style={styles.symptomsText}>Location / Soil: {r.location} • {r.soilCondition}</Text>
+                <Text style={styles.symptomsText}>{isFr ? 'Lieu / Sol' : 'Location / Soil'}: {r.location} • {r.soilCondition}</Text>
                 {r.actionPlan ? (
-                  <Text style={styles.treatmentText}>Plan: {r.actionPlan}</Text>
+                  <Text style={styles.treatmentText}>{isFr ? 'Plan' : 'Plan'}: {r.actionPlan}</Text>
                 ) : null}
                 <Text style={styles.timestamp}>
                   {new Date(r.createdAt || r.generatedAt || Date.now()).toLocaleDateString()} • {r.source || 'Offline Agro-Engine'}
@@ -86,14 +100,32 @@ export default function HistoryScreen({ goTo }) {
             ))
           )}
         </View>
+      ) : (
+        <View style={styles.listSection}>
+          {chats.length === 0 ? (
+            <Text style={styles.emptyText}>{isFr ? 'Aucune question enregistrée.' : 'No agronomist questions recorded yet.'}</Text>
+          ) : (
+            chats.map((chat, index) => (
+              <View key={chat.id || index} style={styles.itemCard}>
+                <Text style={styles.questionLabel}>{isFr ? 'Votre question' : 'Your question'}</Text>
+                <Text style={styles.symptomsText}>{chat.message}</Text>
+                <Text style={styles.questionLabel}>{isFr ? 'Réponse de l’agronome' : 'Agronomist answer'}</Text>
+                <Text style={styles.treatmentText}>{chat.reply}</Text>
+                <Text style={styles.timestamp}>
+                  {new Date(chat.createdAt || Date.now()).toLocaleDateString()} • {chat.modelUsed || 'AI Agronomist'}
+                </Text>
+              </View>
+            ))
+          )}
+        </View>
       )}
 
       <Pressable style={styles.primaryButton} onPress={() => goTo('profile')}>
-        <Text style={styles.primaryButtonText}>👨‍🌾 Edit Farmer Profile</Text>
+        <Text style={styles.primaryButtonText}>👨‍🌾 {isFr ? 'Modifier le profil' : 'Edit Farmer Profile'}</Text>
       </Pressable>
 
       <Pressable style={styles.secondaryButton} onPress={() => goTo('home')}>
-        <Text style={styles.secondaryButtonText}>Back to Dashboard</Text>
+        <Text style={styles.secondaryButtonText}>{isFr ? 'Retour au tableau de bord' : 'Back to Dashboard'}</Text>
       </Pressable>
     </ScrollView>
   );
@@ -179,6 +211,14 @@ const styles = StyleSheet.create({
     color: '#424242',
     fontSize: 13,
     lineHeight: 18,
+    marginBottom: 4,
+  },
+  questionLabel: {
+    color: '#2E7D32',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    marginTop: 4,
     marginBottom: 4,
   },
   treatmentText: {

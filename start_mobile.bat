@@ -1,5 +1,5 @@
 @echo off
-REM Expo Mobile App Starter - SHOWS QR CODE
+REM Expo Mobile App Starter - DEVELOPMENT CLIENT
 cd /d "%~dp0expo-mobile"
 
 cls
@@ -7,25 +7,25 @@ color 06
 echo.
 echo ╔════════════════════════════════════════╗
 echo ║                                        ║
-echo ║  AGRO-VISSION MOBILE APP - EXPO QR     ║
+echo ║  AGRO-VISSION MOBILE APP - DEV CLIENT  ║
 echo ║                                        ║
-echo ║  📱 Scan QR Code with Expo Go App     ║
+echo ║  📱 Open the installed AGROVISSION app ║
 echo ║                                        ║
 echo ║  ✓ Phone on same WiFi as PC          ║
 echo ║  ✓ Auto LAN ^& Offline AI Ready        ║
 echo ║                                        ║
 echo ╚════════════════════════════════════════╝
 echo.
-echo Starting Expo in a few seconds...
+echo Starting Metro for the development app...
 echo.
 timeout /t 2 /nobreak
 
 echo.
 echo ════════════════════════════════════════
-echo QR CODE APPEARS BELOW:
+echo Metro connection appears below:
 echo ════════════════════════════════════════
 echo.
 
-npm start
+npx expo start --dev-client --clear --lan --port 8082
 
 pause
