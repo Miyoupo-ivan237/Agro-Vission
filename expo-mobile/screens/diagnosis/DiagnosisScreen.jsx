@@ -464,7 +464,9 @@ function DiagnosisResultCard({ result, isFr, goTo }) {
   if (!result) return null;
   const sev = getSeverityStyle(result.severity) || { color: '#65A30D', bg: '#ECFCCB', icon: '🟢' };
   const cropKey = normalizeCropKey(result.imageCrop || result.crop || 'maize');
-  const guidance = getCropAgronomicGuidance(cropKey, isFr ? 'Français' : 'English') || {};
+  const guidance = (typeof getCropAgronomicGuidance === 'function'
+    ? getCropAgronomicGuidance(cropKey, isFr ? 'Français' : 'English')
+    : null) || {};
 
   // Safe list parser: handles arrays, delimited strings, or single values without crashing
   const toSafeList = (val) => {

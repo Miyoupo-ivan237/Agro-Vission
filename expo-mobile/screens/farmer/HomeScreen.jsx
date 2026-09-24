@@ -1,14 +1,23 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
-  View, Text, Pressable, StyleSheet, ScrollView, Image,
-  ImageBackground, Dimensions, TextInput, ActivityIndicator
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  ScrollView,
+  Image,
+  ImageBackground,
+  Dimensions,
+  TextInput,
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { sendAgronomistChat } from '../../src/api';
 import { offlineChatAgronomist } from '../../src/offline_ai';
 
 const { width } = Dimensions.get('window');
 
-
+// 24 Cameroon Crops Preserved Exactly from User Application
 export const CAMEROON_CROPS_SHOWCASE = [
   {
     id: 'cocoa',
@@ -377,14 +386,337 @@ export const CAMEROON_CROPS_SHOWCASE = [
   }
 ];
 
+// Dynamic Soil Profile Data with tailored moisture, air temp, soil temp, humidity, and insights for each timeframe
+export const SOIL_DATA = {
+  profile: {
+    nameEn: 'Soil profile',
+    nameFr: 'Profil du sol',
+    periods: {
+      W: {
+        moisture: '52%',
+        airTemp: '24°C',
+        soilTemp: '18°C',
+        humidity: '67%',
+        points: [
+          { label: 'Mon', h: '25%' },
+          { label: 'Tue', h: '42%' },
+          { label: 'Wed', h: '68%' },
+          { label: 'Thu', h: '36%' },
+          { label: 'Fri', h: '72%', active: true },
+          { label: 'Sat', h: '48%' },
+          { label: 'Sun', h: '28%' },
+        ]
+      },
+      M: {
+        moisture: '54%',
+        airTemp: '24°C',
+        soilTemp: '18°C',
+        humidity: '66%',
+        points: [
+          { label: 'W1', h: '40%' },
+          { label: 'W2', h: '62%' },
+          { label: 'W3', h: '54%', active: true },
+          { label: 'W4', h: '46%' },
+        ]
+      },
+      '3M': {
+        moisture: '50%',
+        airTemp: '25°C',
+        soilTemp: '19°C',
+        humidity: '65%',
+        points: [
+          { label: 'Jul', h: '44%' },
+          { label: 'Aug', h: '50%', active: true },
+          { label: 'Sep', h: '56%' },
+        ]
+      },
+      '6M': {
+        moisture: '51%',
+        airTemp: '24°C',
+        soilTemp: '18°C',
+        humidity: '68%',
+        points: [
+          { label: 'Apr', h: '60%' },
+          { label: 'May', h: '58%' },
+          { label: 'Jun', h: '42%' },
+          { label: 'Jul', h: '45%' },
+          { label: 'Aug', h: '50%' },
+          { label: 'Sep', h: '51%', active: true },
+        ]
+      }
+    },
+    statusEn: 'Optimal moisture level. No irrigation required today.',
+    statusFr: 'Taux d’humidité optimal. Aucune irrigation requise aujourd’hui.',
+    subEn: 'Last update: 30 min ago',
+    subFr: 'Dernière mise à jour: il y a 30 min'
+  },
+  black: {
+    nameEn: 'Black soil',
+    nameFr: 'Terre noire',
+    periods: {
+      W: {
+        moisture: '68%',
+        airTemp: '27°C',
+        soilTemp: '21°C',
+        humidity: '73%',
+        points: [
+          { label: 'Mon', h: '52%' },
+          { label: 'Tue', h: '64%' },
+          { label: 'Wed', h: '78%' },
+          { label: 'Thu', h: '60%' },
+          { label: 'Fri', h: '85%', active: true },
+          { label: 'Sat', h: '70%' },
+          { label: 'Sun', h: '58%' },
+        ]
+      },
+      M: {
+        moisture: '70%',
+        airTemp: '27°C',
+        soilTemp: '21°C',
+        humidity: '74%',
+        points: [
+          { label: 'W1', h: '62%' },
+          { label: 'W2', h: '76%' },
+          { label: 'W3', h: '70%', active: true },
+          { label: 'W4', h: '65%' },
+        ]
+      },
+      '3M': {
+        moisture: '67%',
+        airTemp: '26°C',
+        soilTemp: '20°C',
+        humidity: '72%',
+        points: [
+          { label: 'Jul', h: '60%' },
+          { label: 'Aug', h: '67%', active: true },
+          { label: 'Sep', h: '72%' },
+        ]
+      },
+      '6M': {
+        moisture: '66%',
+        airTemp: '27°C',
+        soilTemp: '21°C',
+        humidity: '73%',
+        points: [
+          { label: 'Apr', h: '72%' },
+          { label: 'May', h: '70%' },
+          { label: 'Jun', h: '58%' },
+          { label: 'Jul', h: '60%' },
+          { label: 'Aug', h: '67%' },
+          { label: 'Sep', h: '66%', active: true },
+        ]
+      }
+    },
+    statusEn: 'High organic retention. High moisture reserves, avoid over-irrigation.',
+    statusFr: 'Forte rétention d’humus. Bonnes réserves hydriques, pas d’arrosage requis.',
+    subEn: 'Last update: 15 min ago',
+    subFr: 'Dernière mise à jour: il y a 15 min'
+  },
+  loamy: {
+    nameEn: 'Loamy',
+    nameFr: 'Limoneux',
+    periods: {
+      W: {
+        moisture: '55%',
+        airTemp: '25°C',
+        soilTemp: '19°C',
+        humidity: '65%',
+        points: [
+          { label: 'Mon', h: '32%' },
+          { label: 'Tue', h: '48%' },
+          { label: 'Wed', h: '65%' },
+          { label: 'Thu', h: '42%' },
+          { label: 'Fri', h: '75%', active: true },
+          { label: 'Sat', h: '52%' },
+          { label: 'Sun', h: '35%' },
+        ]
+      },
+      M: {
+        moisture: '56%',
+        airTemp: '25°C',
+        soilTemp: '19°C',
+        humidity: '65%',
+        points: [
+          { label: 'W1', h: '45%' },
+          { label: 'W2', h: '64%' },
+          { label: 'W3', h: '56%', active: true },
+          { label: 'W4', h: '50%' },
+        ]
+      },
+      '3M': {
+        moisture: '53%',
+        airTemp: '25°C',
+        soilTemp: '19°C',
+        humidity: '64%',
+        points: [
+          { label: 'Jul', h: '48%' },
+          { label: 'Aug', h: '53%', active: true },
+          { label: 'Sep', h: '59%' },
+        ]
+      },
+      '6M': {
+        moisture: '54%',
+        airTemp: '25°C',
+        soilTemp: '19°C',
+        humidity: '65%',
+        points: [
+          { label: 'Apr', h: '64%' },
+          { label: 'May', h: '60%' },
+          { label: 'Jun', h: '45%' },
+          { label: 'Jul', h: '48%' },
+          { label: 'Aug', h: '53%' },
+          { label: 'Sep', h: '54%', active: true },
+        ]
+      }
+    },
+    statusEn: 'Ideal root aeration and percolation. Optimal for maize and vegetables.',
+    statusFr: 'Aération racinaire et percolation idéales. Optimal pour le maïs et maraîchage.',
+    subEn: 'Last update: 22 min ago',
+    subFr: 'Dernière mise à jour: il y a 22 min'
+  },
+  clay: {
+    nameEn: 'Clay',
+    nameFr: 'Argileux',
+    periods: {
+      W: {
+        moisture: '76%',
+        airTemp: '22°C',
+        soilTemp: '16°C',
+        humidity: '82%',
+        points: [
+          { label: 'Mon', h: '60%' },
+          { label: 'Tue', h: '72%' },
+          { label: 'Wed', h: '86%' },
+          { label: 'Thu', h: '68%' },
+          { label: 'Fri', h: '92%', active: true },
+          { label: 'Sat', h: '78%' },
+          { label: 'Sun', h: '65%' },
+        ]
+      },
+      M: {
+        moisture: '78%',
+        airTemp: '22°C',
+        soilTemp: '16°C',
+        humidity: '83%',
+        points: [
+          { label: 'W1', h: '70%' },
+          { label: 'W2', h: '84%' },
+          { label: 'W3', h: '78%', active: true },
+          { label: 'W4', h: '74%' },
+        ]
+      },
+      '3M': {
+        moisture: '75%',
+        airTemp: '22°C',
+        soilTemp: '16°C',
+        humidity: '81%',
+        points: [
+          { label: 'Jul', h: '70%' },
+          { label: 'Aug', h: '75%', active: true },
+          { label: 'Sep', h: '80%' },
+        ]
+      },
+      '6M': {
+        moisture: '74%',
+        airTemp: '22°C',
+        soilTemp: '16°C',
+        humidity: '82%',
+        points: [
+          { label: 'Apr', h: '80%' },
+          { label: 'May', h: '78%' },
+          { label: 'Jun', h: '68%' },
+          { label: 'Jul', h: '70%' },
+          { label: 'Aug', h: '75%' },
+          { label: 'Sep', h: '74%', active: true },
+        ]
+      }
+    },
+    statusEn: 'Dense structure, high water retention. Ensure good ridge drainage.',
+    statusFr: 'Structure dense, forte rétention d’eau. Assurer le drainage des billons.',
+    subEn: 'Last update: 10 min ago',
+    subFr: 'Dernière mise à jour: il y a 10 min'
+  },
+  volcanic: {
+    nameEn: 'Volcanic',
+    nameFr: 'Volcanique',
+    periods: {
+      W: {
+        moisture: '46%',
+        airTemp: '21°C',
+        soilTemp: '17°C',
+        humidity: '58%',
+        points: [
+          { label: 'Mon', h: '20%' },
+          { label: 'Tue', h: '38%' },
+          { label: 'Wed', h: '58%' },
+          { label: 'Thu', h: '30%' },
+          { label: 'Fri', h: '68%', active: true },
+          { label: 'Sat', h: '42%' },
+          { label: 'Sun', h: '24%' },
+        ]
+      },
+      M: {
+        moisture: '48%',
+        airTemp: '21°C',
+        soilTemp: '17°C',
+        humidity: '59%',
+        points: [
+          { label: 'W1', h: '36%' },
+          { label: 'W2', h: '56%' },
+          { label: 'W3', h: '48%', active: true },
+          { label: 'W4', h: '40%' },
+        ]
+      },
+      '3M': {
+        moisture: '44%',
+        airTemp: '21°C',
+        soilTemp: '17°C',
+        humidity: '57%',
+        points: [
+          { label: 'Jul', h: '38%' },
+          { label: 'Aug', h: '44%', active: true },
+          { label: 'Sep', h: '50%' },
+        ]
+      },
+      '6M': {
+        moisture: '45%',
+        airTemp: '21°C',
+        soilTemp: '17°C',
+        humidity: '58%',
+        points: [
+          { label: 'Apr', h: '54%' },
+          { label: 'May', h: '50%' },
+          { label: 'Jun', h: '36%' },
+          { label: 'Jul', h: '38%' },
+          { label: 'Aug', h: '44%' },
+          { label: 'Sep', h: '45%', active: true },
+        ]
+      }
+    },
+    statusEn: 'Fast mineral drainage, crisp highland air. Great for potatoes and coffee.',
+    statusFr: 'Drainage minéral rapide, air frais des plateaux. Idéal pour pommes de terre et café.',
+    subEn: 'Last update: 18 min ago',
+    subFr: 'Dernière mise à jour: il y a 18 min'
+  }
+};
+
 export default function HomeScreen({ goTo, userEmail, setUserEmail, language = 'English' }) {
   const isFr = language === 'Français' || language === 'Francais';
+
+  // Sensor & Soil profile state (Image 4 design)
+  const [selectedSoilType, setSelectedSoilType] = useState('profile');
+  const [analyticsPeriod, setAnalyticsPeriod] = useState('W'); // W, M, 3M, 6M
+
+  // Active soil data based on user selection
+  const currentSoil = SOIL_DATA[selectedSoilType] || SOIL_DATA.profile;
+  const currentPeriodData = currentSoil.periods[analyticsPeriod] || currentSoil.periods.W;
+
   // Agronomist Chat Console State
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [chatReply, setChatReply] = useState(null);
 
-  // 24 Cameroon Crops Rotating Showcase (Agronomic Catalog) State
+  // Crops catalog rotation state
   const [rotatingCropIndex, setRotatingCropIndex] = useState(0);
   const [cropAutoRotate, setCropAutoRotate] = useState(true);
   const scrollViewRef = useRef();
@@ -393,7 +725,7 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
     if (!cropAutoRotate) return;
     const cropTimer = setInterval(() => {
       setRotatingCropIndex((current) => (current + 1) % CAMEROON_CROPS_SHOWCASE.length);
-    }, 3500);
+    }, 4000);
     return () => clearInterval(cropTimer);
   }, [cropAutoRotate]);
 
@@ -432,14 +764,19 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
     { label: '🌱 Mosaïque Manioc', query: 'Comment lutter contre la mosaïque du manioc ?' },
     { label: '🧪 Dosage NPK 20-10-10', query: 'Quel est le dosage de NPK 20-10-10 par hectare pour le maïs ?' },
     { label: '🍫 Réhabiliter Cacao', query: 'Quelles sont les 3 étapes pour réhabiliter une vieille cacaoyère ?' },
-    { label: '🥬 Cultiver l’Eru', query: 'Comment réussir la culture et la domestication de l’Eru ?' }
   ] : [
     { label: '🌽 Maize Armyworm', query: 'How to control fall armyworm on maize in Cameroon?' },
     { label: '🌱 Cassava Mosaic', query: 'How to prevent cassava mosaic disease?' },
     { label: '🧪 NPK 20-10-10 Rates', query: 'What is the dosage of NPK 20-10-10 per hectare for maize?' },
-    { label: '🍫 Cocoa Rehabilitation', query: 'What are the steps to rehabilitate an unproductive cocoa farm?' },
-    { label: '🥬 Grow Eru / Okok', query: 'How to cultivate and domesticate Eru in Cameroon?' }
+    { label: '🍫 Cocoa Care', query: 'What are the steps to rehabilitate an unproductive cocoa farm?' },
   ];
+
+  const activeCrop = CAMEROON_CROPS_SHOWCASE[rotatingCropIndex] || CAMEROON_CROPS_SHOWCASE[0];
+
+  // Farmer display name
+  const farmerName = userEmail
+    ? userEmail.split('@')[0].replace(/[._]/g, ' ')
+    : (isFr ? 'Planteur Agricole' : 'Watson');
 
   return (
     <ScrollView
@@ -448,256 +785,460 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
     >
-      {/* ── Top Header ──────────────────────────────────────────────── */}
-      <View style={styles.header}>
-        <View style={styles.logoRow}>
-          <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
-          <View style={styles.headerTextWrap}>
-            <View style={styles.headerTitleRow}>
-              <Text style={styles.title} numberOfLines={1}>Agro{'\u2011'}Vission</Text>
-              <View style={styles.portalTag}>
-                <Text style={styles.portalTagText}>{isFr ? 'AGRICULTEUR' : 'FARMER'}</Text>
-              </View>
-            </View>
-            <Text style={styles.subtitle} numberOfLines={1}>
-              {userEmail ? `👤 ${userEmail}` : (isFr ? '🌾 Tableau Agricole Cameroun' : '🌾 Cameroon Agricultural Dashboard')}
-            </Text>
-          </View>
-        </View>
 
-        <View style={styles.headerRightBtns}>
-          <Pressable
-            style={styles.accountHeaderBtn}
-            onPress={() => goTo('account')}
-          >
-            <Text style={styles.accountHeaderBtnText}>
-              👤 {isFr ? 'Mon Compte' : 'My Account'}
-            </Text>
-          </Pressable>
-          <Pressable style={styles.welcomeBtn} onPress={handleSignOut}>
-            <Text style={styles.welcomeBtnText}>🚪</Text>
-          </Pressable>
-        </View>
-      </View>
+      {/* ────────────────────────────────────────────────────────────────
+          IMAGE 4 DESIGN: REGION INDICATOR & MINIMALIST SOIL PILLS
+      ──────────────────────────────────────────────────────────────── */}
+      <View style={styles.topHeader}>
+        <View style={styles.headerProfileRow}>
+          {/* Farmer Profile Avatar */}
+          <View style={styles.avatarWrapper}>
+            <Image
+              source={require('../../assets/logo.png')}
+              style={styles.avatarImg}
+            />
+            <View style={styles.onlineBadge} />
+          </View>
 
-      {/* ── Ecological Agro-Banner ── */}
-      <View style={styles.agroBanner}>
-        <View style={styles.agroBannerLeft}>
-          <Text style={styles.agroBannerIcon}>🌿</Text>
-          <View style={styles.agroBannerTextWrap}>
-            <Text style={styles.agroBannerTitle}>
-              {isFr ? 'Saison des Cultures • Cameroun' : 'Active Cropping Season • Cameroon'}
+          {/* Farmer Greeting & Region */}
+          <View style={styles.headerGreetingCol}>
+            <Text style={styles.greetingEyebrow}>
+              {isFr ? 'Bonjour,' : 'Good Morning,'}
             </Text>
-            <Text style={styles.agroBannerSub}>
-              {isFr ? 'Surveillance phytosanitaire & conseils agronomiques' : 'Phytosanitary monitoring & agronomic advice'}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.agroBannerBadge}>
-          <Text style={styles.agroBannerBadgeText}>{isFr ? '🟢 OPTIMAL' : '🟢 OPTIMAL'}</Text>
-        </View>
-      </View>
-
-      {/* ── Farm Status Metrics Bar ──────────────────────────────────── */}
-      <View style={styles.metricsBar}>
-        <View style={styles.metricItem}>
-          <View style={[styles.metricIconWrap, { backgroundColor: '#DCFCE7' }]}>
-            <Text style={styles.metricIcon}>📍</Text>
-          </View>
-          <View>
-            <Text style={styles.metricLabel}>{isFr ? 'RÉGION' : 'REGION'}</Text>
-            <Text style={styles.metricValue}>10 Zones CMR</Text>
-          </View>
-        </View>
-        <View style={styles.metricDivider} />
-        <View style={styles.metricItem}>
-          <View style={[styles.metricIconWrap, { backgroundColor: '#FEF3C7' }]}>
-            <Text style={styles.metricIcon}>🧠</Text>
-          </View>
-          <View>
-            <Text style={styles.metricLabel}>{isFr ? 'MODÈLE IA' : 'AI MODEL'}</Text>
-            <Text style={styles.metricValue}>Qwen 3B & Vision</Text>
-          </View>
-        </View>
-        <View style={styles.metricDivider} />
-        <View style={styles.metricItem}>
-          <View style={[styles.metricIconWrap, { backgroundColor: '#E0E7FF' }]}>
-            <Text style={styles.metricIcon}>⚡</Text>
-          </View>
-          <View>
-            <Text style={styles.metricLabel}>MODE</Text>
-            <Text style={styles.metricValue}>{isFr ? 'Hors-Ligne' : 'Offline Ready'}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* ── Section: 24 Cameroon Crops Rotating Showcase (AGRONOMIC CATALOG) ── */}
-      <View style={styles.showcaseSection}>
-        <View style={styles.showcaseHeaderRow}>
-          <View style={styles.showcaseHeaderLeft}>
-            <View style={styles.showcaseTag}>
-              <Text style={styles.showcaseTagText}>
-                🌾 {isFr ? 'CATALOGUE AGRONOMIQUE' : 'AGRONOMIC CATALOG'}
-              </Text>
-            </View>
-            <Text style={styles.showcaseTitle}>
-              {isFr ? `${CAMEROON_CROPS_SHOWCASE.length} Grandes Cultures du Cameroun` : `${CAMEROON_CROPS_SHOWCASE.length} Major Cameroon Crops`}
-            </Text>
-            <Text style={styles.showcaseSub}>
-              {isFr
-                ? 'Rotation automatique (3,5 s) • Touchez une culture pour explorer'
-                : 'Auto-rotating (3.5s) • Tap any crop thumbnail to inspect'}
+            <Text style={styles.farmerNameText} numberOfLines={1}>
+              {farmerName}
             </Text>
           </View>
 
-          {/* Controls: Prev / Pause / Next */}
-          <View style={styles.showcaseControls}>
+          {/* Top Actions: Notifications Bell & Account */}
+          <View style={styles.headerActionsRow}>
             <Pressable
-              style={styles.arrowBtn}
-              onPress={() => {
-                setCropAutoRotate(false);
-                setRotatingCropIndex((prev) => (prev - 1 + CAMEROON_CROPS_SHOWCASE.length) % CAMEROON_CROPS_SHOWCASE.length);
-              }}
+              style={styles.headerIconBtn}
+              onPress={() => goTo('notifications')}
             >
-              <Text style={styles.arrowBtnText}>‹</Text>
+              <Text style={styles.headerIcon}>🔔</Text>
+              <View style={styles.notificationDot} />
             </Pressable>
+
             <Pressable
-              style={[styles.pauseBtn, !cropAutoRotate && styles.pauseBtnActive]}
-              onPress={() => setCropAutoRotate(prev => !prev)}
+              style={styles.headerIconBtn}
+              onPress={() => goTo('account')}
             >
-              <Text style={styles.pauseBtnText}>{cropAutoRotate ? '❚❚' : '▶'}</Text>
+              <Text style={styles.headerIcon}>👤</Text>
             </Pressable>
+
             <Pressable
-              style={styles.arrowBtn}
-              onPress={() => {
-                setCropAutoRotate(false);
-                setRotatingCropIndex((prev) => (prev + 1) % CAMEROON_CROPS_SHOWCASE.length);
-              }}
+              style={[styles.headerIconBtn, { backgroundColor: '#FEE2E2' }]}
+              onPress={handleSignOut}
             >
-              <Text style={styles.arrowBtnText}>›</Text>
+              <Text style={styles.headerIcon}>🚪</Text>
             </Pressable>
           </View>
         </View>
 
-        {/* Active Crop Hero Card */}
-        {(() => {
-          const crop = CAMEROON_CROPS_SHOWCASE[rotatingCropIndex] || CAMEROON_CROPS_SHOWCASE[0];
-          return (
-            <View style={styles.cropRotatingCard}>
-              <ImageBackground
-                source={crop.localImage || { uri: crop.image }}
-                style={styles.cropCardImageBg}
-                imageStyle={styles.cropCardImageRadius}
-              >
-                <View style={styles.cropCardGradient}>
-                  <View style={styles.cropTopMetaRow}>
-                    <View style={[styles.cropBadgePill, { backgroundColor: crop.color }]}>
-                      <Text style={styles.cropBadgePillText}>
-                        {crop.icon} #{rotatingCropIndex + 1} / {CAMEROON_CROPS_SHOWCASE.length}
-                      </Text>
-                    </View>
-                    <View style={styles.cropCycleTag}>
-                      <Text style={styles.cropCycleTagText}>
-                        ⏳ {isFr ? crop.seasonFr : crop.season}
-                      </Text>
-                    </View>
-                  </View>
+        {/* Region Sub-Header (Image 4 exact: Region Lower Saxony) */}
+        <View style={styles.regionHeaderBar}>
+          <Text style={styles.regionSubLabel}>{isFr ? 'Région :' : 'Region'}</Text>
+          <Text style={styles.regionMainLabel}>Lower Saxony • Cameroon</Text>
+        </View>
 
-                  <Text style={styles.cropMainName}>
-                    {isFr ? crop.nameFr : crop.name}
-                  </Text>
-                  <Text style={styles.cropRegionName}>
-                    📍 {isFr ? crop.zoneFr : crop.zone}
-                  </Text>
-                </View>
-              </ImageBackground>
-
-              <View style={styles.cropCardBody}>
-                <View style={styles.cropTipBox}>
-                  <Text style={styles.cropTipLabel}>
-                    💡 {isFr ? 'Conseil d\'Expert & Pratique :' : 'Agronomic Guidance & Tip:'}
-                  </Text>
-                  <Text style={styles.cropTipContent}>
-                    {isFr ? crop.tipFr : crop.tip}
-                  </Text>
-                </View>
-
-                {/* Direct Actions: Diagnose Leaf & Build Crop Advisory */}
-                <View style={styles.cropActionsRow}>
-                  <Pressable
-                    style={styles.cropActionDiagnose}
-                    onPress={() => goTo('diagnosis')}
-                  >
-                    <Text style={styles.cropActionDiagnoseText}>
-                      📸 {isFr ? 'Diagnostiquer' : 'Diagnose Leaf'}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={styles.cropActionAdvice}
-                    onPress={() => goTo('cropAdvice')}
-                  >
-                    <Text style={styles.cropActionAdviceText}>
-                      🌾 {isFr ? 'Fiche & Rotation →' : 'Plan & Advisory →'}
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-            </View>
-          );
-        })()}
-
-        {/* 24-Crop Horizontal Scrollable Thumbnail Ribbon */}
+        {/* Soil Filter Pills (Image 4 exact pill style - no emojis, active solid green) */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={styles.cropsRibbonScroll}
-          contentContainerStyle={styles.cropsRibbonContent}
+          style={styles.soilPillsScroll}
+          contentContainerStyle={{ gap: 8, paddingHorizontal: 2 }}
         >
-          {CAMEROON_CROPS_SHOWCASE.map((crop, index) => {
-            const isSelected = index === rotatingCropIndex;
+          {[
+            { key: 'profile', labelEn: 'Soil profile', labelFr: 'Profil du sol' },
+            { key: 'black', labelEn: 'Black soil', labelFr: 'Terre noire' },
+            { key: 'loamy', labelEn: 'Loamy', labelFr: 'Limoneux' },
+            { key: 'clay', labelEn: 'Clay', labelFr: 'Argileux' },
+            { key: 'volcanic', labelEn: 'Volcanic', labelFr: 'Volcanique' },
+          ].map((item) => {
+            const isSelected = selectedSoilType === item.key;
             return (
               <Pressable
-                key={crop.id}
-                style={[styles.cropChip, isSelected && styles.cropChipActive]}
-                onPress={() => {
-                  setRotatingCropIndex(index);
-                  setCropAutoRotate(false);
-                }}
+                key={item.key}
+                style={[
+                  styles.soilPill,
+                  isSelected && styles.soilPillActive,
+                ]}
+                onPress={() => setSelectedSoilType(item.key)}
               >
-                <Text style={styles.cropChipIcon}>{crop.icon}</Text>
-                <Text style={[styles.cropChipText, isSelected && styles.cropChipTextActive]}>
-                  {isFr ? crop.nameFr.split(' ')[0] : crop.name.split(' ')[0]}
+                <Text
+                  style={[
+                    styles.soilPillText,
+                    isSelected && styles.soilPillTextActive,
+                  ]}
+                >
+                  {isFr ? item.labelFr : item.labelEn}
                 </Text>
-                {isSelected && <View style={styles.cropChipDot} />}
               </Pressable>
             );
           })}
         </ScrollView>
       </View>
 
-      {/* ── Section: AI Agronomist Interactive Chat Bar ──────────────── */}
-      <View style={styles.agronomistCard}>
-        <View style={styles.agronomistHeaderRow}>
-          <View style={styles.agronomistBadge}>
-            <Text style={styles.agronomistBadgeText}>🤖 {isFr ? 'AGRONOME IA EN DIRECT' : 'LIVE AI AGRONOMIST'}</Text>
+      {/* ────────────────────────────────────────────────────────────────
+          IMAGE 4 DESIGN: 2x2 FIELD SENSOR METRIC CARDS
+      ──────────────────────────────────────────────────────────────── */}
+      <View style={styles.metricsGrid}>
+        {/* Metric 1: Soil Moisture */}
+        <View style={styles.metricCard}>
+          <View style={styles.metricCardTop}>
+            <Text style={styles.metricCardIcon}>🌱</Text>
+            <Text style={styles.metricCardValue}>{currentPeriodData.moisture}</Text>
           </View>
-          <View style={styles.onlinePill}>
-            <Text style={styles.onlineDot}>●</Text>
-            <Text style={styles.onlineText}>{isFr ? '24/7 Hors-Ligne' : '24/7 Offline Ready'}</Text>
+          <Text style={styles.metricCardLabel}>
+            {isFr ? 'Humidité du sol' : 'Soil Moisture'}
+          </Text>
+        </View>
+
+        {/* Metric 2: Air Temp */}
+        <View style={styles.metricCard}>
+          <View style={styles.metricCardTop}>
+            <Text style={styles.metricCardIcon}>🌡️</Text>
+            <Text style={styles.metricCardValue}>{currentPeriodData.airTemp}</Text>
+          </View>
+          <Text style={styles.metricCardLabel}>
+            {isFr ? 'Température air' : 'Air temp'}
+          </Text>
+        </View>
+
+        {/* Metric 3: Soil Temp */}
+        <View style={styles.metricCard}>
+          <View style={styles.metricCardTop}>
+            <Text style={styles.metricCardIcon}>🍂</Text>
+            <Text style={styles.metricCardValue}>{currentPeriodData.soilTemp}</Text>
+          </View>
+          <Text style={styles.metricCardLabel}>
+            {isFr ? 'Température sol' : 'Soil temp'}
+          </Text>
+        </View>
+
+        {/* Metric 4: Humidity */}
+        <View style={styles.metricCard}>
+          <View style={styles.metricCardTop}>
+            <Text style={styles.metricCardIcon}>💧</Text>
+            <Text style={styles.metricCardValue}>{currentPeriodData.humidity}</Text>
+          </View>
+          <Text style={styles.metricCardLabel}>
+            {isFr ? 'Humidité' : 'Humidity'}
+          </Text>
+        </View>
+      </View>
+
+      {/* ────────────────────────────────────────────────────────────────
+          IMAGE 4 DESIGN: SOIL MOISTURE ANALYTICS & CURVED LINE CHART
+      ──────────────────────────────────────────────────────────────── */}
+      <View style={styles.analyticsCard}>
+        <View style={styles.analyticsHeader}>
+          <Text style={styles.analyticsTitle}>
+            {isFr ? 'Humidité du sol' : 'Soil moisture'}
+          </Text>
+
+          {/* Timeframe Toggles: [W] [M] [3M] [6M] */}
+          <View style={styles.timeframeTogglesRow}>
+            {['W', 'M', '3M', '6M'].map((period) => {
+              const isActive = analyticsPeriod === period;
+              return (
+                <Pressable
+                  key={period}
+                  style={[
+                    styles.timeframeBtn,
+                    isActive && styles.timeframeBtnActive,
+                  ]}
+                  onPress={() => setAnalyticsPeriod(period)}
+                >
+                  <Text
+                    style={[
+                      styles.timeframeBtnText,
+                      isActive && styles.timeframeBtnTextActive,
+                    ]}
+                  >
+                    {period}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
 
-        <Text style={styles.agronomistTitle}>
-          {isFr ? 'Une Question pour vos Cultures ou Sols ?' : 'Have a Question About Your Crops or Soil?'}
-        </Text>
-        <Text style={styles.agronomistSub}>
-          {isFr
-            ? 'Posez votre question directement ci-dessous pour obtenir une recommandation agronomique certifiée :'
-            : 'Type your farming question below for instant certified agronomic guidance:'}
+        {/* Styled Curve Line Chart with 0%-100% axis */}
+        <View style={styles.chartContainer}>
+          {/* Axis Labels (0%, 25%, 50%, 75%, 100%) */}
+          <View style={styles.chartYAxis}>
+            <Text style={styles.axisLabel}>100%</Text>
+            <Text style={styles.axisLabel}>75%</Text>
+            <Text style={styles.axisLabel}>50%</Text>
+            <Text style={styles.axisLabel}>25%</Text>
+            <Text style={styles.axisLabel}>0%</Text>
+          </View>
+
+          {/* Graph Visual Area */}
+          <View style={styles.chartPlotArea}>
+            {/* Gridlines */}
+            <View style={styles.gridLine} />
+            <View style={styles.gridLine} />
+            <View style={styles.gridLine} />
+            <View style={styles.gridLine} />
+            <View style={styles.gridLine} />
+
+            {/* Wavy Graph Representation */}
+            <View style={styles.wavePlotContainer}>
+              <View style={styles.waveBarsRow}>
+                {(currentPeriodData.points || []).map((pt, i) => (
+                  <View key={i} style={styles.waveColumn}>
+                    {pt.active && (
+                      <View style={styles.activeDotBubble}>
+                        <Text style={styles.activeDotBubbleText}>{currentPeriodData.moisture}</Text>
+                      </View>
+                    )}
+                    <View
+                      style={[
+                        styles.waveNode,
+                        pt.active && styles.waveNodeActive,
+                        { bottom: pt.h },
+                      ]}
+                    />
+                    <View style={[styles.waveStem, { height: pt.h }]} />
+                    <Text
+                      style={[
+                        styles.dayLabel,
+                        pt.active && styles.dayLabelActive,
+                      ]}
+                    >
+                      {pt.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* ────────────────────────────────────────────────────────────────
+          IMAGE 4 DESIGN: SMART INSIGHTS CARD
+      ──────────────────────────────────────────────────────────────── */}
+      <View style={styles.smartInsightsCard}>
+        <View style={styles.insightsIconWrap}>
+          <Text style={styles.insightsIcon}>🌱</Text>
+        </View>
+        <View style={styles.insightsContent}>
+          <Text style={styles.insightsTitle}>
+            {isFr ? 'Analyses Intelligentes' : 'Smart Insights'}
+          </Text>
+          <Text style={styles.soilStatusTag}>🌱 SOIL STATUS</Text>
+          <Text style={styles.insightsMainText}>
+            {isFr ? currentSoil.statusFr : currentSoil.statusEn}
+          </Text>
+          <Text style={styles.insightsMetaText}>
+            {isFr ? currentSoil.subFr : currentSoil.subEn}
+          </Text>
+        </View>
+      </View>
+
+
+
+      {/* ────────────────────────────────────────────────────────────────
+          IMAGE 3 DESIGN: PROMO / SPOTLIGHT BANNER
+      ──────────────────────────────────────────────────────────────── */}
+      <View style={styles.promoBannerCard}>
+        <View style={styles.promoBannerLeft}>
+          <View style={styles.promoBadge}>
+            <Text style={styles.promoBadgeText}>
+              {isFr ? '50% D’ÉCONOMIES' : '50% SAVINGS'}
+            </Text>
+          </View>
+          <Text style={styles.promoTitle}>
+            {isFr ? 'Bio-Compostage & Engrais Vert' : 'Bio-Compost & Soil Nutrition'}
+          </Text>
+          <Text style={styles.promoSub}>
+            {isFr
+              ? 'Réduisez vos coûts d’engrais minéraux grâce aux méthodes agro-écologiques certifiées.'
+              : 'Cut mineral fertilizer costs with certified agro-ecological formulas.'}
+          </Text>
+          <Pressable
+            style={styles.promoActionBtn}
+            onPress={() => goTo('cropAdvice')}
+          >
+            <Text style={styles.promoActionBtnText}>
+              {isFr ? 'Consulter le Guide →' : 'Get Guide →'}
+            </Text>
+          </Pressable>
+        </View>
+
+        <Image
+          source={require('../../assets/crops/plantain.jpg')}
+          style={styles.promoBannerImg}
+        />
+      </View>
+
+      {/* ────────────────────────────────────────────────────────────────
+          IMAGE 3 DESIGN: POPULAR GOODS & 24 CAMEROON CROPS SHOWCASE
+      ──────────────────────────────────────────────────────────────── */}
+      <View style={styles.popularSection}>
+        <View style={styles.sectionHeaderRow}>
+          <View>
+            <Text style={styles.sectionTitle}>
+              {isFr ? 'Cultures du Cameroun' : 'Popular Crops'}
+            </Text>
+            <Text style={styles.sectionSubtitle}>
+              {isFr
+                ? `${CAMEROON_CROPS_SHOWCASE.length} cultures adaptées aux 10 régions`
+                : `${CAMEROON_CROPS_SHOWCASE.length} crops tailored to Cameroon agro-zones`}
+            </Text>
+          </View>
+
+          {/* Previous / Next Controls */}
+          <View style={styles.cropControls}>
+            <Pressable
+              style={styles.cropArrowBtn}
+              onPress={() => {
+                setCropAutoRotate(false);
+                setRotatingCropIndex(
+                  (prev) => (prev - 1 + CAMEROON_CROPS_SHOWCASE.length) % CAMEROON_CROPS_SHOWCASE.length
+                );
+              }}
+            >
+              <Text style={styles.cropArrowBtnText}>‹</Text>
+            </Pressable>
+            <Pressable
+              style={styles.cropArrowBtn}
+              onPress={() => {
+                setCropAutoRotate(false);
+                setRotatingCropIndex(
+                  (prev) => (prev + 1) % CAMEROON_CROPS_SHOWCASE.length
+                );
+              }}
+            >
+              <Text style={styles.cropArrowBtnText}>›</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Horizontal Crop Selection Chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.cropChipsScroll}
+          contentContainerStyle={{ gap: 8, paddingHorizontal: 2 }}
+        >
+          {CAMEROON_CROPS_SHOWCASE.map((crop, idx) => {
+            const isSelected = idx === rotatingCropIndex;
+            return (
+              <Pressable
+                key={crop.id}
+                style={[
+                  styles.cropPillItem,
+                  isSelected && styles.cropPillItemActive,
+                ]}
+                onPress={() => {
+                  setRotatingCropIndex(idx);
+                  setCropAutoRotate(false);
+                }}
+              >
+                <Text style={styles.cropPillIcon}>{crop.icon}</Text>
+                <Text
+                  style={[
+                    styles.cropPillLabel,
+                    isSelected && styles.cropPillLabelActive,
+                  ]}
+                >
+                  {isFr ? crop.nameFr.split(' ')[0] : crop.name.split(' ')[0]}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
+        {/* Featured Crop Display Card (Image 3 Card style) */}
+        <View style={styles.featuredCropCard}>
+          <ImageBackground
+            source={activeCrop.localImage || { uri: activeCrop.image }}
+            style={styles.cropCardImgBanner}
+            imageStyle={{ borderRadius: 18 }}
+          >
+            <View style={styles.cropCardImgOverlay}>
+              <View style={styles.cropZoneBadge}>
+                <Text style={styles.cropZoneBadgeText}>
+                  📍 {isFr ? activeCrop.zoneFr : activeCrop.zone}
+                </Text>
+              </View>
+              <Text style={styles.cropCardImgTitle}>
+                {isFr ? activeCrop.nameFr : activeCrop.name}
+              </Text>
+              <Text style={styles.cropCardImgSeason}>
+                🗓️ {isFr ? activeCrop.seasonFr : activeCrop.season}
+              </Text>
+            </View>
+          </ImageBackground>
+
+          <View style={styles.cropCardBody}>
+            <View style={styles.tipBox}>
+              <Text style={styles.tipBoxLabel}>
+                💡 {isFr ? 'Conseil Pratique :' : 'Agronomic Guidance:'}
+              </Text>
+              <Text style={styles.tipBoxContent}>
+                {isFr ? activeCrop.tipFr : activeCrop.tip}
+              </Text>
+            </View>
+
+            {/* Direct Action Buttons */}
+            <View style={styles.cropActionBtnsRow}>
+              <Pressable
+                style={styles.cropActionPrimary}
+                onPress={() => goTo('diagnosis')}
+              >
+                <Text style={styles.cropActionPrimaryText}>
+                  🔬 {isFr ? 'Diagnostiquer la Feuille' : 'Diagnose Leaf'}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.cropActionSecondary}
+                onPress={() => goTo('cropAdvice')}
+              >
+                <Text style={styles.cropActionSecondaryText}>
+                  🌱 {isFr ? 'Plan de Culture' : 'Crop Advisory'}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* ────────────────────────────────────────────────────────────────
+          AI AGRONOMIST INSTANT CONSOLE (CHAT ASSISTANT)
+      ──────────────────────────────────────────────────────────────── */}
+      <View style={styles.chatConsoleCard}>
+        <View style={styles.chatConsoleHeader}>
+          <View style={styles.chatConsoleBadge}>
+            <Text style={styles.chatConsoleBadgeText}>
+              🤖 {isFr ? 'AGRONOME IA EN DIRECT' : 'LIVE AI AGRONOMIST'}
+            </Text>
+          </View>
+          <View style={styles.offlineStatusPill}>
+            <View style={styles.statusDotGreen} />
+            <Text style={styles.offlineStatusText}>
+              {isFr ? '100% Hors-Ligne' : '100% Offline Ready'}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.chatConsoleTitle}>
+          {isFr ? 'Une question sur vos cultures ou votre sol ?' : 'Have a Question About Your Crops or Soil?'}
         </Text>
 
-        {/* Quick Suggestion Chips */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
+        {/* Suggestion Chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipsScroll}
+          contentContainerStyle={{ gap: 8, paddingHorizontal: 2 }}
+        >
           {PROMPT_CHIPS.map((chip, idx) => (
             <Pressable
               key={idx}
@@ -712,126 +1253,76 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
           ))}
         </ScrollView>
 
-        {/* Chat Input Bar */}
-        <View style={styles.chatInputContainer}>
+        {/* Input Bar */}
+        <View style={styles.chatInputBar}>
           <TextInput
-            style={styles.chatTextInput}
+            style={styles.chatInput}
             value={chatInput}
             onChangeText={setChatInput}
-            placeholder={isFr ? 'ex: Comment soigner la chenille sur le maïs ?' : 'e.g. How to treat fall armyworm on maize?'}
+            placeholder={isFr ? 'Posez votre question agronomique...' : 'Type your farming question...'}
             placeholderTextColor="#94A3B8"
             returnKeyType="send"
             onSubmitEditing={() => handleAskAgronomist(chatInput)}
           />
           <Pressable
-            style={[styles.chatSendBtn, (!chatInput.trim() || chatLoading) && styles.chatSendBtnDisabled]}
+            style={[
+              styles.chatSendButton,
+              (!chatInput.trim() || chatLoading) && styles.chatSendButtonDisabled,
+            ]}
             onPress={() => handleAskAgronomist(chatInput)}
             disabled={!chatInput.trim() || chatLoading}
           >
             {chatLoading ? (
-              <ActivityIndicator color="#ffffff" size="small" />
+              <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.chatSendBtnText}>➤</Text>
+              <Text style={styles.chatSendButtonText}>➤</Text>
             )}
           </Pressable>
         </View>
 
-        {/* Instant Answer Preview Box */}
+        {/* Chat Answer Box */}
         {chatReply && (
-          <View style={styles.chatAnswerBox}>
-            <View style={styles.chatAnswerHeader}>
-              <Text style={styles.chatAnswerBadge}>🌾 {isFr ? 'Réponse Agronomique' : 'Agronomic Advice'}</Text>
-              <Text style={styles.chatAnswerSource}>{chatReply.source}</Text>
+          <View style={styles.chatReplyBox}>
+            <View style={styles.chatReplyHeader}>
+              <Text style={styles.chatReplyTag}>
+                🌾 {isFr ? 'Recommandation Certifiée' : 'Agronomic Guidance'}
+              </Text>
+              <Text style={styles.chatReplySource}>{chatReply.source}</Text>
             </View>
-            <Text style={styles.chatAnswerQuery}>« {chatReply.question} »</Text>
-            <Text style={styles.chatAnswerBody}>{chatReply.reply}</Text>
+            <Text style={styles.chatReplyQuery}>« {chatReply.question} »</Text>
+            <Text style={styles.chatReplyBody}>{chatReply.reply}</Text>
 
-            <Pressable style={styles.openChatFullBtn} onPress={() => goTo('aiChat')}>
-              <Text style={styles.openChatFullBtnText}>
-                💬 {isFr ? 'Continuer la discussion dans le Chat Complet →' : 'Continue in Full AI Chat Screen →'}
+            <Pressable
+              style={styles.openFullChatLink}
+              onPress={() => goTo('aiChat')}
+            >
+              <Text style={styles.openFullChatLinkText}>
+                💬 {isFr ? 'Continuer dans le Chat Complet →' : 'Continue in Full AI Chat Screen →'}
               </Text>
             </Pressable>
           </View>
         )}
       </View>
 
-      {/* ── Section: My Account Gateway Card ─────────────────────────── */}
-      <View style={styles.myAccountGatewayCard}>
-        <View style={styles.gatewayHeader}>
-          <View style={styles.gatewayAvatar}>
-            <Text style={styles.gatewayAvatarIcon}>👨‍🌾</Text>
-          </View>
-          <View style={styles.gatewayHeaderCol}>
-            <View style={styles.gatewayTitleRow}>
-              <Text style={styles.gatewayTitle}>
-                {isFr ? 'Mon Compte Agriculteur' : 'My Farmer Account'}
-              </Text>
-              <View style={styles.gatewayActiveBadge}>
-                <Text style={styles.gatewayActiveBadgeText}>✓ {isFr ? 'ACTIF' : 'ACTIVE'}</Text>
-              </View>
-            </View>
-            <Text style={styles.gatewaySub} numberOfLines={1}>
-              {userEmail || (isFr ? 'Planteur du Cameroun' : 'Cameroon Farmer')}
-            </Text>
-          </View>
-        </View>
-
-        <Text style={styles.gatewayDesc}>
-          {isFr
-            ? 'Entrez dans votre compte personnel pour accéder à votre suivi d\'enquête parcelle, vos rappels sanitaires et l\'historique complet de vos diagnostics.'
-            : 'Enter your personal account portal to manage your field survey tracking, alert reminders, and complete diagnosis history.'}
-        </Text>
-
-        {/* 3 Module Preview Chips */}
-        <View style={styles.gatewayModulesGrid}>
-          <Pressable style={styles.gatewayModuleChip} onPress={() => goTo('account')}>
-            <View style={[styles.gatewayModuleIconBg, { backgroundColor: '#DCFCE7' }]}>
-              <Text style={styles.gatewayModuleIcon}>📋</Text>
-            </View>
-            <Text style={styles.gatewayModuleLabel}>{isFr ? 'Enquête Parcelle' : 'Field Survey'}</Text>
-          </Pressable>
-          <Pressable style={styles.gatewayModuleChip} onPress={() => goTo('account')}>
-            <View style={[styles.gatewayModuleIconBg, { backgroundColor: '#FEF3C7' }]}>
-              <Text style={styles.gatewayModuleIcon}>🔔</Text>
-            </View>
-            <Text style={styles.gatewayModuleLabel}>{isFr ? 'Alertes & Rappels' : 'Alert Reminders'}</Text>
-          </Pressable>
-          <Pressable style={styles.gatewayModuleChip} onPress={() => goTo('account')}>
-            <View style={[styles.gatewayModuleIconBg, { backgroundColor: '#DBEAFE' }]}>
-              <Text style={styles.gatewayModuleIcon}>📜</Text>
-            </View>
-            <Text style={styles.gatewayModuleLabel}>{isFr ? 'Historique' : 'History Logs'}</Text>
-          </Pressable>
-        </View>
-
-        {/* Enter My Account Button */}
-        <Pressable
-          style={styles.gatewayEnterBtn}
-          onPress={() => goTo('account')}
-        >
-          <Text style={styles.gatewayEnterBtnText}>
-            👤 {isFr ? 'Accéder à Mon Compte →' : 'Enter My Account →'}
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* ── Admin Quick Action (Verified Administrator Only) ─────────── */}
+      {/* ────────────────────────────────────────────────────────────────
+          ADMIN PORTAL ACCESS (ADMINISTRATOR ONLY)
+      ──────────────────────────────────────────────────────────────── */}
       {userEmail === 'ivanmiyoupo@gmail.com' && (
         <Pressable style={styles.adminCard} onPress={() => goTo('admin')}>
-          <View style={styles.adminCardLeft}>
-            <Text style={styles.adminIcon}>🔑</Text>
-            <View>
-              <Text style={styles.adminTitle}>
-                {isFr ? 'Portail Administrateur & Analytique' : 'Admin & Analytics Portal'}
+          <View style={styles.adminCardContent}>
+            <Text style={styles.adminCardIcon}>🔑</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.adminCardTitle}>
+                {isFr ? 'Portail Administrateur Agro-Vission' : 'Admin & Analytics Portal'}
               </Text>
-              <Text style={styles.adminText}>
+              <Text style={styles.adminCardSub}>
                 {isFr
-                  ? 'Comptes agriculteurs, historique des diagnostics et état des modèles IA'
-                  : 'Farmer accounts, diagnosis logs, and AI model health'}
+                  ? 'Gestion des utilisateurs, diagnostics et santé des modèles'
+                  : 'Manage farmers, diagnosis reports, and system telemetry'}
               </Text>
             </View>
           </View>
-          <Text style={styles.adminArrow}>→</Text>
+          <Text style={styles.adminCardArrow}>→</Text>
         </Pressable>
       )}
     </ScrollView>
@@ -841,812 +1332,815 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EEF4EC', // Organic fertile earth & botanical tint, removes cold flat white
+    backgroundColor: '#F3F6F4', // Elegant earthy pale sage tone
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 44,
+    paddingTop: Platform.OS === 'ios' ? 44 : 28,
     paddingBottom: 40,
   },
-  header: {
+
+  /* ── Header ── */
+  topHeader: {
+    marginBottom: 16,
+  },
+  headerProfileRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 14,
   },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
+  avatarWrapper: {
+    position: 'relative',
+    marginRight: 12,
   },
-  logo: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+  avatarImg: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#86EFAC',
-    shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  headerTextWrap: {
+  onlineBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#22C55E',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  headerGreetingCol: {
     flex: 1,
   },
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flexWrap: 'nowrap',
+  greetingEyebrow: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '500',
   },
-  title: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#0A331A', // Deep rich forest evergreen
+  farmerNameText: {
+    fontSize: 19,
+    fontWeight: '800',
+    color: '#0F291E',
     letterSpacing: -0.3,
-    flexShrink: 0,
   },
-  portalTag: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#86EFAC',
-  },
-  portalTagText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#047857',
-  },
-  subtitle: {
-    fontSize: 12,
-    color: '#3B684B',
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  headerRightBtns: {
+  headerActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  accountHeaderBtn: {
-    backgroundColor: '#047857',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#065F46',
-    shadowColor: '#047857',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  accountHeaderBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 12,
-  },
-  welcomeBtn: {
+  headerIconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#CBD5E1',
-    elevation: 1,
-  },
-  welcomeBtnText: {
-    fontSize: 14,
-  },
-
-  /* Agro Banner */
-  agroBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#E2F0DE',
-    borderWidth: 1,
-    borderColor: '#A7D9A4',
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 14,
-  },
-  agroBannerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  agroBannerIcon: {
-    fontSize: 18,
-  },
-  agroBannerTextWrap: {
-    flex: 1,
-  },
-  agroBannerTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#144622',
-  },
-  agroBannerSub: {
-    fontSize: 10.5,
-    color: '#3D6B48',
-    marginTop: 1,
-  },
-  agroBannerBadge: {
-    backgroundColor: '#DCFCE7',
-    borderWidth: 1,
-    borderColor: '#86EFAC',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  agroBannerBadgeText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#065F46',
-  },
-
-  /* Metrics Bar */
-  metricsBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 18,
-    marginBottom: 18,
-    borderWidth: 1.5,
-    borderColor: '#86EFAC',
-    shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  metricItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  metricIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  metricIcon: {
+  headerIcon: {
     fontSize: 16,
   },
-  metricLabel: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#4B6B58',
-    letterSpacing: 0.8,
-  },
-  metricValue: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    color: '#0A331A',
-  },
-  metricDivider: {
-    width: 1,
-    height: 26,
-    backgroundColor: '#D1E7DD',
+  notificationDot: {
+    position: 'absolute',
+    top: 7,
+    right: 8,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#EF4444',
   },
 
-  /* ── 24 Cameroon Crops Rotating Showcase (Agronomic Catalog) ── */
-  showcaseSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1.5,
-    borderColor: '#A7F3D0',
-    shadowColor: '#047857',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.09,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  showcaseHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  showcaseHeaderLeft: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  showcaseTag: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 9,
-    paddingVertical: 3.5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    marginBottom: 4,
-  },
-  showcaseTagText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#92400E',
-    letterSpacing: 0.5,
-  },
-  showcaseTitle: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#0A331A',
-    letterSpacing: -0.3,
-  },
-  showcaseSub: {
-    fontSize: 11,
-    color: '#4B6B58',
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  showcaseControls: {
+  /* Region Bar (Image 4 exact) */
+  regionHeaderBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    marginBottom: 10,
+    paddingHorizontal: 2,
   },
-  arrowBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#F0FDF4',
-    borderWidth: 1.5,
-    borderColor: '#A7F3D0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  arrowBtnText: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#065F46',
-    lineHeight: 20,
-  },
-  pauseBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#F0FDF4',
-    borderWidth: 1.5,
-    borderColor: '#A7F3D0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pauseBtnActive: {
-    backgroundColor: '#059669',
-    borderColor: '#047857',
-  },
-  pauseBtnText: {
+  regionSubLabel: {
     fontSize: 11,
-    fontWeight: '900',
-    color: '#065F46',
+    color: '#9CA3AF',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  regionMainLabel: {
+    fontSize: 13,
+    color: '#374151',
+    fontWeight: '700',
   },
 
-  /* Active Crop Card */
-  cropRotatingCard: {
-    backgroundColor: '#F7FBF6',
-    borderRadius: 18,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: '#A7F3D0',
+  /* Soil pills (Image 4 exact) */
+  soilPillsScroll: {
     marginBottom: 14,
   },
-  cropCardImageBg: {
-    width: '100%',
-    height: 186,
-    justifyContent: 'flex-end',
+  soilPill: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
-  cropCardImageRadius: {
-    borderTopLeftRadius: 16.5,
-    borderTopRightRadius: 16.5,
+  soilPillActive: {
+    backgroundColor: '#2E7D32',
+    borderColor: '#2E7D32',
   },
-  cropCardGradient: {
-    backgroundColor: 'rgba(7, 36, 19, 0.82)',
-    padding: 14,
+  soilPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4B5563',
   },
-  cropTopMetaRow: {
+  soilPillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+
+  /* ── 2x2 Sensor Metric Cards (Image 4) ── */
+  metricsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 16,
+  },
+  metricCard: {
+    width: (width - 42) / 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  metricCardTop: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
-  },
-  cropBadgePill: {
-    paddingHorizontal: 9,
-    paddingVertical: 3.5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  cropBadgePillText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  cropCycleTag: {
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  cropCycleTagText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  cropMainName: {
-    fontSize: 19,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -0.2,
-  },
-  cropRegionName: {
-    fontSize: 11.5,
-    color: '#A7F3D0',
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  cropCardBody: {
-    padding: 14,
-    backgroundColor: '#F9FCF8',
-  },
-  cropTipBox: {
-    backgroundColor: '#FEF9C3',
-    borderWidth: 1.5,
-    borderColor: '#FACC15',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 12,
-  },
-  cropTipLabel: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    color: '#854D0E',
+    gap: 8,
     marginBottom: 4,
   },
-  cropTipContent: {
-    fontSize: 12.5,
-    color: '#713F12',
-    lineHeight: 18,
+  metricCardIcon: {
+    fontSize: 18,
+  },
+  metricCardValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1E293B',
+  },
+  metricCardLabel: {
+    fontSize: 12,
+    color: '#6B7280',
     fontWeight: '500',
   },
-  cropActionsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  cropActionDiagnose: {
-    flex: 1,
-    backgroundColor: '#059669',
-    paddingVertical: 11,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cropActionDiagnoseText: {
-    color: '#FFFFFF',
-    fontSize: 12.5,
-    fontWeight: '800',
-  },
-  cropActionAdvice: {
-    flex: 1,
-    backgroundColor: '#F0FDF4',
-    borderWidth: 1.5,
-    borderColor: '#86EFAC',
-    paddingVertical: 11,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cropActionAdviceText: {
-    color: '#047857',
-    fontSize: 12.5,
-    fontWeight: '800',
-  },
 
-  /* 24 Crops Ribbon */
-  cropsRibbonScroll: {
-    marginTop: 2,
-  },
-  cropsRibbonContent: {
-    paddingVertical: 4,
-    gap: 8,
-  },
-  cropChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F6EE',
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#D0DEC9',
-    gap: 5,
-  },
-  cropChipActive: {
-    backgroundColor: '#059669',
-    borderColor: '#047857',
-    shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  cropChipIcon: {
-    fontSize: 14,
-  },
-  cropChipText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#3B5945',
-  },
-  cropChipTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-  },
-  cropChipDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#FEF08A',
-    marginLeft: 2,
-  },
-
-  /* ── Interactive Agronomist Chat Console ───────────────────── */
-  agronomistCard: {
-    backgroundColor: '#F4FAF4',
-    borderRadius: 22,
+  /* ── Soil Moisture Analytics & Chart (Image 4) ── */
+  analyticsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     padding: 18,
-    marginBottom: 20,
-    borderWidth: 1.5,
-    borderColor: '#86EFAC',
-    shadowColor: '#047857',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  agronomistHeaderRow: {
+  analyticsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 16,
   },
-  agronomistBadge: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#86EFAC',
-  },
-  agronomistBadgeText: {
-    fontSize: 10.5,
+  analyticsTitle: {
+    fontSize: 16,
     fontWeight: '800',
-    color: '#065F46',
-    letterSpacing: 0.5,
+    color: '#0F291E',
   },
-  onlinePill: {
+  timeframeTogglesRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    paddingHorizontal: 8,
+    gap: 4,
+  },
+  timeframeBtn: {
+    paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 12,
-    gap: 5,
+    backgroundColor: '#F1F5F9',
   },
-  onlineDot: {
-    color: '#10B981',
-    fontSize: 10,
+  timeframeBtnActive: {
+    backgroundColor: '#16A34A',
   },
-  onlineText: {
-    fontSize: 10,
+  timeframeBtnText: {
+    fontSize: 11,
     fontWeight: '700',
-    color: '#047857',
+    color: '#64748B',
   },
-  agronomistTitle: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#0A331A',
+  timeframeBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  chartContainer: {
+    flexDirection: 'row',
+    height: 140,
+    alignItems: 'flex-end',
+  },
+  chartYAxis: {
+    width: 36,
+    height: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingRight: 6,
+    paddingBottom: 20,
+  },
+  axisLabel: {
+    fontSize: 9.5,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  chartPlotArea: {
+    flex: 1,
+    height: '100%',
+    position: 'relative',
+    justifyContent: 'space-between',
+  },
+  gridLine: {
+    width: '100%',
+    height: 1,
+    backgroundColor: '#F1F5F9',
+  },
+  wavePlotContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+  },
+  waveBarsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: '100%',
+    paddingBottom: 4,
+  },
+  waveColumn: {
+    flex: 1,
+    alignItems: 'center',
+    height: '100%',
+    justifyContent: 'flex-end',
+    position: 'relative',
+  },
+  activeDotBubble: {
+    position: 'absolute',
+    bottom: '68%',
+    backgroundColor: '#16A34A',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    zIndex: 10,
+  },
+  activeDotBubbleText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  waveNode: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#86EFAC',
+    borderWidth: 1.5,
+    borderColor: '#16A34A',
+    zIndex: 5,
+  },
+  waveNodeActive: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#16A34A',
+    borderColor: '#DCFCE7',
+    borderWidth: 2,
+  },
+  waveStem: {
+    width: 2,
+    backgroundColor: 'rgba(22, 163, 74, 0.25)',
+    borderRadius: 1,
+  },
+  dayLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#94A3B8',
+    marginTop: 6,
+  },
+  dayLabelActive: {
+    color: '#16A34A',
+    fontWeight: '800',
+  },
+
+  /* ── Smart Insights Card (Image 4) ── */
+  smartInsightsCard: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+    gap: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  insightsIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#DCFCE7',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  insightsIcon: {
+    fontSize: 20,
+  },
+  insightsContent: {
+    flex: 1,
+  },
+  insightsTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#111827',
     marginBottom: 4,
   },
-  agronomistSub: {
-    fontSize: 12,
-    color: '#3C664E',
-    lineHeight: 17,
-    marginBottom: 12,
+  soilStatusTag: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#16A34A',
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
-  chipsScroll: {
-    marginBottom: 12,
-  },
-  promptChip: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#A7F3D0',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    marginRight: 8,
-  },
-  promptChipText: {
-    fontSize: 12,
+  insightsMainText: {
+    fontSize: 13.5,
     fontWeight: '700',
-    color: '#14532D',
+    color: '#0F291E',
+    marginBottom: 3,
   },
-  chatInputContainer: {
+  insightsMetaText: {
+    fontSize: 11,
+    color: '#94A3B8',
+  },
+
+  /* ── Our Services Grid (Image 3) ── */
+  servicesSection: {
+    marginBottom: 20,
+  },
+  sectionHeaderRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#34D399',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 12,
   },
-  chatTextInput: {
-    flex: 1,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F291E',
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  sectionLink: {
     fontSize: 13,
-    color: '#0A331A',
-    paddingVertical: 8,
+    fontWeight: '700',
+    color: '#16A34A',
   },
-  chatSendBtn: {
-    backgroundColor: '#059669',
+  servicesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  serviceGridItem: {
+    width: (width - 42) / 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  serviceIconCircle: {
     width: 38,
     height: 38,
     borderRadius: 12,
-    alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 6,
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  chatSendBtnDisabled: {
-    backgroundColor: '#94A3B8',
-    opacity: 0.6,
+  serviceIconText: {
+    fontSize: 18,
   },
-  chatSendBtnText: {
+  serviceItemTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F291E',
+    marginBottom: 2,
+  },
+  serviceItemSub: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+
+  /* ── Promo Banner (Image 3) ── */
+  promoBannerCard: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 22,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  promoBannerLeft: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  promoBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#F59E0B',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  promoBadgeText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 10,
+    fontWeight: '800',
   },
-  chatAnswerBox: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#10B981',
+  promoTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#78350F',
+    marginBottom: 4,
+  },
+  promoSub: {
+    fontSize: 11.5,
+    color: '#92400E',
+    lineHeight: 16,
+    marginBottom: 10,
+  },
+  promoActionBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#78350F',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  promoActionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  promoBannerImg: {
+    width: 80,
+    height: 80,
     borderRadius: 16,
-    padding: 14,
-    marginTop: 14,
-    shadowColor: '#047857',
+  },
+
+  /* ── Cameroon Crops Showcase ── */
+  popularSection: {
+    marginBottom: 22,
+  },
+  cropControls: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  cropArrowBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  cropArrowBtnText: {
+    fontSize: 16,
+    color: '#0F291E',
+    fontWeight: '800',
+  },
+  cropChipsScroll: {
+    marginBottom: 12,
+  },
+  cropPillItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  cropPillItemActive: {
+    backgroundColor: '#16A34A',
+    borderColor: '#16A34A',
+  },
+  cropPillIcon: {
+    fontSize: 14,
+  },
+  cropPillLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  cropPillLabelActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  featuredCropCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 2,
   },
-  chatAnswerHeader: {
+  cropCardImgBanner: {
+    width: '100%',
+    height: 140,
+  },
+  cropCardImgOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 30, 15, 0.45)',
+    padding: 14,
+    justifyContent: 'flex-end',
+  },
+  cropZoneBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  cropZoneBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  cropCardImgTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#FFFFFF',
+  },
+  cropCardImgSeason: {
+    fontSize: 12,
+    color: '#E2FCE7',
+    fontWeight: '600',
+  },
+  cropCardBody: {
+    padding: 16,
+  },
+  tipBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  tipBoxLabel: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#064E3B',
+    marginBottom: 3,
+  },
+  tipBoxContent: {
+    fontSize: 12.5,
+    color: '#475569',
+    lineHeight: 18,
+  },
+  cropActionBtnsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  cropActionPrimary: {
+    flex: 1,
+    backgroundColor: '#16A34A',
+    paddingVertical: 10,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  cropActionPrimaryText: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    fontWeight: '800',
+  },
+  cropActionSecondary: {
+    flex: 1,
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 10,
+    borderRadius: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  cropActionSecondaryText: {
+    color: '#0F291E',
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+
+  /* ── AI Chat Console ── */
+  chatConsoleCard: {
+    backgroundColor: '#0F291E',
+    borderRadius: 22,
+    padding: 18,
+    marginBottom: 20,
+  },
+  chatConsoleHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  chatConsoleBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  chatConsoleBadgeText: {
+    color: '#86EFAC',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  offlineStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statusDotGreen: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#4ADE80',
+  },
+  offlineStatusText: {
+    color: '#CBD5E1',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  chatConsoleTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 12,
+  },
+  chipsScroll: {
+    marginBottom: 14,
+  },
+  promptChip: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  promptChipText: {
+    color: '#E2FCE7',
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
+  chatInputBar: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  chatInput: {
+    flex: 1,
+    fontSize: 13,
+    color: '#0F172A',
+    paddingVertical: 8,
+  },
+  chatSendButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#16A34A',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chatSendButtonDisabled: {
+    backgroundColor: '#CBD5E1',
+  },
+  chatSendButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  chatReplyBox: {
+    backgroundColor: '#1E3E2F',
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  chatReplyHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
   },
-  chatAnswerBadge: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#047857',
+  chatReplyTag: {
+    color: '#86EFAC',
+    fontSize: 11,
+    fontWeight: '700',
   },
-  chatAnswerSource: {
+  chatReplySource: {
+    color: '#94A3B8',
     fontSize: 10,
-    color: '#065F46',
-    fontWeight: '600',
   },
-  chatAnswerQuery: {
+  chatReplyQuery: {
+    color: '#E2E8F0',
     fontSize: 12,
     fontStyle: 'italic',
-    color: '#166534',
-    marginBottom: 8,
+    marginBottom: 6,
   },
-  chatAnswerBody: {
+  chatReplyBody: {
+    color: '#FFFFFF',
     fontSize: 13,
-    color: '#0A331A',
-    lineHeight: 19,
-    marginBottom: 10,
-  },
-  openChatFullBtn: {
-    backgroundColor: '#047857',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  openChatFullBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-
-  /* ── My Account Gateway Card ───────────────────────────────── */
-  myAccountGatewayCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    padding: 18,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: '#10B981',
-    shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  gatewayHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 10,
-  },
-  gatewayAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#DCFCE7',
-    borderWidth: 2,
-    borderColor: '#34D399',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gatewayAvatarIcon: {
-    fontSize: 24,
-  },
-  gatewayHeaderCol: {
-    flex: 1,
-  },
-  gatewayTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  gatewayTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#0A331A',
-  },
-  gatewayActiveBadge: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  gatewayActiveBadgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#047857',
-  },
-  gatewaySub: {
-    fontSize: 12,
-    color: '#4B6B58',
-    marginTop: 2,
-  },
-  gatewayDesc: {
-    fontSize: 12,
-    color: '#2D4B39',
     lineHeight: 18,
-    marginBottom: 14,
+    marginBottom: 10,
   },
-  gatewayModulesGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 14,
+  openFullChatLink: {
+    alignSelf: 'flex-start',
   },
-  gatewayModuleChip: {
-    flex: 1,
-    backgroundColor: '#F8FCF8',
-    borderWidth: 1.5,
-    borderColor: '#A7F3D0',
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  gatewayModuleIconBg: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 2,
-  },
-  gatewayModuleIcon: {
-    fontSize: 16,
-  },
-  gatewayModuleLabel: {
-    fontSize: 10,
+  openFullChatLinkText: {
+    color: '#86EFAC',
+    fontSize: 11.5,
     fontWeight: '700',
-    color: '#1B4D2E',
-    textAlign: 'center',
-  },
-  gatewayEnterBtn: {
-    backgroundColor: '#047857',
-    paddingVertical: 13,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#047857',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  gatewayEnterBtnText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 0.2,
   },
 
-  /* ── Admin Card ────────────────────────────────────────────── */
+  /* ── Admin Card ── */
   adminCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#064E3B',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#059669',
-    shadowColor: '#047857',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  adminCardLeft: {
+  adminCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     flex: 1,
   },
-  adminIcon: {
+  adminCardIcon: {
     fontSize: 22,
   },
-  adminTitle: {
+  adminCardTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#A7F3D0',
-    marginBottom: 2,
+    color: '#0F291E',
   },
-  adminText: {
+  adminCardSub: {
     fontSize: 11,
-    color: '#D1FAE5',
+    color: '#64748B',
   },
-  adminArrow: {
+  adminCardArrow: {
     fontSize: 18,
-    color: '#A7F3D0',
-    fontWeight: 'bold',
+    color: '#16A34A',
+    fontWeight: '800',
+    marginLeft: 8,
   },
 });

@@ -1,93 +1,89 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Image, ScrollView, ImageBackground, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Image,
+  ScrollView,
+  ImageBackground,
+  Dimensions,
+  Platform
+} from 'react-native';
 import { getT } from '../../src/translations';
 
 const { width } = Dimensions.get('window');
 
+// 4 core app services from the user's application
 const APP_SERVICES = [
   {
     key: 'diagnosis',
     icon: '🔬',
     route: 'diagnosis',
-    badgeEn: 'AI PLANT VISION & PATHOLOGY',
-    badgeFr: 'VISION & PATHOLOGIE IA',
-    titleEn: 'Plant Disease Diagnosis',
-    titleFr: 'Diagnostic Maladies des Plantes',
-    descEn: 'Scan sick crop leaves with AI vision. Get instant diagnosis of fungal, bacterial, and pest attacks plus certified organic & chemical treatments.',
-    descFr: 'Scannez les feuilles avec la vision IA. Détection instantanée des maladies et remèdes certifiés bio & chimiques.',
-    ctaEn: '📸 Inspect Leaf Now',
-    ctaFr: '📸 Scanner une Feuille',
+    nameEn: 'Plant Disease Diagnosis',
+    nameFr: 'Diagnostic Maladies des Plantes',
+    taglineEn: 'AI Leaf Scanner & Certified Remedies',
+    taglineFr: 'Scanner de Feuilles & Remèdes Certifiés',
     image: require('../../assets/crops/cocoa.jpg'),
-    accentColor: '#16A34A',
-    badgeBg: '#DCFCE7'
+    badge: 'AI VISION',
+    color: '#16A34A',
   },
   {
     key: 'cropAdvice',
     icon: '🌾',
     route: 'cropAdvice',
-    badgeEn: 'MAJOR CAMEROON CROPS',
-    badgeFr: 'GRANDES CULTURES DU CAMEROUN',
-    titleEn: 'Major Cameroon Crop Advisory',
-    titleFr: 'Conseils Grandes Cultures Cameroun',
-    descEn: 'Personalized crop calendars and NPK fertilization adapted to Cameroon agro-ecological zones (Centre, Littoral, West, North, East) for maximum harvest yield.',
-    descFr: 'Sélection des meilleures cultures et calendriers d\'engrais adaptés aux 10 régions du Cameroun.',
-    ctaEn: '🌱 Build Crop Plan',
-    ctaFr: '🌱 Créer mon Plan',
+    nameEn: 'Cameroon Crop Advisory',
+    nameFr: 'Conseils Grandes Cultures',
+    taglineEn: 'NPK Schedules & Agro-Zones',
+    taglineFr: 'Calendriers NPK & Éco-Zones',
     image: require('../../assets/crops/plantain.jpg'),
-    accentColor: '#D97706',
-    badgeBg: '#FEF3C7'
+    badge: 'AGRO-ZONES',
+    color: '#D97706',
   },
   {
     key: 'aiChat',
     icon: '🤖',
     route: 'aiChat',
-    badgeEn: 'AGRONOMIST CONSULTANT 24/7',
-    badgeFr: 'AGRONOME IA EN DIRECT 24/7',
-    titleEn: 'AI Agronomist Chat',
-    titleFr: 'Agronome IA en Direct',
-    descEn: '24/7 localized farming advisory in French & English. Ask about armyworm control, cassava mosaic, soil pH, cocoa black pod, and organic remedies.',
-    descFr: 'Conseils agronomiques 24/7 en français et anglais. Posez vos questions sur les ravageurs, maladies et sols.',
-    ctaEn: '💬 Talk with Agronomist',
-    ctaFr: '💬 Échanger avec l\'Agronome',
+    nameEn: 'AI Agronomist Consultant',
+    nameFr: 'Agronome IA en Direct',
+    taglineEn: '24/7 Offline Agronomic Advisory',
+    taglineFr: 'Conseils Agronomiques 24/7 Hors-Ligne',
     image: require('../../assets/crops/coffee.jpg'),
-    accentColor: '#059669',
-    badgeBg: '#D1FAE5'
+    badge: 'OFFLINE CHAT',
+    color: '#059669',
   },
   {
     key: 'survey',
     icon: '📋',
     route: 'survey',
-    badgeEn: 'DIGITAL FIELD SCOUTING',
-    badgeFr: 'SUIVI NUMÉRIQUE DE PARCELLE',
-    titleEn: 'Field Health Survey',
-    titleFr: 'Enquête & Suivi de Parcelle',
-    descEn: 'Record plot moisture, growth stages, and pest infestations directly from your field to log farm progress and monitor harvest cycles.',
-    descFr: 'Enregistrez l\'humidité, le stade végétatif et les attaques parasitaires pour suivre la santé de votre parcelle.',
-    ctaEn: '📋 Start Field Survey',
-    ctaFr: '📋 Démarrer l\'Enquête',
+    nameEn: 'Field Health Survey',
+    nameFr: 'Enquête & Suivi de Parcelle',
+    taglineEn: 'Digital Plot Scouting & Soil Log',
+    taglineFr: 'Suivi Numérique & Humidité du Sol',
     image: require('../../assets/crops/cassava.jpg'),
-    accentColor: '#15803D',
-    badgeBg: '#DCFCE7'
-  }
+    badge: 'SCOUTING',
+    color: '#15803D',
+  },
 ];
 
 export default function WelcomeScreen({ goTo, setLanguage, currentLanguage, userEmail }) {
   const [lang, setLang] = useState(currentLanguage || 'English');
-  const [activeServiceIndex, setActiveServiceIndex] = useState(0);
-  const isFrench = lang === 'Français';
+  const [activeSlide, setActiveSlide] = useState(0);
+  const isFrench = lang === 'Français' || lang === 'Francais';
   const t = getT(lang);
 
-  // Auto-interchange service showcases every 5 seconds
+  // Auto-rotate the floating service showcase (Image 1 style)
   useEffect(() => {
     const timer = setInterval(() => {
-      setActiveServiceIndex((prev) => (prev + 1) % APP_SERVICES.length);
-    }, 5000);
+      setActiveSlide((prev) => (prev + 1) % APP_SERVICES.length);
+    }, 4000);
     return () => clearInterval(timer);
   }, []);
 
-  const handleLanguageSelect = (selected) => {
-    setLang(selected);
-    if (setLanguage) setLanguage(selected);
+  const handleLanguageToggle = () => {
+    const nextLang = isFrench ? 'English' : 'Français';
+    setLang(nextLang);
+    if (setLanguage) setLanguage(nextLang);
   };
 
   const handleToolNavigation = (targetRoute) => {
@@ -98,310 +94,449 @@ export default function WelcomeScreen({ goTo, setLanguage, currentLanguage, user
     }
   };
 
-  const activeService = APP_SERVICES[activeServiceIndex];
-  const imageSource = activeService.image;
+  const currentService = APP_SERVICES[activeSlide];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      {/* Top Header & Branding */}
-      <View style={styles.topHeader}>
-        <View style={styles.brandingRow}>
-          <Image
-            source={require('../../assets/logo.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-          <View style={styles.brandingText}>
-            <View style={styles.titleRow}>
-              <Text style={styles.appName}>AGRO-VISSION</Text>
-              <View style={styles.countryBadge}>
-                <Text style={styles.countryBadgeText}>🇨🇲 CAMEROON</Text>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+      bounces={false}
+    >
+      {/* ────────────────────────────────────────────────────────────────
+          IMAGE 1 DESIGN: HERO & TOP NAVIGATION WITH WHEAT AMBIANCE
+      ──────────────────────────────────────────────────────────────── */}
+      <View style={styles.heroWrapper}>
+        <ImageBackground
+          source={{
+            uri: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
+          }}
+          style={styles.heroBackground}
+          imageStyle={styles.heroBgImage}
+        >
+          {/* Subtle natural dark-green gradient overlay */}
+          <View style={styles.heroOverlay}>
+            {/* Top Navigation Bar (Logo, Nav Links, Contact Us / Sign In) */}
+            <View style={styles.navBar}>
+              <View style={styles.navBrand}>
+                <View style={styles.logoBadge}>
+                  <Text style={styles.logoBadgeIcon}>🌾</Text>
+                </View>
+                <Text style={styles.brandTitle}>Agro</Text>
+              </View>
+
+              {/* Quick links & Language switch */}
+              <View style={styles.navRight}>
+                <Pressable
+                  style={styles.langPill}
+                  onPress={handleLanguageToggle}
+                >
+                  <Text style={styles.langPillText}>
+                    {isFrench ? '🇫🇷 FR' : '🇬🇧 EN'}
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.contactBtn}
+                  onPress={() => (userEmail ? goTo('home') : goTo('login'))}
+                >
+                  <Text style={styles.contactBtnText}>
+                    {userEmail
+                      ? (isFrench ? 'Tableau ↗' : 'Dashboard ↗')
+                      : (isFrench ? 'Connexion ↗' : 'Sign In ↗')}
+                  </Text>
+                </Pressable>
               </View>
             </View>
-            <Text style={styles.tagline}>
-              {isFrench
-                ? 'Intelligence Agricole & Diagnostic IA pour le Cameroun'
-                : 'Agricultural Intelligence & AI Pathology for Cameroon'}
+
+            {/* Hero Main Content */}
+            <View style={styles.heroBody}>
+              {/* Pill badge: • Provide Future-Proof Solutions */}
+              <View style={styles.heroPillBadge}>
+                <View style={styles.heroPillDot} />
+                <Text style={styles.heroPillBadgeText}>
+                  {isFrench
+                    ? 'Solutions Agricoles d’Avenir • Cameroun'
+                    : 'Provide Future-Proof Solutions'}
+                </Text>
+              </View>
+
+              {/* Headline: Agricultural (bold modern) Solutions. (italic serif style) */}
+              <Text style={styles.heroTitleMain}>Agricultural</Text>
+              <Text style={styles.heroTitleSerif}>Solutions.</Text>
+
+              {/* Subtitle */}
+              <Text style={styles.heroSubtitle}>
+                {isFrench
+                  ? 'L’agriculture commence par des informations plus intelligentes. Optimisez l’efficacité, la résilience et la durabilité de vos parcelles grâce à l’intelligence artificielle.'
+                  : 'Farming starts with smarter insights. Unlock efficiency, resilience, and long-term sustainability climate-aware solutions.'}
+              </Text>
+
+              {/* Action Buttons Row */}
+              <View style={styles.heroCtaRow}>
+                {/* Primary Button: Lime / Cream Pill Button */}
+                <Pressable
+                  style={styles.primaryPillBtn}
+                  onPress={() => (userEmail ? goTo('home') : goTo('register'))}
+                >
+                  <Text style={styles.primaryPillBtnText}>
+                    {userEmail
+                      ? (isFrench ? 'Ouvrir Mon Tableau ↗' : 'Go to Dashboard ↗')
+                      : (isFrench ? 'Créer un Compte ↗' : 'Start Investing ↗')}
+                  </Text>
+                </Pressable>
+
+                {/* Secondary Button: Dark Translucent Glass Pill */}
+                <Pressable
+                  style={styles.secondaryPillBtn}
+                  onPress={() => handleToolNavigation('diagnosis')}
+                >
+                  <Text style={styles.secondaryPillBtnText}>
+                    {isFrench ? 'Diagnostiquer ↗' : 'Meet the Farmers ↗'}
+                  </Text>
+                </Pressable>
+              </View>
+
+              {/* Floating Frosted Glass Card (Harvester / Service Preview) */}
+              <View style={styles.floatingPreviewCard}>
+                <ImageBackground
+                  source={currentService.image}
+                  style={styles.floatingCardBg}
+                  imageStyle={{ borderRadius: 16 }}
+                >
+                  <View style={styles.floatingCardOverlay}>
+                    <View style={styles.floatingCardHeader}>
+                      <Text style={styles.floatingCardTitle}>
+                        {isFrench ? currentService.nameFr : currentService.nameEn} ↗
+                      </Text>
+                    </View>
+
+                    {/* Pagination Indicators (Image 1 style) */}
+                    <View style={styles.carouselIndicators}>
+                      {APP_SERVICES.map((_, idx) => (
+                        <Pressable
+                          key={idx}
+                          onPress={() => setActiveSlide(idx)}
+                          style={[
+                            styles.indicatorBar,
+                            idx === activeSlide && styles.indicatorBarActive,
+                          ]}
+                        />
+                      ))}
+                    </View>
+                  </View>
+                </ImageBackground>
+              </View>
+            </View>
+          </View>
+        </ImageBackground>
+      </View>
+
+      {/* ────────────────────────────────────────────────────────────────
+          IMAGE 1 LOWER SECTION: TRUSTED PARTNERS & ABOUT US EMBEDDED CROPS
+      ──────────────────────────────────────────────────────────────── */}
+      <View style={styles.trustedSection}>
+        <Text style={styles.trustedTitle}>
+          {isFrench
+            ? 'Reconnu par les producteurs & leaders agricoles du Cameroun'
+            : 'Trusted by growers & supply-chain leaders'}
+        </Text>
+
+        {/* Minimalist Logo Partner Row */}
+        <View style={styles.partnersRow}>
+          <View style={styles.partnerBadge}>
+            <Text style={styles.partnerText}>⬡ logoipsum</Text>
+          </View>
+          <View style={styles.partnerBadge}>
+            <Text style={styles.partnerText}>◈ logoipsum</Text>
+          </View>
+          <View style={styles.partnerBadge}>
+            <Text style={styles.partnerText}>❖ logoipsum</Text>
+          </View>
+          <View style={styles.partnerBadge}>
+            <Text style={styles.partnerText}>◇ logoipsum</Text>
+          </View>
+        </View>
+
+        {/* • About Us Pill */}
+        <View style={styles.aboutUsPillRow}>
+          <View style={styles.aboutPill}>
+            <View style={styles.aboutPillDot} />
+            <Text style={styles.aboutPillText}>
+              {isFrench ? 'À Propos' : 'About Us'}
             </Text>
           </View>
         </View>
 
-        {/* Live Status Pill with Attractive Leaf Green Accent */}
-        <View style={styles.statusPill}>
-          <View style={styles.statusDot} />
-          <Text style={styles.statusText}>
-            {isFrench ? '⚡ IA Hors-Ligne & Modèle Qwen Actif' : '⚡ Offline AI & Qwen Model Active'}
+        {/* Statement with Embedded Crop Pills (Exact match to Image 1) */}
+        <View style={styles.missionCard}>
+          <Text style={styles.missionText}>
+            {isFrench ? 'Les défis que rencontrent ' : 'The challenges farmers '}
+            {/* Embedded Crop Pill 1 */}
+            <View style={styles.inlineCropPill}>
+              <Image
+                source={require('../../assets/crops/plantain.jpg')}
+                style={styles.inlineCropImg}
+              />
+            </View>
+            {isFrench
+              ? ' les agriculteurs et communautés rurales peuvent être surmontés grâce à '
+              : ' and rural communities face can be overcome through smart '}
+            {/* Embedded Crop Pill 2 */}
+            <View style={styles.inlineCropPill}>
+              <Image
+                source={require('../../assets/crops/cocoa.jpg')}
+                style={styles.inlineCropImg}
+              />
+            </View>
+            {isFrench
+              ? ' l’innovation agricole durable.'
+              : ' agricultural innovation.'}
           </Text>
-        </View>
 
-        {/* Hero Stats Row */}
-        <View style={styles.heroStats}>
-          <View style={styles.heroStat}>
-            <Text style={styles.heroStatNum}>14+</Text>
-            <Text style={styles.heroStatLabel}>{isFrench ? 'Cultures' : 'Crops'}</Text>
-          </View>
-          <View style={styles.heroStatDivider} />
-          <View style={styles.heroStat}>
-            <Text style={styles.heroStatNum}>40+</Text>
-            <Text style={styles.heroStatLabel}>{isFrench ? 'Maladies' : 'Diseases'}</Text>
-          </View>
-          <View style={styles.heroStatDivider} />
-          <View style={styles.heroStat}>
-            <Text style={styles.heroStatNum}>10</Text>
-            <Text style={styles.heroStatLabel}>{isFrench ? 'Régions' : 'Regions'}</Text>
-          </View>
-          <View style={styles.heroStatDivider} />
-          <View style={styles.heroStat}>
-            <Text style={styles.heroStatNum}>100%</Text>
-            <Text style={styles.heroStatLabel}>{isFrench ? 'Hors-ligne' : 'Offline'}</Text>
+          {/* 4 Feature Pill Tags */}
+          <View style={styles.featurePillsWrap}>
+            <View style={styles.tagPill}>
+              <Text style={styles.tagPillText}>
+                {isFrench ? 'Agriculture Intelligente' : 'Smart Farming'}
+              </Text>
+            </View>
+            <View style={styles.tagPill}>
+              <Text style={styles.tagPillText}>
+                {isFrench ? 'Croissance Durable' : 'Sustainable Growth'}
+              </Text>
+            </View>
+            <View style={styles.tagPill}>
+              <Text style={styles.tagPillText}>
+                {isFrench ? 'Innovation Agri' : 'Agri Innovation'}
+              </Text>
+            </View>
+            <View style={styles.tagPill}>
+              <Text style={styles.tagPillText}>
+                {isFrench ? 'Récolte d’Avenir' : 'Future Harvest'}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
 
-      {/* Main Single Unified Showcase Container */}
-      <View style={styles.unifiedContainer}>
-        {/* Section Heading */}
-        <View style={styles.showcaseHeader}>
-          <Text style={styles.showcaseEyebrow}>
-            🇨🇲 {isFrench ? 'GRANDES CULTURES DU CAMEROUN & SERVICES' : 'MAJOR CAMEROON CROPS & FARM SERVICES'}
-          </Text>
-          <Text style={styles.showcaseMainTitle}>
-            {isFrench ? 'Tout pour protéger et développer vos récoltes au Cameroun' : 'Protect & Boost Your Farm Yields in Cameroon'}
-          </Text>
-        </View>
+      {/* ────────────────────────────────────────────────────────────────
+          IMAGE 2 DESIGN: ORGANIC & SUSTAINABLE FARMING SHOWCASE
+      ──────────────────────────────────────────────────────────────── */}
+      <View style={styles.organicSection}>
+        {/* Organic Hero Banner with Rich Green Atmosphere */}
+        <ImageBackground
+          source={{
+            uri: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1000&q=80',
+          }}
+          style={styles.organicHeroBanner}
+          imageStyle={{ borderRadius: 24 }}
+        >
+          <View style={styles.organicHeroOverlay}>
+            <View style={styles.leafIconBadge}>
+              <Text style={styles.leafIcon}>🍃</Text>
+            </View>
+            <Text style={styles.organicHeroTitle}>
+              {isFrench
+                ? 'Intéressé par l’agriculture biologique ?'
+                : 'Interested in going organic?'}
+            </Text>
+            <Text style={styles.organicHeroSub}>
+              {isFrench
+                ? 'Rejoignez nos sessions hebdomadaires pour apprendre la transition vers le bio, la conformité et les fertilisants naturels au Cameroun.'
+                : 'Join our free weekly Organic Office Hours to learn everything about transitioning to organic staying in compliance & more. All questions & experience levels welcome!'}
+            </Text>
 
-        {/* Interactive Service Tab Selectors */}
-        <View style={styles.tabsRow}>
-          {APP_SERVICES.map((srv, idx) => {
-            const isActive = idx === activeServiceIndex;
-            return (
+            <Pressable
+              style={styles.learnMoreBtn}
+              onPress={() => handleToolNavigation('cropAdvice')}
+            >
+              <Text style={styles.learnMoreBtnText}>
+                {isFrench ? 'En savoir plus →' : 'Learn More →'}
+              </Text>
+            </Pressable>
+          </View>
+        </ImageBackground>
+
+        {/* Overlaid White Rounded Card: "Why Organic?" (Image 2 style) */}
+        <View style={styles.whyOrganicCard}>
+          <View style={styles.whyOrganicHeader}>
+            <Text style={styles.whyOrganicIcon}>🌱</Text>
+            <Text style={styles.whyOrganicTitle}>
+              {isFrench ? 'Pourquoi le Bio ?' : 'Why Organic?'}
+            </Text>
+          </View>
+
+          <Text style={styles.whyOrganicDesc}>
+            {isFrench
+              ? 'L’agriculture biologique crée des emplois, séquestre le carbone, protège les cours d’eau et réduit l’exposition aux pesticides toxiques. Découvrez ses bénéfices économiques, sociaux et environnementaux.'
+              : 'Organic creates jobs, sequesters carbon, keeps water clean, and reduces our exposure to toxic pesticides. Learn about the economic, social, and environmental benefits of organic.'}
+          </Text>
+
+          {/* Action Links */}
+          <View style={styles.whyOrganicBtnsRow}>
+            <Pressable
+              style={styles.organicPillActionBtn}
+              onPress={() => handleToolNavigation('cropAdvice')}
+            >
+              <Text style={styles.organicPillActionBtnText}>
+                {isFrench ? 'La Science du Bio →' : 'The Science Behind Organic →'}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.organicSecondaryLink}
+              onPress={() => handleToolNavigation('survey')}
+            >
+              <Text style={styles.organicSecondaryLinkText}>
+                {isFrench ? 'Qu’est-ce que le Bio ? →' : 'What is Organic →'}
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* 3 Pillar Cards (Healthy Soil, Clean Water, Communities) */}
+          <View style={styles.organicPillarsGrid}>
+            <View style={styles.pillarCard}>
+              <View style={[styles.pillarIconBox, { backgroundColor: '#DCFCE7' }]}>
+                <Text style={styles.pillarIcon}>🌱</Text>
+              </View>
+              <Text style={styles.pillarTitle}>
+                {isFrench ? 'Sol Sain' : 'Healthy Soil'}
+              </Text>
+              <Text style={styles.pillarSub}>
+                {isFrench
+                  ? 'Crée un sol fertile pour les générations futures.'
+                  : 'Builds fertile soil for future generations.'}
+              </Text>
+            </View>
+
+            <View style={styles.pillarCard}>
+              <View style={[styles.pillarIconBox, { backgroundColor: '#E0F2FE' }]}>
+                <Text style={styles.pillarIcon}>💧</Text>
+              </View>
+              <Text style={styles.pillarTitle}>
+                {isFrench ? 'Eau Propre' : 'Clean Water'}
+              </Text>
+              <Text style={styles.pillarSub}>
+                {isFrench
+                  ? 'Protège les rivières, lacs et nappes phréatiques.'
+                  : 'Protects our rivers, lakes & drinking water.'}
+              </Text>
+            </View>
+
+            <View style={styles.pillarCard}>
+              <View style={[styles.pillarIconBox, { backgroundColor: '#FEF3C7' }]}>
+                <Text style={styles.pillarIcon}>👥</Text>
+              </View>
+              <Text style={styles.pillarTitle}>
+                {isFrench ? 'Communautés' : 'Communities'}
+              </Text>
+              <Text style={styles.pillarSub}>
+                {isFrench
+                  ? 'Soutient les agriculteurs et l’économie locale.'
+                  : 'Supports farmers and local economies.'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Farmer Hands with Soil Photo Strip (Image 2 right preview) */}
+          <View style={styles.soilPhotoWrapper}>
+            <Image
+              source={require('../../assets/crops/cassava.jpg')}
+              style={styles.soilPhoto}
+            />
+            <View style={styles.soilPhotoCaption}>
+              <Text style={styles.soilPhotoCaptionTitle}>
+                {isFrench ? 'Terre Vivante & Fertile' : 'Rich Living Soil'}
+              </Text>
+              <Text style={styles.soilPhotoCaptionSub}>
+                {isFrench
+                  ? 'Pratiques agro-écologiques adaptées aux 10 régions du Cameroun.'
+                  : 'Agro-ecological practices adapted to Cameroon farmland.'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* ────────────────────────────────────────────────────────────────
+          DIRECT APPLICATION SHORTCUTS & ACCOUNT ACCESS
+      ──────────────────────────────────────────────────────────────── */}
+      <View style={styles.portalActionSection}>
+        <View style={styles.portalCard}>
+          <Text style={styles.portalCardEyebrow}>
+            ⚡ {isFrench ? 'COMMENCEZ VOTRE GESTION AGRICOLE' : 'START YOUR FARM MANAGEMENT'}
+          </Text>
+          <Text style={styles.portalCardTitle}>
+            {userEmail
+              ? (isFrench ? `Bienvenue, ${userEmail}` : `Welcome back, ${userEmail}`)
+              : (isFrench ? 'Rejoignez Agro-Vission dès aujourd’hui' : 'Join Agro-Vission Today')}
+          </Text>
+          <Text style={styles.portalCardSub}>
+            {isFrench
+              ? 'Accédez au diagnostic instantané par caméra, aux calendriers de culture par région et à l’agronome IA 100% hors-ligne.'
+              : 'Access instant plant pathology scanning, regional Cameroon calendars, and our 100% offline Qwen AI agronomist.'}
+          </Text>
+
+          {/* Primary Buttons */}
+          <View style={styles.portalButtonsRow}>
+            {userEmail ? (
+              <Pressable
+                style={styles.portalPrimaryBtn}
+                onPress={() => goTo('home')}
+              >
+                <Text style={styles.portalPrimaryBtnText}>
+                  🌾 {isFrench ? 'Accéder à Mon Tableau de Bord' : 'Go to My Dashboard'}
+                </Text>
+              </Pressable>
+            ) : (
+              <>
+                <Pressable
+                  style={styles.portalPrimaryBtn}
+                  onPress={() => goTo('register')}
+                >
+                  <Text style={styles.portalPrimaryBtnText}>
+                    🚀 {isFrench ? 'Créer un Compte Agriculteur' : 'Create Farmer Account First'}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={styles.portalSecondaryBtn}
+                  onPress={() => goTo('login')}
+                >
+                  <Text style={styles.portalSecondaryBtnText}>
+                    🔑 {isFrench ? 'Déjà Inscrit ? Se Connecter' : 'Already Registered? Log In'}
+                  </Text>
+                </Pressable>
+              </>
+            )}
+          </View>
+
+          {/* 4 Direct Tool Chips */}
+          <View style={styles.toolChipsGrid}>
+            {APP_SERVICES.map((srv) => (
               <Pressable
                 key={srv.key}
-                style={[
-                  styles.tabButton,
-                  isActive && [styles.tabButtonActive, { backgroundColor: srv.accentColor, borderColor: srv.accentColor }]
-                ]}
-                onPress={() => setActiveServiceIndex(idx)}
+                style={styles.toolChip}
+                onPress={() => handleToolNavigation(srv.route)}
               >
-                <Text style={styles.tabIcon}>{srv.icon}</Text>
-                <Text style={[styles.tabText, isActive && styles.tabTextActive]} numberOfLines={1}>
-                  {idx === 0 ? (isFrench ? 'Diagnostic' : 'Diagnosis') :
-                   idx === 1 ? (isFrench ? 'Cultures' : 'Crops') :
-                   idx === 2 ? (isFrench ? 'Agronome' : 'Agronomist') :
-                   (isFrench ? 'Enquête' : 'Survey')}
+                <Text style={styles.toolChipIcon}>{srv.icon}</Text>
+                <Text style={styles.toolChipLabel} numberOfLines={1}>
+                  {isFrench ? srv.nameFr.split(' ')[0] : srv.nameEn.split(' ')[0]}
                 </Text>
               </Pressable>
-            );
-          })}
-        </View>
-
-        {/* Dynamic Interchanging Service Card with Agriculture Image */}
-        <View style={styles.serviceCardWrapper}>
-          <ImageBackground
-            source={imageSource}
-            style={styles.serviceImageBanner}
-            imageStyle={styles.bannerImg}
-          >
-            <View style={styles.bannerOverlay}>
-              <View style={[styles.serviceTag, { backgroundColor: activeService.badgeBg }]}>
-                <Text style={[styles.serviceTagText, { color: activeService.accentColor }]}>
-                  {isFrench ? activeService.badgeFr : activeService.badgeEn}
-                </Text>
-              </View>
-
-              <Text style={styles.serviceTitle}>
-                {isFrench ? activeService.titleFr : activeService.titleEn}
-              </Text>
-              <Text style={styles.serviceDesc}>
-                {isFrench ? activeService.descFr : activeService.descEn}
-              </Text>
-
-              <Pressable
-                style={[styles.serviceActionBtn, { backgroundColor: activeService.accentColor }]}
-                onPress={() => handleToolNavigation(activeService.route)}
-              >
-                <Text style={styles.serviceActionBtnText}>
-                  {isFrench ? activeService.ctaFr : activeService.ctaEn}
-                </Text>
-              </Pressable>
-            </View>
-          </ImageBackground>
-
-          {/* Progress Indicators */}
-          <View style={styles.progressDotsRow}>
-            {APP_SERVICES.map((_, dotIdx) => (
-              <Pressable
-                key={dotIdx}
-                onPress={() => setActiveServiceIndex(dotIdx)}
-                style={[
-                  styles.progressDot,
-                  dotIdx === activeServiceIndex && [styles.progressDotActive, { backgroundColor: activeService.accentColor }]
-                ]}
-              />
             ))}
           </View>
         </View>
-
-        {/* Feature Highlights */}
-        <View style={styles.featureStrip}>
-          {[
-            { icon: '🔬', label: isFrench ? 'Diagnostic IA' : 'AI Diagnosis' },
-            { icon: '📡', label: isFrench ? '100% Hors-ligne' : '100% Offline' },
-            { icon: '🌍', label: isFrench ? '2 Langues' : 'Bilingual' },
-            { icon: '⚡', label: isFrench ? 'Instantané' : 'Instant' },
-          ].map((f, i) => (
-            <View key={i} style={styles.featureChip}>
-              <Text style={styles.featureChipIcon}>{f.icon}</Text>
-              <Text style={styles.featureChipLabel}>{f.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* How It Works Quick Explainer */}
-        <View style={styles.explainerCard}>
-          <Text style={styles.explainerEyebrow}>
-            💡 {isFrench ? 'COMMENT ÇA MARCHE (3 ÉTAPES SIMPLES)' : 'HOW IT WORKS (3 SIMPLE STEPS)'}
-          </Text>
-          <View style={styles.stepItem}>
-            <View style={styles.stepNumCircle}>
-              <Text style={styles.stepNumText}>1</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.stepHeading}>
-                {isFrench ? 'Créez votre compte agricole' : 'Create your farmer account'}
-              </Text>
-              <Text style={styles.stepBody}>
-                {isFrench
-                  ? 'Renseignez votre région et culture pour des prédictions sur-mesure.'
-                  : 'Register your region and crop to personalize AI guidance.'}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.stepItem}>
-            <View style={styles.stepNumCircle}>
-              <Text style={styles.stepNumText}>2</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.stepHeading}>
-                {isFrench ? 'Diagnostiquez & Obtenez des conseils' : 'Diagnose & Get tailored advice'}
-              </Text>
-              <Text style={styles.stepBody}>
-                {isFrench
-                  ? 'Prenez une photo d\'une feuille ou demandez un plan de fertilisation.'
-                  : 'Snap leaf photos or request optimal crop and fertilizer schedules.'}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.stepItem}>
-            <View style={styles.stepNumCircle}>
-              <Text style={styles.stepNumText}>3</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.stepHeading}>
-                {isFrench ? 'Appliquez les solutions et suivez la récolte' : 'Apply remedies & track harvest'}
-              </Text>
-              <Text style={styles.stepBody}>
-                {isFrench
-                  ? 'Traitements bio et chimiques certifiés pour booster vos rendements.'
-                  : 'Follow certified organic and chemical steps to protect yield.'}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Account Creation & Login Gateway */}
-        <View style={styles.authGatewayCard}>
-          <View style={styles.authNoticeRow}>
-            <Text style={styles.authNoticeIcon}>🌱</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.authNoticeTitle}>
-                {isFrench ? 'Nouveau sur Agro-Vission ?' : 'First Time on Agro-Vission?'}
-              </Text>
-              <Text style={styles.authNoticeSub}>
-                {isFrench
-                  ? 'Créez d\'abord votre compte agriculteur. La prochaine fois, connectez-vous directement !'
-                  : 'Create your farmer account first. Once registered, you can log in directly next time!'}
-              </Text>
-            </View>
-          </View>
-
-          {/* 1. Primary: Create Account First */}
-          <Pressable style={styles.registerButton} onPress={() => goTo('register')}>
-            <Text style={styles.registerButtonText}>
-              🚀 {isFrench ? 'Créer un Compte Agriculteur' : 'Create Farmer Account First'}
-            </Text>
-          </Pressable>
-
-          {/* 2. Secondary: Already Registered? Login */}
-          <Pressable style={styles.loginButton} onPress={() => goTo('login')}>
-            <Text style={styles.loginButtonText}>
-              🔑 {isFrench ? 'Déjà inscrit ? Se Connecter' : 'Already Have an Account? Log In'}
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* 4 Quick Access Service Shortcuts (Direct access after account creation) */}
-        <View style={styles.quickAccessSection}>
-          <Text style={styles.quickAccessTitle}>
-            ⚡ {isFrench ? 'ACCÈS DIRECT AUX OUTILS' : 'DIRECT ACCESS TO TOOLS'}
-          </Text>
-          <View style={styles.quickAccessGrid}>
-            <Pressable style={styles.quickItem} onPress={() => handleToolNavigation('diagnosis')}>
-              <Text style={styles.quickItemIcon}>🔬</Text>
-              <Text style={styles.quickItemText}>{isFrench ? 'Diagnostic' : 'Diagnosis'}</Text>
-            </Pressable>
-            <Pressable style={styles.quickItem} onPress={() => handleToolNavigation('cropAdvice')}>
-              <Text style={styles.quickItemIcon}>🌾</Text>
-              <Text style={styles.quickItemText}>{isFrench ? 'Cultures' : 'Crop Plan'}</Text>
-            </Pressable>
-            <Pressable style={styles.quickItem} onPress={() => handleToolNavigation('aiChat')}>
-              <Text style={styles.quickItemIcon}>🤖</Text>
-              <Text style={styles.quickItemText}>{isFrench ? 'Agronome IA' : 'AI Chat'}</Text>
-            </Pressable>
-            <Pressable style={styles.quickItem} onPress={() => handleToolNavigation('survey')}>
-              <Text style={styles.quickItemIcon}>📋</Text>
-              <Text style={styles.quickItemText}>{isFrench ? 'Enquête' : 'Survey'}</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Language Selection Bar */}
-        <View style={styles.languageSection}>
-          <Text style={styles.languageLabel}>
-            🌐 {t.selectLanguage || (isFrench ? 'Choisir la langue' : 'Select Language')}
-          </Text>
-          <View style={styles.languageButtonsRow}>
-            <Pressable
-              style={[styles.langBtn, lang === 'English' && styles.langBtnActive]}
-              onPress={() => handleLanguageSelect('English')}
-            >
-              <Text style={styles.langEmoji}>🇬🇧</Text>
-              <Text style={[styles.langText, lang === 'English' && styles.langTextActive]}>English</Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.langBtn, lang === 'Français' && styles.langBtnActive]}
-              onPress={() => handleLanguageSelect('Français')}
-            >
-              <Text style={styles.langEmoji}>🇫🇷</Text>
-              <Text style={[styles.langText, lang === 'Français' && styles.langTextActive]}>Français</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Quick Portal Entry (Direct to Dashboard for existing logged-in farmers) */}
-        <Pressable style={styles.dashboardLink} onPress={() => handleToolNavigation('home')}>
-          <Text style={styles.dashboardLinkText}>
-            🌿 {isFrench ? 'Ouvrir le Tableau de Bord Agriculteur →' : 'Enter Farmer Dashboard →'}
-          </Text>
-        </Pressable>
       </View>
 
-      {/* Footer Info */}
-      <View style={styles.footerInfo}>
-        <Text style={styles.footerText}>Agro-Vission Cameroon © 2026 • Dedicated to African Smallholder Farmers</Text>
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text style={styles.footerBrand}>AGRO-VISSION • CAMEROON 2026</Text>
+        <Text style={styles.footerNote}>
+          {isFrench
+            ? 'Dédié aux agriculteurs et à l’agriculture durable africaine'
+            : 'Dedicated to African Smallholders & Sustainable Agriculture'}
+        </Text>
       </View>
     </ScrollView>
   );
@@ -412,505 +547,618 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
   },
-  content: {
-    paddingHorizontal: 18,
-    paddingTop: 45,
-    paddingBottom: 35,
+  scrollContent: {
+    paddingBottom: 40,
   },
-  topHeader: {
-    marginBottom: 16,
+
+  /* ── Hero & Image 1 Design ── */
+  heroWrapper: {
+    width: '100%',
+    minHeight: 580,
+    backgroundColor: '#1E3926',
   },
-  brandingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    marginBottom: 12,
+  heroBackground: {
+    width: '100%',
+    minHeight: 580,
   },
-  logoImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#DCFCE7',
-    shadowColor: '#16A34A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
+  heroBgImage: {
+    opacity: 0.9,
+    resizeMode: 'cover',
   },
-  brandingText: {
+  heroOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(19, 42, 24, 0.65)',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 36,
+    paddingBottom: 32,
+    justifyContent: 'space-between',
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  appName: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#0F172A',
-    letterSpacing: 1.2,
-  },
-  countryBadge: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#86EFAC',
-  },
-  countryBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#15803D',
-  },
-  tagline: {
-    fontSize: 12,
-    color: '#475569',
-    fontWeight: '500',
-    lineHeight: 16,
-    marginTop: 2,
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0FDF4',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: '#BBF7D0',
-    gap: 8,
-    shadowColor: '#16A34A',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statusDot: {
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
-    backgroundColor: '#16A34A',
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#15803D',
-  },
-  // Single Unified Container
-  unifiedContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 18,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    elevation: 4,
-    marginBottom: 16,
-  },
-  showcaseHeader: {
-    marginBottom: 14,
-  },
-  showcaseEyebrow: {
-    fontSize: 11,
-    fontWeight: '900',
-    color: '#16A34A',
-    letterSpacing: 1.2,
-    marginBottom: 4,
-  },
-  showcaseMainTitle: {
-    fontSize: 19,
-    fontWeight: '900',
-    color: '#0F172A',
-    letterSpacing: -0.3,
-  },
-  // Tabs
-  tabsRow: {
+
+  /* Nav Bar */
+  navBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 6,
-    marginBottom: 14,
+    alignItems: 'center',
+    marginBottom: 28,
   },
-  tabButton: {
-    flex: 1,
+  navBrand: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 2,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    gap: 3,
+    gap: 8,
   },
-  tabButtonActive: {
+  logoBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  logoBadgeIcon: {
+    fontSize: 20,
+  },
+  brandTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+  },
+  navRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  langPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  langPillText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  contactBtn: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  contactBtnText: {
+    color: '#13351C',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  /* Hero Body */
+  heroBody: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  heroPillBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    gap: 6,
+  },
+  heroPillDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#86EFAC',
+  },
+  heroPillBadgeText: {
+    color: '#E2FCE7',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  heroTitleMain: {
+    fontSize: 42,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -1,
+    lineHeight: 46,
+  },
+  heroTitleSerif: {
+    fontSize: 44,
+    fontWeight: '400',
+    fontStyle: 'italic',
+    color: '#E8F5E9',
+    letterSpacing: -0.5,
+    marginBottom: 12,
+    lineHeight: 48,
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: 'rgba(255, 255, 255, 0.88)',
+    marginBottom: 20,
+    maxWidth: 480,
+  },
+  heroCtaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 22,
+    flexWrap: 'wrap',
+  },
+  primaryPillBtn: {
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 26,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
-  tabIcon: {
-    fontSize: 13,
+  primaryPillBtnText: {
+    color: '#064E3B',
+    fontSize: 14,
+    fontWeight: '800',
   },
-  tabText: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#475569',
-    flexShrink: 0,
+  secondaryPillBtn: {
+    backgroundColor: 'rgba(10, 40, 18, 0.55)',
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 26,
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
   },
-  tabTextActive: {
+  secondaryPillBtnText: {
     color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
-  // Service Card Banner
-  serviceCardWrapper: {
-    borderRadius: 20,
+
+  /* Floating Frosted Glass Card */
+  floatingPreviewCard: {
+    height: 120,
+    borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: '#DCFCE7',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    marginTop: 6,
   },
-  serviceImageBanner: {
-    minHeight: 260,
-    justifyContent: 'flex-end',
+  floatingCardBg: {
+    width: '100%',
+    height: '100%',
   },
-  bannerImg: {
-    borderRadius: 18,
-  },
-  bannerOverlay: {
-    padding: 18,
-    backgroundColor: 'rgba(15, 23, 42, 0.76)',
-    borderBottomLeftRadius: 18,
-    borderBottomRightRadius: 18,
-  },
-  serviceTag: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-    marginBottom: 8,
-  },
-  serviceTagText: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.8,
-  },
-  serviceTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    marginBottom: 6,
-  },
-  serviceDesc: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: '#E2E8F0',
-    marginBottom: 14,
-  },
-  serviceActionBtn: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  serviceActionBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  progressDotsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 10,
-    backgroundColor: '#F8FAFC',
-    gap: 8,
-  },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#CBD5E1',
-  },
-  progressDotActive: {
-    width: 24,
-  },
-  // How It Works Explainer Card
-  explainerCard: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 16,
-  },
-  explainerEyebrow: {
-    fontSize: 11,
-    fontWeight: '900',
-    color: '#16A34A',
-    letterSpacing: 0.8,
-    marginBottom: 12,
-  },
-  stepItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    marginBottom: 10,
-  },
-  stepNumCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#16A34A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 1,
-  },
-  stepNumText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '900',
-  },
-  stepHeading: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 2,
-  },
-  stepBody: {
-    fontSize: 11,
-    color: '#64748B',
-    lineHeight: 15,
-  },
-  // Auth Gateway Card
-  authGatewayCard: {
-    backgroundColor: '#F0FDF4',
-    borderWidth: 1.5,
-    borderColor: '#BBF7D0',
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 16,
-  },
-  authNoticeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
-  },
-  authNoticeIcon: {
-    fontSize: 24,
-  },
-  authNoticeTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#15803D',
-  },
-  authNoticeSub: {
-    fontSize: 11,
-    color: '#166534',
-    lineHeight: 15,
-    marginTop: 1,
-  },
-  registerButton: {
-    backgroundColor: '#16A34A',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 10,
-    shadowColor: '#16A34A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  registerButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 0.3,
-  },
-  loginButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#16A34A',
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  loginButtonText: {
-    color: '#15803D',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  // Quick Access Section
-  quickAccessSection: {
-    marginBottom: 16,
-    paddingTop: 4,
-  },
-  quickAccessTitle: {
-    fontSize: 11,
-    fontWeight: '900',
-    color: '#475569',
-    letterSpacing: 0.8,
-    marginBottom: 10,
-  },
-  quickAccessGrid: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  quickItem: {
+  floatingCardOverlay: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    paddingVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(10, 30, 15, 0.5)',
+    padding: 12,
+    justifyContent: 'space-between',
   },
-  quickItemIcon: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  quickItemText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#334155',
-    textAlign: 'center',
-  },
-  // Language Selection
-  languageSection: {
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#F1F5F9',
-    marginBottom: 14,
-  },
-  languageLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#64748B',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-  },
-  languageButtonsRow: {
+  floatingCardHeader: {
     flexDirection: 'row',
-    gap: 10,
-  },
-  langBtn: {
-    flex: 1,
-    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 9,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
-    gap: 6,
   },
-  langBtnActive: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#16A34A',
-  },
-  langEmoji: {
+  floatingCardTitle: {
+    color: '#FFFFFF',
     fontSize: 15,
+    fontWeight: '800',
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
-  langText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#475569',
-  },
-  langTextActive: {
-    color: '#15803D',
-  },
-  dashboardLink: {
+  carouselIndicators: {
+    flexDirection: 'row',
+    gap: 6,
     alignItems: 'center',
+  },
+  indicatorBar: {
+    width: 8,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  indicatorBarActive: {
+    width: 24,
+    backgroundColor: '#FFFFFF',
+  },
+
+  /* ── Lower Image 1: Trusted & Mission ── */
+  trustedSection: {
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    paddingBottom: 24,
+    backgroundColor: '#F8FAFC',
+  },
+  trustedTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#064E3B',
+    textAlign: 'center',
+    marginBottom: 16,
+    letterSpacing: 0.2,
+  },
+  partnersRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 28,
+    flexWrap: 'wrap',
+  },
+  partnerBadge: {
+    paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  dashboardLinkText: {
-    color: '#15803D',
-    fontSize: 13,
-    fontWeight: '800',
+  partnerText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: -0.2,
   },
-  footerInfo: {
-    alignItems: 'center',
-    paddingVertical: 4,
+  aboutUsPillRow: {
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  footerText: {
-    fontSize: 10,
-    color: '#94A3B8',
-    textAlign: 'center',
-  },
-  // Hero Stats Banner
-  heroStats: {
+  aboutPill: {
     flexDirection: 'row',
-    backgroundColor: '#0F172A',
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 12,
     alignItems: 'center',
-    justifyContent: 'space-around',
+    backgroundColor: '#064E3B',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 14,
+    gap: 6,
   },
-  heroStat: {
-    alignItems: 'center',
-    flex: 1,
+  aboutPillDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: '#86EFAC',
   },
-  heroStatNum: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#4ADE80',
-    letterSpacing: -0.5,
+  aboutPillText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
-  heroStatLabel: {
-    fontSize: 10,
-    color: '#94A3B8',
-    fontWeight: '600',
-    marginTop: 2,
-    textAlign: 'center',
+  missionCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  heroStatDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+  missionText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0F172A',
+    lineHeight: 30,
+    marginBottom: 18,
   },
-  // Feature Highlights Strip
-  featureStrip: {
+  inlineCropPill: {
+    width: 38,
+    height: 20,
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginHorizontal: 4,
+    marginBottom: -4,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  inlineCropImg: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  featurePillsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  tagPill: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  tagPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#334155',
+  },
+
+  /* ── Image 2: Organic Section ── */
+  organicSection: {
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+  },
+  organicHeroBanner: {
+    width: '100%',
+    minHeight: 240,
+    borderRadius: 24,
+    overflow: 'hidden',
     marginBottom: 16,
   },
-  featureChip: {
+  organicHeroOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 38, 22, 0.78)',
+    padding: 22,
+    justifyContent: 'center',
+    borderRadius: 24,
+  },
+  leafIconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  leafIcon: {
+    fontSize: 18,
+  },
+  organicHeroTitle: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    lineHeight: 30,
+  },
+  organicHeroSub: {
+    fontSize: 13,
+    color: '#E2FCE7',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  learnMoreBtn: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#4ADE80',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  learnMoreBtnText: {
+    color: '#064E3B',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+
+  /* "Why Organic?" White Overlay Card */
+  whyOrganicCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  whyOrganicHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
-    gap: 4,
+    gap: 8,
+    marginBottom: 10,
   },
-  featureChipIcon: {
+  whyOrganicIcon: {
+    fontSize: 24,
+  },
+  whyOrganicTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#064E3B',
+  },
+  whyOrganicDesc: {
     fontSize: 13,
+    lineHeight: 20,
+    color: '#475569',
+    marginBottom: 16,
   },
-  featureChipLabel: {
-    fontSize: 11,
+  whyOrganicBtnsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+    flexWrap: 'wrap',
+  },
+  organicPillActionBtn: {
+    backgroundColor: '#16A34A',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  organicPillActionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '700',
+  },
+  organicSecondaryLink: {
+    paddingHorizontal: 6,
+    paddingVertical: 6,
+  },
+  organicSecondaryLinkText: {
     color: '#15803D',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  organicPillarsGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 20,
+  },
+  pillarCard: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  pillarIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  pillarIcon: {
+    fontSize: 14,
+  },
+  pillarTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  pillarSub: {
+    fontSize: 10.5,
+    lineHeight: 14,
+    color: '#64748B',
+  },
+  soilPhotoWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 16,
+    padding: 10,
+    gap: 12,
+  },
+  soilPhoto: {
+    width: 70,
+    height: 60,
+    borderRadius: 12,
+  },
+  soilPhotoCaption: {
+    flex: 1,
+  },
+  soilPhotoCaptionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginBottom: 2,
+  },
+  soilPhotoCaptionSub: {
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 15,
+  },
+
+  /* ── Direct Portal Actions ── */
+  portalActionSection: {
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  portalCard: {
+    backgroundColor: '#0F291E',
+    borderRadius: 24,
+    padding: 22,
+  },
+  portalCardEyebrow: {
+    color: '#86EFAC',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  portalCardTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  portalCardSub: {
+    color: '#CBD5E1',
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 18,
+  },
+  portalButtonsRow: {
+    gap: 10,
+    marginBottom: 20,
+  },
+  portalPrimaryBtn: {
+    backgroundColor: '#22C55E',
+    paddingVertical: 13,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  portalPrimaryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  portalSecondaryBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingVertical: 12,
+    borderRadius: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  portalSecondaryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  toolChipsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  toolChip: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  toolChipIcon: {
+    fontSize: 22,
+    marginBottom: 4,
+  },
+  toolChipLabel: {
+    color: '#E2E8F0',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
+  /* ── Footer ── */
+  footer: {
+    alignItems: 'center',
+    paddingTop: 24,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    marginHorizontal: 20,
+  },
+  footerBrand: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#064E3B',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  footerNote: {
+    fontSize: 11,
+    color: '#94A3B8',
+    textAlign: 'center',
   },
 });

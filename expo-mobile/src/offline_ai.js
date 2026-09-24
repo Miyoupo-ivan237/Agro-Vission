@@ -2888,6 +2888,7 @@ if (typeof module !== 'undefined' && module.exports) {
     OFFLINE_DISEASES,
     OFFLINE_RECOMMENDATIONS,
     identifyPlantFromImage,
+    getCropAgronomicGuidance,
     offlineDiagnoseCrop,
     offlineRecommendCrop,
     offlineChatAgronomist
