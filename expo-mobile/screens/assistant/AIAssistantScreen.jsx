@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { sendAgronomistChat } from '../../src/api';
+import { offlineChatAgronomist } from '../../src/offline_ai';
 import { getT } from '../../src/translations';
 
 export default function AIAssistantScreen({ goTo, language = 'English' }) {
@@ -53,14 +54,29 @@ export default function AIAssistantScreen({ goTo, language = 'English' }) {
       };
       setMessages(prev => [...prev, aiMsg]);
     } catch (error) {
-      const fallbackMsg = {
-        id: (Date.now() + 2).toString(),
-        sender: 'ai',
-        text: language === 'Français' 
-          ? "Je traite ceci hors-ligne. Veuillez vérifier les recommandations de cultures sur le tableau de bord pour des conseils spécifiques."
-          : "I am processing this offline. Please check the Crop Recommendations on the dashboard for specific advice."
-      };
-      setMessages(prev => [...prev, fallbackMsg]);
+      // Network or server error — call the on-device AI directly so the farmer
+      // always receives a real, crop-specific agronomic answer.
+      console.warn('[AgroVission] Chat server unreachable, using offline AI:', error?.message);
+      try {
+        const offlineResponse = offlineChatAgronomist(userMsg.text, language);
+        const aiMsg = {
+          id: (Date.now() + 1).toString(),
+          sender: 'ai',
+          text: offlineResponse.reply || (language === 'Français'
+            ? "Je traite ceci hors-ligne. Veuillez préciser votre culture ou région pour une réponse plus ciblée."
+            : "I am processing this offline. Please specify your crop or region for a more targeted answer.")
+        };
+        setMessages(prev => [...prev, aiMsg]);
+      } catch (offlineError) {
+        const fallbackMsg = {
+          id: (Date.now() + 2).toString(),
+          sender: 'ai',
+          text: language === 'Français'
+            ? "🌱 Moteur IA hors-ligne actif. Précisez votre culture (ex: maïs, manioc, tomate) et votre problème pour obtenir des conseils personnalisés."
+            : "🌱 Offline AI engine active. Please specify your crop (e.g. maize, cassava, tomato) and your issue for personalised advice."
+        };
+        setMessages(prev => [...prev, fallbackMsg]);
+      }
     } finally {
       setLoading(false);
     }

@@ -2,7 +2,7 @@
 // Ollama Local LLM & Cameroon Agricultural Expert AI System
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
-const OLLAMA_NUM_CTX = Number(process.env.OLLAMA_NUM_CTX || 1024);
+const OLLAMA_NUM_CTX = Number(process.env.OLLAMA_NUM_CTX || 2048);
 const OLLAMA_TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 180000);
 const OLLAMA_KEEP_ALIVE = process.env.OLLAMA_KEEP_ALIVE || '30m';
 const OLLAMA_NUM_THREADS = Number(process.env.OLLAMA_NUM_THREADS || 4);
@@ -21,13 +21,19 @@ const PREFERRED_MODELS = [
   'mistral'
 ];
 
-const AGRONOMIST_SYSTEM_PROMPT = `You are "Agro-Vission AI", an expert Agronomist Handbook, Soil Scientist, and Plant Pathologist specialized in Cameroon and Sub-Saharan African agriculture.
-You answer all farming questions intelligently (staples, vegetables, groundnuts/garnut, cocoa, coffee, tubers, soils, fertilizers, pest control, plant diseases, irrigation, harvesting).
-For every question:
-1. Provide practical, encyclopedic advice with recommended Cameroon varieties (IRAD, hybrid seeds), plant spacing, and planting timing.
-2. Detail fertilizer programs (NPK formulas, Urea, SSP, compost) and pest management (organic remedies like neem oil, and safe chemical options like Mancozeb, Emamectin Benzoate).
-3. For diseases and pests (rosette virus, aphids, armyworms, blights, mosaic), give symptoms, causes, and step-by-step solutions.
-4. Tailor advice to Cameroon's agro-ecological zones (Far North, Adamawa, Western Highlands, Littoral, Centre, South). Respond directly, clearly, and authoritatively.`;
+const AGRONOMIST_SYSTEM_PROMPT = `You are Agro-Vission AI, a professional agronomist and plant pathologist specialized in Cameroon and tropical Sub-Saharan African agriculture.
+
+SCOPE: You ONLY answer questions about agriculture and farming. This includes: crop selection and calendars; planting, nursery and seed preparation; soil testing, fertility, compost and fertilizer programs; irrigation and water management; weeds, pests, diseases and plant diagnosis; pruning, harvesting, post-harvest handling, storage and processing; livestock and poultry; agroforestry; climate and weather risks for farming; farm economics, markets and farm budgets; food safety; and sustainable or organic farming practices.
+
+OUT OF SCOPE: If a question is about technology, politics, entertainment, sports, history, mathematics, coding, personal finance, medicine, or ANY topic that is not directly related to agriculture or farming — you MUST politely refuse and redirect. Example refusal: "I am Agro-Vission AI and I only answer agriculture-related questions. Please ask about crops, soil, pests, plant diseases, or farming practices."
+
+Never answer out-of-scope questions even if asked politely or indirectly. Always redirect the user to ask an agronomy question.
+
+For agriculture questions: understand natural wording, spelling mistakes, local names, and both French and English. Never reject a valid farming question because it is broad or does not contain a keyword. If a question lacks important details, answer what can be answered safely, state the assumptions, and ask one useful follow-up question.
+
+Structure answers clearly: direct answer first, then practical steps, prevention or risks, and Cameroon-specific advice when relevant. Adapt recommendations to the crop, growth stage, region, season, soil, farm size and available resources. Use safe integrated pest management. Do not invent a diagnosis, pesticide dose, variety or certainty.
+
+For English questions answer only in clear English. For French questions answer only in clear French.`;
 
 // Comprehensive offline agronomic knowledge base covering Cameroon crops
 const OFFLINE_KNOWLEDGE = [
@@ -244,6 +250,269 @@ const OFFLINE_KNOWLEDGE = [
 2. **Onion (Oignon Violet de Maroua):** World-famous violet onions grown in river valleys with furrow irrigation (25-35 T/ha).
 3. **Irrigated Rice (Riz SEMRY):** SEMRY Yagoua & Maga polders along the Logone river provide controlled flood basins.
 4. **Cotton & Cowpeas (Niébé):** Essential cash and drought-resilient protein crops.`
+  },
+
+  // ── COCOA FARM REHABILITATION (FAO/ILRI Good Agronomic Practices) ─────────────────────────────
+  {
+    triggers: ['rehabilitat', 'old cocoa', 'unproductive', 'replant cocoa', 'cocoa yield decline', 'cocoa farm recovery', 'rejuvenat'],
+    response: `🍫 **Cocoa Farm Rehabilitation — FAO Good Agronomic Practices (West & Central Africa):**
+
+Cocoa cultivation covers ~5.9 million ha worldwide; Cameroon, Côte d'Ivoire, Ghana and Nigeria account for 73% of production. Many farms are ageing and unproductive. Rehabilitation restores yields without full replanting.
+
+## THREE REHABILITATION STRATEGIES
+
+**1. REHABILITATION BY REPLANTING (Full Replacement):**
+- Used when >50% of trees are unproductive, dead, or diseased.
+- Clear old trees, leave stumps to protect soil; plant improved certified clones (in Cameroon: SNK 16, SNK 13, ICS 1) at 3m × 3m (1,111 trees/ha).
+- Provide temporary shade with plantain or Gliricidia to protect young seedlings.
+- Target: First harvest by year 3-4; full production by year 5-6.
+
+**2. REHABILITATION BY GRAFTING (Top-Working):**
+- Used when rootstock is healthy but variety is low-yielding.
+- Graft high-yielding certified budwood onto existing stumps/branches.
+- Cut main branch; apply paste bud or patch bud of selected clone.
+- Wrap with polythene tape; remove after 3 weeks when graft takes.
+- Advantage: Productive within 18-24 months (faster than replanting).
+
+**3. REHABILITATION BY CHUPON SELECTION (Side-Shooting):**
+- Allow 2-3 vigorous suckers (chupons) to grow from the base of old trees.
+- Remove weakest chupons; keep 1 strong upright shoot per tree.
+- This shoot replaces the old unproductive canopy within 2-3 years.
+- Lowest cost method; suitable for partially productive farms.
+
+## PRE-PLANTING GOOD AGRONOMIC PRACTICES
+- **Land preparation:** Remove only diseased/dead trees; leave forest shade trees (Terminalia, Albizia) for canopy.
+- **Soil conservation:** Maintain organic leaf litter — do NOT burn old material.
+- **Shade management:** 30-40% shade at establishment; reduce to 20-25% as trees mature.
+
+## POST-PLANTING MANAGEMENT
+- **Fertilizer:** Young cocoa (1-3 yrs): NPK 12-12-17 at 125g/tree twice yearly (rains onset and end).
+- **Weeding:** Keep 1m circle weed-free; use cutlass (do not hoe — damages surface roots).
+- **Pruning:** Remove chupons from trunk; maintain 3-5 main branches (jorquette) for harvest access.
+- **Black Pod:** Copper fungicide every 21 days during heavy rains. Harvest and bury all mummified pods.
+- **Capsid/Mirids:** Spray at first flush (August-October). Systemic insecticide where damage exceeds 30%.`
+  },
+
+  // ── NUTRIENT DEFICIENCY DIAGNOSIS (Agro Hospital / Leaf Analysis) ──────────
+  {
+    triggers: ['yellow leaf', 'yellowing', 'leaf curl', 'nutrient deficiency', 'deficience', 'feuille jaune', 'pale leaf', 'purple leaf', 'stunted', 'weak growth', 'leaf analysis', 'foliar test', 'plant tissue', 'analyse foliaire', 'leaf test', 'magnesium', 'potassium deficiency', 'nitrogen deficiency', 'phosphorus deficiency', 'calcium deficiency', 'micronutrient', 'manganese', 'zinc deficiency', 'iron deficiency', 'boron'],
+    response: `🔬 **Crop Nutrient Deficiency Diagnosis — Visual Field Guide (Cameroon):**
+
+Many farmers in Cameroon lose yields because deficiencies are identified too late. The following visual guide helps you detect problems BEFORE they cause major losses.
+
+## MACRONUTRIENT DEFICIENCIES
+
+**🟡 NITROGEN (N) Deficiency:**
+- *Symptoms:* Uniform yellowing starting from oldest (lower) leaves upward. Entire leaf turns pale yellow-green. Slow, stunted growth. Thin stems.
+- *Crops most affected:* Maize, cassava, tomato, cabbage, rice.
+- *Correction:* Top-dress Urea (46% N) at 50-100 kg/ha. For organic: incorporate chicken manure or green manure.
+- *Confirm:* If yellowing starts at leaf tip and midrib stays green → likely N. If only new leaves yellow → likely S or Fe.
+
+**🟠 PHOSPHORUS (P) Deficiency:**
+- *Symptoms:* Leaves turn dark green, then purplish-red on undersides (anthocyanin). Delayed maturity, small fruits. Poor root development.
+- *Crops most affected:* Maize, groundnut, tomato, potato on acidic soils.
+- *Correction:* Apply Triple Superphosphate (TSP 46% P₂O₅) at 100 kg/ha at planting. Lime acidic soils to unlock phosphorus.
+
+**🟤 POTASSIUM (K) Deficiency:**
+- *Symptoms:* Leaf edges and tips turn brown and curl (scorching). Starts on older lower leaves. Weak stems; lodging. Poor fruit filling.
+- *Crops most affected:* Plantain/banana (very K-hungry), potato, tomato, cocoa, oil palm.
+- *Correction:* Apply Muriate of Potash (MOP 60% K₂O) at 100 kg/ha or Sulfate of Potash (SOP). For plantain: 200-300g KCl per plant every 3 months.
+
+**⚪ CALCIUM (Ca) Deficiency:**
+- *Symptoms:* Young leaf tips and edges die (brown lesions). Blossom end rot in tomato and pepper (black sunken base of fruit). Tip burn in cabbage.
+- *Correction:* Apply Calcium Nitrate (CAN) at 150 kg/ha at flowering. Agricultural lime corrects both Ca and pH simultaneously.
+
+**🔵 MAGNESIUM (Mg) Deficiency:**
+- *Symptoms:* Interveinal chlorosis on older leaves — leaf turns yellow between green veins (herringbone pattern). Very common in cocoa on acidic soils.
+- *Crops most affected:* Cocoa, coffee, citrus, tomato, potato.
+- *Correction:* Foliar spray with 2% Magnesium Sulfate (Epsom salt) every 2 weeks. Soil: Kieserite (MgSO₄) at 100 kg/ha.
+
+## MICRONUTRIENT DEFICIENCIES
+
+**🟢 IRON (Fe) Deficiency:**
+- *Symptoms:* Young (new) leaves turn pale yellow/white while veins remain green. Most common in alkaline soils (pH >7).
+- *Correction:* Foliar spray with Ferrous Sulfate (FeSO₄) 0.5%. Acidify soil with elemental sulfur.
+
+**🔶 ZINC (Zn) Deficiency:**
+- *Symptoms:* Small leaves (little leaf), short internodes (rosette), white/yellow bands at leaf base. New growth stunted.
+- *Crops most affected:* Maize, rice, citrus.
+- *Correction:* Foliar spray with Zinc Sulfate 0.5% (3 applications at 7-day intervals). Soil: ZnSO₄ at 10 kg/ha.
+
+**🟣 BORON (B) Deficiency:**
+- *Symptoms:* Growing points die (hollow stem). Blossom drop in tomato and pepper. Cracked/corky fruits.
+- *Correction:* Foliar spray with Borax 0.2% (2g/litre). Apply at flower initiation.
+
+**🟫 MANGANESE (Mn) Deficiency:**
+- *Symptoms:* Interveinal chlorosis on young leaves (similar to Mg but on new leaves, not old). Common on waterlogged soils.
+- *Correction:* Foliar spray with Manganese Sulfate 0.2%.
+
+## QUICK DIAGNOSIS CHECKLIST
+| Pattern | First Affected | Most Likely Cause |
+|---|---|---|
+| Uniform pale yellow | Old (lower) leaves | Nitrogen |
+| Purple undersides | Old leaves | Phosphorus |
+| Leaf edge scorch | Old leaves | Potassium |
+| Yellow between green veins | Old leaves | Magnesium |
+| Yellow between green veins | New leaves | Iron or Manganese |
+| Small leaves + rosette | New growth | Zinc |
+| Blossom drop, hollow stem | Growing tip | Boron |
+| Brown leaf tip + watery base | Young leaves | Calcium |
+
+## PROFESSIONAL LEAF ANALYSIS
+For precise diagnosis beyond visual assessment, professional plant tissue laboratory testing (leaf analysis) is available in Cameroon through services like **Agro Hospital** (Yaoundé & Bamenda):
+- Contact: (+237) 681532846 / 657469343 / 653416123
+- Services: Nitrogen, Phosphorus, Potassium, Ca, Mg, micronutrient analysis; fungal/viral/bacterial crop disease testing; farm phytosanitary audits.
+- Results in a few working days with practical crop nutrition recommendations.`
+  },
+
+  // ── TRADITIONAL CAMEROON VEGETABLES (Nutrition Connect / FAO) ─────────────
+  {
+    triggers: ['eru', 'okok', 'koko', 'ndole', 'bitter leaf', 'bitterleaf', 'huckleberry', 'njama njama', 'waterleaf', 'vernonia', 'gnetum', 'african nightshade', 'traditional vegetable', 'légume traditionnel', 'légume feuille', 'leafy vegetable', 'feuille comestible', 'solanum', 'morelle', 'wild vegetable'],
+    response: `🥬 **Traditional Vegetables of Cameroon — Cultivation & Nutrition Guide:**
+
+Cameroon is rich in indigenous leafy vegetables that are nutritionally superior to many introduced crops. These vegetables provide essential amino acids, iron, calcium, magnesium, vitamins A, C, E, B1 and B2, and dietary fibre critical for food and nutrition security.
+
+## 🌿 ERU / OKOK / KOKO (*Gnetum africanum*)
+
+**Importance:** Staple in the Southwest Region (Bayangi people) and widely traded across Cameroon. One of the highest-value wild-harvested vegetables.
+
+**Nutritional value:** Rich in protein (13-18% dry weight), essential amino acids, iron, calcium, and dietary fibre. Leaves used fresh or dried.
+
+**Cultivation (Domestication):**
+- *Habitat:* Climbing vine — naturally found in humid lowland rainforest (South-West, Littoral, South, East regions).
+- *Propagation:* Seed germination (slow — 4-6 months) or stem cuttings (faster). Soak seeds in water 24h before sowing.
+- *Staking:* Requires a live support tree or wooden poles (2-3m) to climb. Gliricidia sepium is an ideal live stake — grows fast and adds N to soil.
+- *Shade:* Requires 40-60% shade — grows well under cocoa, plantain, or oil palm canopy.
+- *Soil:* Deep, well-drained, organic-rich loam. Apply heavy compost (5-10 kg/plant pit).
+- *Spacing:* 3m × 3m in agroforestry plots.
+- *Harvest:* Harvest leaf tips every 4-6 weeks — never strip more than 30% of foliage to allow recovery.
+- *Sustainability:* Avoid over-harvesting from the wild — domestication in agroforestry systems is strongly recommended by FAO.
+
+**Cooking:** Shred finely; cook with palm oil, waterleaf (Talinum fruticosum), crayfish, cow skin, smoked fish. Served with water fufu or garri.
+
+---
+
+## 🌱 NDOLÉ / BITTER LEAF (*Vernonia amygdalina*)
+
+**Importance:** Namesake of Cameroon's national dish. Highly prized for flavour and medicinal properties (anti-malarial, anti-diabetic, digestive aid, antibacterial).
+
+**Nutritional value:** High in iron, calcium, zinc, B-vitamins, antioxidants. Protein: 4-6% fresh weight.
+
+**Cultivation:**
+- *Propagation:* Stem cuttings (30-40cm long) planted directly. Easy — roots in 2-3 weeks. Or sow seeds in nursery.
+- *Spacing:* 1m × 1m for intensive production; 2m × 2m for larger shrubs.
+- *Soil:* Adapts to most soil types; prefers well-drained, fertile loam. Full sun.
+- *Fertiliser:* Light NPK 15-15-15 (100 kg/ha) at establishment; wood ash side-dressing every 2 months.
+- *Harvest:* Begin harvesting leaves 3-4 months after planting. Cut back to 30cm stub for regrowth.
+- *Yield:* 8-15 T/ha fresh leaves per year with 3-4 harvests.
+- *Pest/Disease:* Generally robust. Aphids — treat with neem oil. Root rot — ensure drainage.
+
+**Cooking:** Wash and squeeze leaves repeatedly (or boil briefly, then rinse) to remove bitterness. Cook with groundnut paste, crayfish, stockfish, prawns. Served at celebrations with plantain, yam, or rice.
+
+---
+
+## 🌑 HUCKLEBERRY / NJAMA NJAMA (*Solanum scabrum* / African Nightshade)
+
+**Importance:** Among the most nutritious leafy vegetables in Cameroon. Highly popular in the Western Highlands (Bamenda, Bafoussam) and served with fufu and Khati Khati (grilled chicken).
+
+**Nutritional value:** Excellent source of iron, calcium, vitamin A (beta-carotene), vitamin C, and folate.
+
+**Cultivation:**
+- *Propagation:* Direct seed sowing in nursery (seedlings in 3 weeks); transplant at 4-5 weeks.
+- *Spacing:* 50cm × 40cm on raised beds.
+- *Soil:* Well-drained fertile loam; grows in full sun or partial shade.
+- *Fertiliser:* Compost (3-5 T/ha) + NPK 15-15-15 (100 kg/ha) at transplant.
+- *Water:* Moderate — keep soil moist but not waterlogged.
+- *Harvest:* Begin leaf harvest 5-6 weeks after transplanting. Harvest tops every 2 weeks to encourage bushy growth.
+- *Yield:* 10-18 T/ha fresh leaves.
+- *Pests:* Flea beetles (small holes in leaves) — spray neem oil. Spider mites in dry season — mist with water.
+
+**Cooking:** Smothered with onions, palm oil, crayfish, and habanero pepper. Served with fufu corn or fufu cocoyam.
+
+---
+
+## 🌊 WATERLEAF (*Talinum fruticosum* / *T. triangulare*)
+
+**Importance:** Used in combination with Eru and as a base green in soups across southern Cameroon.
+
+**Cultivation:** Very easy. Stem cuttings root in 2-3 days in moist soil. Space 30cm × 30cm on raised beds. Harvest every 3 weeks. Grows year-round in humid areas.
+
+---
+
+## NUTRITION & FOOD SECURITY NOTE
+These traditional vegetables are **more nutritious than many introduced vegetables** and are adapted to Cameroon's climate without expensive inputs. Integrating them into home gardens, school gardens, and agroforestry systems improves household nutrition, especially for women and children, while generating market income.
+
+FAO and nutrition programmes actively promote domestication and cultivation of Eru, Bitter Leaf, and African Nightshade to reduce pressure on wild forest resources and improve food sovereignty.`
+  },
+
+  // ── COCOA GOOD AGRONOMIC PRACTICES — DETAILED (FAO/ILRI) ─────────────────
+  {
+    triggers: ['cocoa nursery', 'cocoa seedling', 'cocoa spacing', 'cocoa shade', 'cocoa clone', 'cocoa pruning', 'jorquette', 'chupon', 'cocoa fertilizer', 'theobroma', 'cocoa establishment', 'cocoa planting'],
+    response: `🍫 **Cocoa Good Agronomic Practices — Pre & Post Planting (Cameroon/West Africa, based on FAO/ILRI research):**
+
+## PRE-PLANTING: NURSERY MANAGEMENT
+
+**Site selection:**
+- Level, sheltered area near water source with 50% shade.
+- Use polythene bags (30cm × 18cm) filled with topsoil + 20% composted organic matter.
+
+**Seed/Seedling preparation:**
+- Use certified high-yielding, disease-tolerant clones (in Cameroon: SNK 16, SNK 13, PA 150).
+- Extract seeds from fully ripe, healthy pods immediately before sowing. Do not dry.
+- Place 1 seed/bag at 2-3cm depth. Germination: 10-14 days.
+- Water daily. Harden seedlings (reduce shade) for 2 weeks before transplanting.
+
+**Transplanting:** 6-8 weeks old (20-25cm tall, 2-3 pairs of leaves).
+
+## PLANTING DESIGN & SHADE
+
+**Spacing:**
+- Standard: 3m × 3m (1,111 plants/ha) — most productive.
+- With shade trees: Plant shade at 9m × 9m (123 trees/ha) before or at same time as cocoa.
+
+**Shade management:**
+- *Establishment (year 1-3):* 40-50% shade using plantain intercrop or Gliricidia sepium.
+- *Production (year 3+):* Reduce to 20-30% by selective shade tree removal.
+- *Benefit:* Shade reduces Black Pod pressure, regulates microclimate, protects against wind.
+
+## FERTILIZATION PROGRAM
+
+| Tree Age | Fertilizer | Rate per Tree | Timing |
+|---|---|---|---|
+| 1-2 years | NPK 12-12-17 | 125g | Twice yearly (start/end of rains) |
+| 3-5 years | NPK 12-12-17 | 250g | Twice yearly |
+| Bearing (6+ yrs) | NPK 12-12-17 + MgSO₄ | 300g + 100g | Twice yearly |
+
+- Apply in a ring 30-50cm from the trunk; do not place directly on roots.
+- On acidic soils (pH <5.5): Lime at 1-2 T/ha every 3 years to prevent Mg and P fixation.
+
+## PRUNING FOR PRODUCTIVITY
+
+**Formative pruning (year 1-3):**
+- Allow ONE vertical stem to grow until the first jorquette forms naturally at 1.2-1.5m.
+- Select 3-5 strong branches from the jorquette; remove others.
+- Remove all vertical suckers (chupons) from trunk — they divert energy from pod production.
+
+**Maintenance pruning (annual):**
+- Remove crossing, diseased, and dead branches.
+- Thin inner canopy for 20-30% light penetration — sunlight on pods stimulates flowering.
+- Best pruning time: end of main dry season (before heavy rains).
+
+## DISEASE & PEST MANAGEMENT
+
+**Black Pod (Phytophthora megakarya — most severe in Cameroon):**
+- Remove and bury all diseased pods weekly during rainy season.
+- Copper-based fungicide (Ridomil Gold Plus or Nordox 75WG) every 21 days from start of rains until harvest.
+- Maintain good drainage in plantation — avoid waterlogging.
+
+**Cocoa Swollen Shoot Virus (CSSV):**
+- No cure. Rogue infected trees including 3-meter buffer zone around each infected tree.
+- Plant resistant/tolerant clones in replanting.
+
+**Mirids/Capsids (Sahlbergella singularis):**
+- Most damaging pest in Cameroon. Causes brown lesions on pods and bark.
+- Spray Thiamethoxam or Imidaclopride at first pod flush (August-October).
+- Monitor by counting capsids on 10 trees per hectare weekly during peak season.`
   }
 ];
 
@@ -278,42 +547,79 @@ async function resolveActiveOllamaModel() {
  * Chat with Agronomist AI using Ollama or Offline Agronomy Fallback
  */
 async function chatAgronomist({ message, history = [], farmerContext = {}, language = 'English' }) {
+  const isFrench = ['français', 'francais', 'french', 'fr'].includes(String(language).toLowerCase());
+
   if (!message || !message.trim()) {
     return {
       success: false,
-      reply: language === 'Français' || language === 'French' 
+      reply: isFrench
         ? 'Veuillez poser une question d\'agronomie ou d\'agriculture.' 
         : 'Please ask an agronomy or farming question.'
     };
   }
 
-  // Known crop and disease questions use the verified local knowledge base immediately.
-  // This keeps farmer answers available even when Ollama is still loading a model.
   const lowerMsg = message.toLowerCase();
   const agricultureTerms = [
     'agriculture', 'agricultural', 'agronomy', 'agronomist', 'farmer', 'farming',
     'farm', 'crop', 'soil', 'seed', 'planting', 'harvest', 'yield', 'irrigation',
     'fertilizer', 'fertiliser', 'manure', 'compost', 'npk', 'urea', 'pest',
     'insecticide', 'fungicide', 'weed', 'livestock', 'cattle', 'goat', 'poultry',
-    'chicken', 'pig', 'rice', 'maize', 'corn', 'cassava', 'manioc', 'cocoa',
-    'cacao', 'tomato', 'plantain', 'banana', 'potato', 'yam', 'coffee',
-    'groundnut', 'garnut', 'peanut', 'arachide', 'cowpea', 'sorghum', 'millet',
-    'cotton', 'onion', 'okra', 'gombo', 'pepper', 'pineapple', 'oil palm',
-    'haricot', 'bean', 'soya', 'soja', 'ndole', 'ndolé', 'macabo', 'taro',
-    'safou', 'avocat', 'mangue', 'papaye', 'fruit', 'légume', 'legume',
-    'engrais', 'récolte', 'recolte', 'ravageur', 'culture agricole', 'semence',
-    'maladie des plantes', 'maladie', 'pépinière', 'sarclage', 'buttage'
+    'rice', 'maize', 'corn', 'cassava', 'manioc', 'cocoa', 'cacao', 'tomato',
+    'plantain', 'banana', 'potato', 'yam', 'coffee', 'groundnut', 'peanut',
+    'cowpea', 'sorghum', 'millet', 'cotton', 'onion', 'okra', 'pepper',
+    'engrais', 'récolte', 'recolte', 'ravageur', 'semence', 'maladie',
+    'plante', 'culture', 'sol', 'champ', 'ferme', 'cultiver', 'semis',
+    'disease', 'seedling', 'nursery', 'transplant', 'pruning', 'mulch',
+    'intercrop', 'rotation', 'agroforestry', 'herbicide', 'greenhouse',
+    'sowing', 'rootstock', 'beans', 'legume', 'tuber', 'cob', 'tassel',
+    // Traditional vegetables
+    'eru', 'okok', 'koko', 'ndole', 'ndolé', 'bitter leaf', 'bitterleaf',
+    'huckleberry', 'njama', 'waterleaf', 'vernonia', 'gnetum', 'african nightshade',
+    'traditional vegetable', 'légume traditionnel', 'feuille comestible', 'wild vegetable',
+    // Nutrient deficiency & Diagnosis
+    'yellowing', 'yellow leaf', 'feuille jaune', 'nutrient deficiency', 'carence',
+    'deficiency', 'magnesium', 'nitrogen deficiency', 'potassium deficiency',
+    'leaf analysis', 'foliar test', 'pale leaf', 'purple leaf', 'interveinal',
+    'boron', 'zinc deficiency', 'iron deficiency', 'calcium deficiency',
+    'analyse foliaire', 'blossom end rot', 'stunted growth', 'agro hospital',
+    'tissue test', 'plant tissue', 'phytosanitary', 'chlorosis', 'necrosis',
+    // Cocoa rehabilitation
+    'rehabilitat', 'rehabilit', 'réhabilit', 'old cocoa', 'unproductive',
+    'cocoa recovery', 'replant cocoa', 'rejuvenat', 'chupon', 'jorquette',
+    'top-working', 'grafting cocoa', 'greffe cacao',
+    // Livestock & poultry
+    'chicken', 'poulet', 'broiler', 'layer', 'hen', 'egg', 'oeuf', 'coop',
+    'poulailler', 'volaille', 'duck', 'canard', 'guinea fowl', 'pintade',
+    'pig', 'swine', 'porc', 'cochon', 'sheep', 'mouton', 'cow', 'vache', 'bull',
+    'beef', 'dairy', 'bovin', 'boeuf', 'zebu', 'betail', 'bétail', 'élevage',
+    'vaccination', 'deworming', 'vermifuge', 'veterinary', 'vétérinaire',
+    // Fruit trees
+    'mango', 'mangue', 'avocado', 'avocat', 'citrus', 'orange', 'lemon', 'citron',
+    'pawpaw', 'papaya', 'papaye', 'guava', 'goyave', 'pineapple', 'ananas',
+    'passion fruit', 'fruit tree', 'arbre fruitier',
+    // Sustainable & agroforestry
+    'sustainable', 'organic', 'biologique', 'durable', 'agroecology', 'agroécologie',
+    'green manure', 'engrais vert', 'cover crop', 'mucuna', 'tephrosia',
+    'leucaena', 'gliricidia', 'calliandra', 'moringa', 'silvopastoral',
+    // Post-harvest & market
+    'post-harvest', 'stockage', 'conservation', 'drying', 'séchage', 'processing',
+    'transformation', 'market', 'marché', 'profit', 'revenu', 'income',
+    'value chain', 'chaîne de valeur', 'gari', 'storage'
   ];
-  const agricultureContext = ['plant', 'plants', 'leaf', 'leaves', 'root', 'tuber', 'fruit', 'garden', 'orchard', 'water', 'rain', 'disease', 'fungus', 'blight', 'mosaic', 'worm', 'aphid', 'cultiv', 'sol', 'plante', 'champ', 'semis', 'maladie', 'terre', 'eau', 'pluie', 'feuille', 'tige', 'arbre', 'graine', 'herbe', 'parasite'];
-  const plantSymptoms = ['yellow', 'brown', 'spot', 'spots', 'curl', 'wilting', 'wilt', 'rot', 'lesion', 'mosaic', 'blight', 'stunt', 'pustule', 'hole', 'holes', 'pourriture', 'jaune', 'tache', 'brûlure', 'enroulement'];
+  const regionalTerms = [
+    'littoral', 'douala', 'moungo', 'njombe', 'njombé', 'penja', 'mbanga',
+    'edéa', 'edea', 'centre', 'yaounde', 'yaoundé', 'bafia', 'ouest',
+    'west', 'bafoussam', 'foumbot', 'nord-ouest', 'north-west', 'bamenda',
+    'sud-ouest', 'south-west', 'buea', 'kumba', 'sud', 'south', 'est', 'east',
+    'adamawa', 'ngaoundéré', 'ngaoundere', 'nord', 'north', 'maroua', 'garoua'
+  ];
   const hasAgricultureTerm = agricultureTerms.some(term => lowerMsg.includes(term));
-  const contextMatches = agricultureContext.filter(term => lowerMsg.includes(term)).length;
-  const hasPlantSymptom = (lowerMsg.includes('plant') || lowerMsg.includes('plante') || lowerMsg.includes('leaf') || lowerMsg.includes('feuille')) && plantSymptoms.some(term => lowerMsg.includes(term));
-  const isAgricultureQuestion = hasAgricultureTerm || (contextMatches >= 1 && (agricultureContext.some(term => ['farm', 'crop', 'soil', 'planting', 'harvest', 'garden', 'orchard', 'irrigat', 'fertili', 'pest', 'disease', 'cultiv', 'champ', 'semis', 'maladie', 'feuille', 'plante'].includes(term) && lowerMsg.includes(term)) || hasPlantSymptom));
-  if (!isAgricultureQuestion) {
+  const hasRegionalAgricultureQuestion = regionalTerms.some(term => lowerMsg.includes(term))
+    && /\b(plant|crop|culture|cultiv|grow|farm|soil|season|harvest|planted|produced|what|which|best|plante|culture|cultiver|sol|saison|récolte|produit|quelle|quels)\b/i.test(lowerMsg);
+  if (!hasAgricultureTerm && !hasRegionalAgricultureQuestion) {
     return {
       success: true,
-      reply: language === 'Français' || language === 'French'
+      reply: isFrench
         ? 'Je suis Agro-Vission AI et je réponds uniquement aux questions d’agriculture, de cultures, de sols, de ravageurs et de maladies des plantes au Cameroun.'
         : 'I am Agro-Vission AI and I answer only agriculture questions about crops, soil, irrigation, pests, plant diseases, farm planning, and Cameroon farming. Please ask an agriculture-related question.',
       source: 'Agro-Vission Agriculture Scope Guard',
@@ -322,9 +628,38 @@ async function chatAgronomist({ message, history = [], farmerContext = {}, langu
     };
   }
 
+  // Deterministic regional, crop, and specialist guidance: select the most specific match
+  let bestKnowledgeItem = null;
+  let highestMatchScore = 0;
+  for (const item of OFFLINE_KNOWLEDGE) {
+    let score = 0;
+    for (const trigger of item.triggers) {
+      if (lowerMsg.includes(trigger)) {
+        score += trigger.length;
+      }
+    }
+    if (score > highestMatchScore) {
+      highestMatchScore = score;
+      bestKnowledgeItem = item;
+    }
+  }
+
+  if (bestKnowledgeItem && highestMatchScore > 0) {
+    return {
+      success: true,
+      reply: isFrench
+        ? `Voici des conseils agricoles vérifiés pour le Cameroun concernant votre question :\n\n${bestKnowledgeItem.response}`
+        : bestKnowledgeItem.response,
+      source: 'Agro-Vission On-Device AI Agronomist (Offline)',
+      isOfflineFallback: true,
+      modelUsed: 'Offline Knowledge Engine'
+    };
+  }
+
+  // Known crop and disease questions use the verified local knowledge base immediately.
+  // This keeps farmer answers available even when Ollama is still loading a model.
   const activeModel = await resolveActiveOllamaModel();
   if (activeModel) {
-    const isFrench = language === 'Français' || language === 'French';
     const contextSummary = Object.entries(farmerContext)
       .filter(([, value]) => value !== undefined && value !== null && String(value).trim())
       .map(([key, value]) => `${key}: ${value}`)
@@ -332,13 +667,15 @@ async function chatAgronomist({ message, history = [], farmerContext = {}, langu
 
     // Updated system prompt with language support
     const SYSTEM_PROMPT = isFrench 
-      ? `Vous êtes "Agro-Vission AI", un manuel et une encyclopédie agronomique vivante, spécialisé dans l'agriculture camerounaise et tropicale.
-Vous répondez avec une grande intelligence et clarté à toutes les questions agricoles (grandes cultures, cultures maraîchères, tubercules, arachides/garnut, arboriculture fruitière, sols, engrais, phytopathologie, élevage et stockage).
-Pour chaque demande d'agriculteur:
-1. Fournir une réponse complète, structurée et encyclopédique avec les variétés recommandées (INERA, IRAD, hybrides adaptés au Cameroun), densités et espacements.
-2. Détailler les protocoles de fertilisation (NPK, Urée, SSP, fientes, compost) et traitements bio et phytosanitaires.
-3. Pour les maladies et ravageurs (chenilles, pucerons, viroses de la rosette, cercosporiose, mildiou), donner les symptômes, la cause et la solution étape par étape.
-4. Donnez des conseils agronomiques adaptés aux 10 régions du Cameroun. Répondez toujours en français impeccable.`
+      ? `Vous êtes « Agro-Vission AI », un agronome professionnel et phytopathologiste spécialisé dans l'agriculture camerounaise et tropicale.
+
+DOMAINE : Vous répondez UNIQUEMENT aux questions d'agriculture et d'agronomie. Cela comprend : choix des cultures et calendriers; semis, pépinière et semences; analyse et fertilité du sol, compost et engrais; irrigation et maîtrise de l'eau; mauvaises herbes, ravageurs, maladies et diagnostic des plantes; récolte, conservation, stockage et transformation; élevage et aviculture; agroforesterie; risques climatiques; économie agricole, marchés; sécurité alimentaire; et agriculture durable ou biologique.
+
+HORS DOMAINE : Si une question porte sur la technologie, la politique, le divertissement, le sport, l'histoire, les mathématiques, la programmation, les finances personnelles, la médecine ou TOUT sujet non lié directement à l'agriculture — vous DEVEZ refuser poliment. Exemple : « Je suis Agro-Vission AI et je réponds uniquement aux questions d'agriculture. Posez-moi une question sur les cultures, le sol, les ravageurs ou les maladies des plantes. » Ne répondez jamais à une question hors domaine même si elle est formulée poliment.
+
+Comprenez les formulations naturelles, les fautes, les noms locaux et le français ou l'anglais. Si des détails manquent, répondez d'abord avec les informations sûres, indiquez vos hypothèses et posez une seule question de suivi utile.
+Commencez par la réponse directe, puis donnez les étapes pratiques, la prévention ou les risques, et les conseils adaptés au Cameroun lorsque cela est pertinent.
+Répondez uniquement en français clair et correct. Ne changez pas de langue à cause d'un nom de culture ou d'un mot cité.`
       : AGRONOMIST_SYSTEM_PROMPT;
 
     try {
@@ -365,7 +702,7 @@ Pour chaque demande d'agriculteur:
           options: {
             num_ctx: OLLAMA_NUM_CTX,
             num_threads: OLLAMA_NUM_THREADS,
-            num_predict: 140,
+            num_predict: 600,
             temperature: 0.6,
             top_p: 0.9
           }
@@ -393,24 +730,54 @@ Pour chaque demande d'agriculteur:
     }
   }
 
-  // 2. Intelligent Offline Fallback Engine
+  // 2. Intelligent Offline Fallback Engine: select the most specific match
+  let fallbackItem = null;
+  let highestFallbackScore = 0;
   for (const item of OFFLINE_KNOWLEDGE) {
-    if (item.triggers.some(t => lowerMsg.includes(t))) {
-      return {
-        success: true,
-        reply: item.response,
-        source: 'Agro-Vission On-Device AI Agronomist (Offline)',
-        isOfflineFallback: true,
-        modelUsed: 'Offline Knowledge Engine'
-      };
+    let score = 0;
+    for (const t of item.triggers) {
+      if (lowerMsg.includes(t)) {
+        score += t.length;
+      }
+    }
+    if (score > highestFallbackScore) {
+      highestFallbackScore = score;
+      fallbackItem = item;
     }
   }
 
+  if (fallbackItem && highestFallbackScore > 0) {
+    return {
+      success: true,
+      reply: isFrench
+        ? `Voici des conseils agricoles vérifiés pour le Cameroun concernant votre question :\n\n${fallbackItem.response}`
+        : fallbackItem.response,
+      source: 'Agro-Vission On-Device AI Agronomist (Offline)',
+      isOfflineFallback: true,
+      modelUsed: 'Offline Knowledge Engine'
+    };
+  }
+
   // Generic expert fallback response
+  const asksAboutAgriculture = /\b(what is agriculture|define agriculture|qu'est-ce que l'agriculture|c'est quoi l'agriculture)\b/i.test(message);
+  const agricultureDefinition = isFrench
+    ? "L’agriculture est la culture des plantes et l’élevage des animaux pour produire des aliments, des fibres et d’autres produits utiles. Au Cameroun, elle comprend notamment les céréales, tubercules, légumineuses, cultures maraîchères, cacao, café et élevage.\n"
+    : "Agriculture is the cultivation of plants and the raising of animals to produce food, fibre, and other useful products. In Cameroon, it includes cereals, root crops, legumes, vegetables, cocoa, coffee, and livestock.\n";
   return {
     success: true,
-    reply: `🌾 **Agro-Vission AI Agronomist Guidance:**
+    reply: isFrench
+      ? `🌾 **Conseils de l'Agronome IA Agro-Vission :**
+Concernant **"${message.trim()}"** :
+${asksAboutAgriculture ? agricultureDefinition : ''}
+1. **Préparation du sol :** Travaillez le sol et incorporez du compost ou du fumier bien décomposé.
+2. **Choix de la culture :** Tenez compte de la région, de la saison, du drainage et du marché local.
+3. **Protection :** Inspectez régulièrement les feuilles et les tiges pour détecter ravageurs et maladies.
+4. **Fertilisation :** Utilisez une analyse du sol quand elle est disponible et suivez les doses indiquées sur l'étiquette.
+
+Précisez la culture, la région du Cameroun, la saison et le type de sol pour une recommandation plus précise.`
+      : `🌾 **Agro-Vission AI Agronomist Guidance:**
 Regarding **"${message.trim()}"**:
+${asksAboutAgriculture ? agricultureDefinition : ''}
 1. **Soil & Field Preparation:** Till soil deeply, construct high ridges for root crops, and add decomposed organic manure to boost beneficial soil microbiome.
 2. **Crop Protection:** Scout leaf undersides and stem bases every 3 days for early insect eggs, fungal spots, or discoloration.
 3. **Fertilizer Program:** Apply Phosphorus (SSP/NPK) at planting for strong roots, Nitrogen (Urea) during vegetative growth, and Potassium (MOP/Wood ash) for fruit and tuber bulking.

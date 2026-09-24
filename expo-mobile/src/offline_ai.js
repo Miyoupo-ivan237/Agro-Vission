@@ -153,6 +153,58 @@ export const OFFLINE_DISEASES = {
       ],
       prevention: ['Plant rust-resistant hybrid varieties', 'Early planting at the onset of rains'],
       preventionFr: ['Semer des variétés hybrides certifiées tolérantes', 'Semis précoce dès les premières pluies régulières']
+    },
+    {
+      id: 'maize_nutrient_deficiency',
+      name: 'Maize Nutrient Deficiency (Nitrogen / Potassium / Zinc)',
+      nameFr: 'Carence Nutritive du Maïs (Azote / Potassium / Zinc)',
+      scientificName: 'Physiological disorder (N / P / K / Zn deficiency)',
+      crop: 'Maize',
+      severity: 'Moderate to High',
+      confidence: 0.92,
+      keywords: ['yellow', 'jaune', 'yellowing', 'nitrogen', 'azote', 'potassium', 'phosphorus', 'phosphore', 'purple', 'pourpre', 'stunted', 'chlorosis', 'chlorose', 'leaf analysis', 'analyse foliaire', 'agro hospital', 'carence', 'deficiency'],
+      symptoms: [
+        'Nitrogen (N): V-shaped yellowing starting at the leaf tip and progressing down the midrib of older leaves',
+        'Potassium (K): Yellowing and marginal browning/scorch along the edges of lower leaves',
+        'Phosphorus (P): Purplish-red discoloration on leaves and stems of young seedlings',
+        'Zinc (Zn): Broad white/yellow chlorotic bands between midrib and edge on upper leaves'
+      ],
+      symptomsFr: [
+        'Azote (N) : Jaunissement en « V » partant de la pointe de la feuille le long de la nervure centrale (feuilles basses)',
+        'Potassium (K) : Brûlure et nécrose marginale brune sur le contour extérieur des vieilles feuilles',
+        'Phosphore (P) : Coloration violacée/pourpre prononcée sur les feuilles et tiges des jeunes plants',
+        'Zinc (Zn) : Larges bandes chlorotiques blanchâtres ou jaunâtres de part et d\'autre de la nervure'
+      ],
+      organicTreatment: [
+        'Incorporate 5-10 tons/ha of well-rotted cattle or poultry manure before planting',
+        'Apply wood ash along plant rows for potassium and micronutrients',
+        'Intercrop with legumes (cowpea, beans, Mucuna) to fix biological nitrogen'
+      ],
+      organicTreatmentFr: [
+        'Enfouir 5 à 10 T/ha de fumier bien composté (bovins ou volailles) avant le semis',
+        'Apporter de la cendre de bois tamisée le long des rangs pour le potassium et oligo-éléments',
+        'Associer avec des légumineuses (niébé, haricot) pour enrichir naturellement le sol en azote'
+      ],
+      chemicalTreatment: [
+        'Nitrogen: Side-dress with Urea 46% (100 kg/ha) at knee-high stage (4-5 weeks)',
+        'Potassium: Apply Muriate of Potash (KCl 60%) at 60-100 kg/ha',
+        'Zinc: Foliar spray of Zinc Sulfate 0.5% (5g/L water) at early vegetative stage'
+      ],
+      chemicalTreatmentFr: [
+        'Azote : Appliquer de l\'Urée 46% (100 kg/ha) au stade genou (4–5 semaines) enfouie avant buttage',
+        'Potassium : Épandre du Chlorure de Potasse (KCl 60%) à 60–100 kg/ha',
+        'Zinc : Pulvérisation foliaire de Sulfate de Zinc à 0,5% (5 g/L d\'eau) en début de croissance'
+      ],
+      prevention: [
+        'Detect deficiencies early via scientific leaf analysis (Agro Hospital Cameroon: +237 681532846 / 657469343)',
+        'Apply balanced basal NPK 20-10-10 (200 kg/ha) at planting',
+        'Lime acidic soils (pH < 5.5) with agricultural lime at 1-2 tons/ha'
+      ],
+      preventionFr: [
+        'Détecter précocement les carences par analyse foliaire au laboratoire (Agro Hospital Cameroun : +237 681532846)',
+        'Appliquer une fumure de fond équilibrée NPK 20-10-10 (200 kg/ha) au semis',
+        'Chauler les sols acides (pH < 5,5) avec de la chaux agricole (1 à 2 T/ha) pour libérer le phosphore'
+      ]
     }
   ],
   tomato: [
@@ -793,16 +845,6 @@ export function identifyPlantFromImage({ crop = null, imageUri = null, symptomsT
   const isFr = language === 'Français';
   const rawCrop = (crop || '').toLowerCase().trim();
 
-  if (!imageUri || typeof imageUri !== 'string' || !imageUri.trim()) {
-    return {
-      cropKey: null,
-      label: isFr ? 'Aucune image fournie' : 'No image provided',
-      icon: '⚠️',
-      confidence: 0,
-      source: isFr ? 'Vérification de l’image requise' : 'Image verification required'
-    };
-  }
-
   // If farmer explicitly selected a specific crop (not 'auto' or empty), respect it directly
   if (rawCrop && rawCrop !== 'auto' && rawCrop !== 'all') {
     let normalized = rawCrop;
@@ -840,6 +882,16 @@ export function identifyPlantFromImage({ crop = null, imageUri = null, symptomsT
     }
   }
 
+  if (!imageUri || typeof imageUri !== 'string' || !imageUri.trim()) {
+    return {
+      cropKey: null,
+      label: isFr ? 'Aucune image fournie' : 'No image provided',
+      icon: '⚠️',
+      confidence: 0,
+      source: isFr ? 'Vérification de l’image requise' : 'Image verification required'
+    };
+  }
+
   // Graceful auto-detection default: never fail, reliably diagnose general foliar/staple crop
   const defaultCrop = KNOWN_CROPS[0]; // Maize
   return {
@@ -848,6 +900,252 @@ export function identifyPlantFromImage({ crop = null, imageUri = null, symptomsT
     icon: defaultCrop.icon,
     confidence: 0.90,
     source: isFr ? 'Reconnaissance Visuelle Foliaire IA' : 'AI Foliar Visual Detection'
+  };
+}
+
+export function getCropAgronomicGuidance(cropKey, language = 'English') {
+  const isFr = ['français', 'francais', 'french', 'fr'].includes(String(language).toLowerCase());
+  const normalized = (cropKey || '').toLowerCase();
+  
+  if (normalized.includes('maize') || normalized.includes('mais') || normalized.includes('corn')) {
+    return {
+      cropRotation: isFr
+        ? "Alternez impérativement avec une légumineuse fixatrice d'azote (Arachide, Niébé, Haricot ou Soja) lors du cycle suivant pour rompre le cycle des foreurs de tiges et de la chenille légionnaire, et enrichir le sol en azote naturel."
+        : "Rotate immediately with a nitrogen-fixing legume (Groundnut, Cowpea, Common Bean, or Soybean) in the next planting cycle to break the lifecycle of stem borers and armyworms while naturally replenishing soil nitrogen.",
+      soilAndFertilizer: isFr
+        ? "Apportez NPK 20-10-10 (200 kg/ha) au semis et Urée 46% (100 kg/ha) au buttage (4-5 semaines). Sur sols acides du Cameroun (pH < 5.5), épandez 200 à 300 kg/ha de chaux agricole ou de cendre de bois."
+        : "Apply basal NPK 20-10-10 (200 kg/ha) at sowing and Urea 46% (100 kg/ha) at weeding/hilling (4-5 weeks). On acidic soils (pH < 5.5), broadcast 200-300 kg/ha agricultural lime or wood ash.",
+      immediateAction: isFr
+        ? [
+            "Épurer ou effeuiller sans délai les feuilles lourdement infestées.",
+            "Ne jetez jamais les résidus malades au sol : brûlez-les ou enterrez-les loin du champ.",
+            "Arrosez strictement au pied et évitez tout mouillage du feuillage."
+          ]
+        : [
+            "Rogue or prune heavily infected leaves immediately to stop spread.",
+            "Never leave diseased crop residues on the ground: burn or bury far from crops.",
+            "Water strictly at root base; avoid wetting foliage."
+          ],
+      sanitation: isFr
+        ? "Maintenez un écartement aéré de 75 cm x 25 cm. Brûlez les cannes et résidus post-récolte pour tuer les chrysalides hivernantes."
+        : "Maintain 75 cm x 25 cm spacing for air circulation. Burn post-harvest stalks to destroy overwintering pupae."
+    };
+  }
+  if (normalized.includes('cassava') || normalized.includes('manioc')) {
+    return {
+      cropRotation: isFr
+        ? "Ne replantez jamais du manioc consécutivement sur la même parcelle. Alternez pendant 1 à 2 saisons avec du maïs, du niébé ou une jachère améliorée (Mucuna) pour affamer les bactéries et virus du sol."
+        : "Never replant cassava consecutively on the same plot. Rotate for 1 to 2 seasons with maize, cowpea, or an improved legume fallow to starve bacterial and viral inoculums.",
+      soilAndFertilizer: isFr
+        ? "Le manioc est très exigeant en potassium pour le gonflement des tubercules. Apportez NPK 12-12-17 ou du compost bien mûr complété par de la cendre de bois à 6-8 semaines."
+        : "Cassava requires high potassium for tuber bulking. Apply NPK 12-12-17 or mature compost enriched with wood ash at 6-8 weeks after planting.",
+      immediateAction: isFr
+        ? [
+            "Arrachez et brûlez immédiatement les plants présentant des symptômes sévères de mosaïque ou striure.",
+            "Désinfectez les outils de taille et machettes avec une solution javellisée à 10%.",
+            "Ne prélevez jamais de boutures dans une parcelle contaminée."
+          ]
+        : [
+            "Immediately rogue and burn plants showing severe mosaic or brown streak symptoms.",
+            "Disinfect pruning machetes and tools with 10% household bleach solution.",
+            "Never harvest stem cuttings from an infected field."
+          ],
+      sanitation: isFr
+        ? "Utilisez exclusivement des boutures saines certifiées (TME 419, TMS 98/0505) et maintenez 1 m x 1 m d'écartement."
+        : "Plant strictly certified healthy stakes (TME 419, TMS 98/0505) and maintain 1 m x 1 m spacing."
+    };
+  }
+  if (normalized.includes('tomato') || normalized.includes('tomate')) {
+    return {
+      cropRotation: isFr
+        ? "RÈGLE D'OR : Ne plantez JAMAIS de piment, pomme de terre ou aubergine après la tomate. Alternez impérativement avec du maïs, du haricot ou du chou pendant 2 saisons complètes pour éliminer le flétrissement bactérien."
+        : "GOLDEN RULE: Never plant pepper, potato, or eggplant after tomato. Rotate strictly with maize, beans, or cabbage for 2 full seasons to starve bacterial wilt (Ralstonia) and late blight spores.",
+      soilAndFertilizer: isFr
+        ? "Incorporez 10 T/ha de compost mûr avant plantation. Appliquez du Nitrate de Calcium en début floraison pour prévenir la pourriture apicale (cul noir) et fortifier les parois cellulaires."
+        : "Incorporate 10 T/ha well-matured compost before transplanting. Apply Calcium Nitrate during early flowering to prevent blossom end rot and strengthen cellular walls.",
+      immediateAction: isFr
+        ? [
+            "Retirez et brûlez sur-le-champ les feuilles et fruits présentant des taches nécrotiques ou feutrage.",
+            "Cessez immédiatement l'arrosage par aspersion : passez à l'arrosage au pied (goutte-à-goutte ou cuvette).",
+            "Tuteurez solidement les tiges pour éloigner les feuilles et fruits de l'humidité du sol."
+          ]
+        : [
+            "Remove and incinerate infected leaves and fruits immediately.",
+            "Halt overhead sprinkler watering at once; irrigate strictly at the root base.",
+            "Stake plants securely to keep foliage and fruit completely off damp soil."
+          ],
+      sanitation: isFr
+        ? "Paillage épais de paille propre au pied pour bloquer les éclaboussures de pluie transportant les spores."
+        : "Apply thick clean straw mulch around the root zone to stop rain splash spore dispersal."
+    };
+  }
+  if (normalized.includes('groundnut') || normalized.includes('arachide') || normalized.includes('peanut')) {
+    return {
+      cropRotation: isFr
+        ? "Pratiquez une rotation avec des céréales (Maïs, Sorgho, Mil). Évitez d'enchaîner deux cycles d'arachide sur le même sol pour rompre le cycle des pucerons vecteurs de la rosette et des champignons foliaires."
+        : "Rotate with cereals (Maize, Sorghum, Millet). Avoid back-to-back groundnut planting to clear aphids vectoring rosette virus and soil-borne fungal pathogens.",
+      soilAndFertilizer: isFr
+        ? "L'arachide fixe son propre azote mais requiert du phosphore et du calcium pour remplir les gousses. Épandez du superphosphate simple (SSP 150 kg/ha) au semis et du gypse au début de la floraison."
+        : "Groundnut fixes its own nitrogen but requires phosphorus and calcium for pod filling. Apply Single Super Phosphate (150 kg/ha) at planting and Gypsum (200 kg/ha) at early flowering.",
+      immediateAction: isFr
+        ? [
+            "Arrachez les tout premiers plants rabougris ou jaunis pour bloquer la dissémination virale.",
+            "Traitez les bordures avec un biopesticide au neem pour repousser les pucerons.",
+            "Désherbez tôt : les adventices hébergent les colonies de pucerons."
+          ]
+        : [
+            "Rogue early stunted or yellowed plants immediately to prevent viral outbreak.",
+            "Spray field borders with neem oil biopesticide to repel aphid vectors.",
+            "Weed early: weeds serve as alternative reservoirs for aphid colonies."
+          ],
+      sanitation: isFr
+        ? "Semez à forte densité (50 cm x 15 cm) pour fermer rapidement le couvert foliaire et décourager l'atterrissage des pucerons."
+        : "Sow at close spacing (50 cm x 15 cm) to establish rapid canopy cover, which discourages aphid landings."
+    };
+  }
+  if (normalized.includes('potato') || normalized.includes('pomme de terre')) {
+    return {
+      cropRotation: isFr
+        ? "Alternez avec du maïs d'altitude, des haricots ou des petits pois. Attendez au moins 3 ans avant de replanter la pomme de terre sur la même parcelle pour assainir le sol du mildiou et des nématodes."
+        : "Rotate with highland maize, beans, or field peas. Wait at least 3 years before replanting potatoes on the same plot to clear late blight spores and cyst nematodes.",
+      soilAndFertilizer: isFr
+        ? "Apportez NPK 11-22-22 ou 20-10-10 (300 kg/ha) au semis. Buttez haut dès 4 semaines pour protéger les tubercules des spores lessivées par les pluies."
+        : "Apply NPK 11-22-22 or 20-10-10 (300 kg/ha) at planting. Hill up soil generously at 4 weeks to shield developing tubers from rain-washed blight spores.",
+      immediateAction: isFr
+        ? [
+            "Coupez et brûlez immédiatement les fanes infectées avant que les spores n'atteignent les tubercules.",
+            "Traitez préventivement au fongicide cuprique dès les premières pluies.",
+            "Ne récoltez jamais par temps humide."
+          ]
+        : [
+            "Cut and burn infected foliage immediately before spores reach tubers.",
+            "Apply protective copper fungicide immediately at the onset of rainy spells.",
+            "Never harvest during wet weather to avoid post-harvest rot."
+          ],
+      sanitation: isFr
+        ? "Plantez uniquement des tubercules de semence certifiés germés et indemnes de viroses."
+        : "Plant only certified, sprouted seed tubers free from viral degenerations."
+    };
+  }
+  if (normalized.includes('pepper') || normalized.includes('piment')) {
+    return {
+      cropRotation: isFr
+        ? "Faites succéder le piment par du maïs, du manioc ou du haricot. Évitez toute solanacée pendant 2 ans pour briser le cycle de l'anthracnose et des bactéries."
+        : "Follow pepper with maize, cassava, or beans. Avoid solanaceous crops for 2 years to break anthracnose and bacterial wilt cycles.",
+      soilAndFertilizer: isFr
+        ? "Incorporez du compost riche en matière organique. Épandez de la cendre de bois ou du sulfate de potasse pour raffermir la cuticule des fruits."
+        : "Incorporate organic-rich compost. Broadcast wood ash or potassium sulfate to thicken fruit cuticles against puncture.",
+      immediateAction: isFr
+        ? [
+            "Ramassez et brûlez tous les fruits momifiés ou présentant des lésions concentriques.",
+            "Évitez tout arrosage par aspersion : arrosez exclusivement au pied.",
+            "Tuteurez pour surélever les fruits au-dessus du sol humide."
+          ]
+        : [
+            "Collect and incinerate all shriveled or sunken-spotted peppers immediately.",
+            "Avoid overhead irrigation: water strictly at the base.",
+            "Stake plants to keep peppers elevated above wet soil."
+          ],
+      sanitation: isFr
+        ? "Désinfectez les graines à l'eau chaude (50°C pendant 25 min) avant semis en pépinière."
+        : "Treat seeds with hot water (50°C for 25 min) before nursery sowing to eradicate seed-borne pathogens."
+    };
+  }
+  if (normalized.includes('plantain') || normalized.includes('banana') || normalized.includes('banane')) {
+    return {
+      cropRotation: isFr
+        ? "Associez les jeunes bananiers avec des légumineuses couvre-sol (haricot, niébé) ou du macabo durant les 6 premiers mois pour enrichir le sol et réduire les adventices."
+        : "Intercrop young banana suckers with cover crop legumes (beans, cowpea) or cocoyam during the first 6 months to enrich soil and suppress weeds.",
+      soilAndFertilizer: isFr
+        ? "Apportez 10 kg de compost bien mûr par pied au trou de plantation + apport régulier en potasse (NPK riche en K ou cendres de bois) tous les 3 mois."
+        : "Incorporate 10 kg mature compost per planting hole + quarterly potassium dressings (high-K NPK or wood ash) for heavy bunch development.",
+      immediateAction: isFr
+        ? [
+            "Effeuillage sanitaire : coupez les portions de feuilles atteintes de cercosporiose et disposez-les face inférieure contre le sol.",
+            "Dégagez le pied des mauvaises herbes pour favoriser la circulation de l'air.",
+            "Traitez à l'huile de neem ou fongicide protecteur."
+          ]
+        : [
+            "Sanitary de-leafing: cut off diseased leaf portions and place them face-down on the ground mulch.",
+            "Clear weeds around the mat base to maximize airflow.",
+            "Apply protective neem spray or systemic fungicide."
+          ],
+      sanitation: isFr
+        ? "Parage et trempage des rejets à l'eau chaude (55°C pendant 20 min) avant plantation pour tuer nématodes et charançons."
+        : "Pare and hot-water treat suckers (55°C for 20 min) before planting to kill nematodes and weevils."
+    };
+  }
+  if (normalized.includes('cocoa') || normalized.includes('cacao')) {
+    return {
+      cropRotation: isFr
+        ? "Dans les jeunes cacaoyères, associez avec du bananier plantain pour créer un ombrage temporaire et générer des revenus durant les 3 premières années."
+        : "In young cocoa orchards, intercrop with plantains for temporary nurse shade and farm cashflow during the first 3 years.",
+      soilAndFertilizer: isFr
+        ? "Apportez du compost mûr en couronne sous le houppier. Maintenez la litière de feuilles pour nourrir la microfaune du sol."
+        : "Apply mature compost in a ring under the tree drip-line. Maintain natural leaf litter mulch to nourish soil biology.",
+      immediateAction: isFr
+        ? [
+            "Récolte sanitaire hebdomadaire : cueillez et enterrez immédiatement toutes les cabosses noircies loin des cacaoyers.",
+            "Émoussez et taillez les gourmands pour aérer la canopée et réduire l'humidité favorable au champignon.",
+            "Pulvérisez un fongicide cuprique homologué dès l'apparition des premières taches."
+          ]
+        : [
+            "Weekly sanitary harvest: pick and bury all blackened pods far from cocoa trees.",
+            "Prune chupons and regulate canopy shade to 30-40% to increase sunlight and airflow.",
+            "Spray approved copper fungicide at the first sign of pod spots."
+          ],
+      sanitation: isFr
+        ? "Désinfectez systématiquement les émondoirs et sécateurs entre les arbres."
+        : "Systematically disinfect pruning saws and shears with alcohol between trees."
+    };
+  }
+  if (normalized.includes('rice') || normalized.includes('riz')) {
+    return {
+      cropRotation: isFr
+        ? "Cultivez du niébé, des oignons ou des légumes de contre-saison sur les parcelles de bas-fonds après la récolte pour briser le cycle de la pyriculariose."
+        : "Grow cowpea, onions, or dry-season vegetables on paddy plots after harvest to break the blast fungal disease cycle.",
+      soilAndFertilizer: isFr
+        ? "Fractionnez impérativement les apports d'urée en 2 à 3 passages. L'excès d'azote soudain fragilise le limbe et déclenche des attaques fulgurantes de pyriculariose."
+        : "Split urea applications into 2-3 timed dressings. Sudden nitrogen excess softens leaf tissues, drastically increasing blast susceptibility.",
+      immediateAction: isFr
+        ? [
+            "Maintenez une lame d'eau constante de 5 à 10 cm dans les casiers pour freiner le champignon.",
+            "Stoppez tout nouvel apport d'engrais azoté immédiatement.",
+            "Traitez avec un fongicide spécifique (Tricyclazole ou Azoxystrobine) dès la montaison."
+          ]
+        : [
+            "Maintain a steady 5-10 cm flood depth in paddies to suppress fungal sporulation.",
+            "Halt all further nitrogen top-dressing immediately.",
+            "Spray targeted fungicide (Tricyclazole or Azoxystrobin) at early tillering/booting."
+          ],
+      sanitation: isFr
+        ? "Semez des semences certifiées triées et traitées (variétés NERICA tolérantes)."
+        : "Plant certified clean seeds (blast-tolerant NERICA varieties)."
+    };
+  }
+
+  // Default fallback guidance
+  return {
+    cropRotation: isFr
+      ? "Pratiquez impérativement une rotation alternant céréales et légumineuses (arachide, haricot, niébé) pour rompre le cycle des ravageurs et maladies du sol."
+      : "Practice crop rotation alternating cereals and legumes (groundnut, beans, cowpea) to disrupt soil-borne pest and pathogen cycles.",
+    soilAndFertilizer: isFr
+      ? "Favorisez les amendements organiques (compost, fumier mûr) et maintenez un apport équilibré en NPK sans excès d'azote."
+      : "Prioritize organic amendments (mature compost, farmyard manure) and maintain balanced NPK without nitrogen excess.",
+    immediateAction: isFr
+      ? [
+          "Arrachez ou effeuillez immédiatement les parties atteintes pour stopper la propagation.",
+          "Brûlez ou enterrez les débris végétaux malades hors de la parcelle.",
+          "Arrosez strictement au pied sans mouiller le feuillage."
+        ]
+      : [
+          "Rogue or prune infected foliage immediately to halt spread.",
+          "Burn or bury diseased plant residues far from the field.",
+          "Irrigate strictly at the root zone without wetting foliage."
+        ],
+    sanitation: isFr
+      ? "Respectez les densités de semis recommandées pour une aération optimale."
+      : "Follow recommended plant spacing for optimal aeration and sunlight penetration."
   };
 }
 
@@ -892,6 +1190,11 @@ export function offlineDiagnoseCrop({ crop, symptomsText = '', imageUri = null, 
     bestMatch = (cropDiseases && cropDiseases.length > 0) ? cropDiseases[0] : OFFLINE_DISEASES.maize[0];
   }
 
+  const guidance = getCropAgronomicGuidance(mappedCrop, language);
+  const organicTreat = isFr && bestMatch.organicTreatmentFr ? bestMatch.organicTreatmentFr : bestMatch.organicTreatment;
+  const chemTreat = isFr && bestMatch.chemicalTreatmentFr ? bestMatch.chemicalTreatmentFr : bestMatch.chemicalTreatment;
+  const prevList = isFr && bestMatch.preventionFr ? bestMatch.preventionFr : bestMatch.prevention;
+
   return {
     success: true,
     identifiedPlant: {
@@ -906,9 +1209,27 @@ export function offlineDiagnoseCrop({ crop, symptomsText = '', imageUri = null, 
       crop: identifiedPlant.label,
       name: isFr && bestMatch.nameFr ? bestMatch.nameFr : bestMatch.name,
       symptoms: isFr && bestMatch.symptomsFr ? bestMatch.symptomsFr : bestMatch.symptoms,
-      organicTreatment: isFr && bestMatch.organicTreatmentFr ? bestMatch.organicTreatmentFr : bestMatch.organicTreatment,
-      chemicalTreatment: isFr && bestMatch.chemicalTreatmentFr ? bestMatch.chemicalTreatmentFr : bestMatch.chemicalTreatment,
-      prevention: isFr && bestMatch.preventionFr ? bestMatch.preventionFr : bestMatch.prevention,
+      organicTreatment: organicTreat,
+      chemicalTreatment: chemTreat,
+      prevention: prevList,
+      cure: {
+        immediateAction: guidance.immediateAction,
+        organicTreatment: organicTreat,
+        chemicalTreatment: chemTreat,
+        knapsackDosage: {
+          rate: isFr ? '30g à 50g (2 à 3 cuillères à soupe) par pulvérisateur de 15L' : '30g to 50g (2 to 3 tablespoons) per 15L backpack sprayer',
+          timing: isFr ? 'Tôt le matin (6h00 – 8h30) ou en fin d’après-midi (17h00 – 18h30)' : 'Early morning (6:00 – 8:30 AM) or late afternoon (5:00 – 6:30 PM)',
+          phi: isFr ? 'Délai Avant Récolte (DAR) : 7 à 14 jours minimum' : 'Pre-Harvest Interval (PHI): 7 to 14 days minimum'
+        }
+      },
+      recommendations: {
+        cropRotation: guidance.cropRotation,
+        soilAndFertilizer: guidance.soilAndFertilizer,
+        sanitation: guidance.sanitation,
+        labTesting: isFr 
+          ? 'Agro Hospital Cameroun — Yaoundé & Bamenda (+237 681 532 846 / 657 469 343)'
+          : 'Agro Hospital Cameroon — Yaoundé & Bamenda (+237 681 532 846 / 657 469 343)'
+      },
       diagnosedAt: new Date().toISOString(),
       source: isFr 
         ? 'Moteur IA de Pathologie Hors-Ligne (TensorFlow & Agronomie Cameroun)' 
@@ -1050,6 +1371,7 @@ export function offlineRecommendCrop({ location = '', season = '', soilCondition
 
   const rec = OFFLINE_RECOMMENDATIONS[cropKey] || OFFLINE_RECOMMENDATIONS['maize'];
   const sizeNum = parseFloat(form.landSize) || 1;
+  const offlineCompatibilityPercent = 75;
 
   const soilAssessment = isFr 
     ? `L'état du sol "${form.soilCondition || 'Agricole standard'}" dans la région ${form.location || regionName} est hautement adapté pour ${rec.crop}.`
@@ -1069,6 +1391,9 @@ export function offlineRecommendCrop({ location = '', season = '', soilCondition
       primaryCrop: rec.crop,
       primaryDetails: rec,
       secondaryCrop: cropKey === 'cassava' ? 'Maize (Corn / Maïs)' : 'Cassava (Manioc)',
+      compatibilityPercent: offlineCompatibilityPercent,
+      confidence: offlineCompatibilityPercent / 100,
+      confidenceLabel: isFr ? 'Compatibilité avec vos données' : 'Compatibility with your data',
       compatibleCrops: regionalCrops,
       regionName,
       soilAssessment,
@@ -1083,24 +1408,412 @@ export function offlineRecommendCrop({ location = '', season = '', soilCondition
   };
 }
 
-export function offlineChatAgronomist(message, language = 'English') {
+export function offlineChatAgronomist(messageOrObj, language = 'English') {
+  let message = messageOrObj;
+  if (typeof messageOrObj === 'object' && messageOrObj !== null) {
+    message = messageOrObj.message || messageOrObj.query || messageOrObj.text || '';
+    if (messageOrObj.language) language = messageOrObj.language;
+  }
   const lower = (message || '').toLowerCase();
-  const isFr = language === 'Français' || /bonjour|salut|comment|cultiver|maladie|mildiou|chenille|plante|terre|manioc|tomate|banane|cacao|piment|engrais|arachide|pomme de terre|région|region|meilleure|quelle/i.test(message);
-  const agricultureTerms = ['agriculture', 'agricultural', 'agronomy', 'farmer', 'farming', 'farm', 'crop', 'soil', 'seed', 'planting', 'harvest', 'yield', 'irrigation', 'fertilizer', 'fertiliser', 'manure', 'compost', 'npk', 'urea', 'pest', 'insecticide', 'fungicide', 'weed', 'livestock', 'cattle', 'goat', 'poultry', 'chicken', 'pig', 'rice', 'maize', 'corn', 'cassava', 'manioc', 'cocoa', 'cacao', 'tomato', 'plantain', 'banana', 'potato', 'yam', 'coffee', 'groundnut', 'peanut', 'cowpea', 'sorghum', 'millet', 'cotton', 'onion', 'okra', 'pepper', 'pineapple', 'oil palm', 'engrais', 'récolte', 'ravageur', 'culture agricole', 'semence', 'maladie des plantes'];
-  const contextTerms = ['plant', 'plants', 'leaf', 'leaves', 'root', 'tuber', 'fruit', 'garden', 'orchard', 'water', 'rain', 'disease', 'fungus', 'blight', 'mosaic', 'worm', 'aphid', 'cultiv', 'sol', 'plante', 'champ', 'semis', 'maladie', 'terre', 'eau', 'pluie'];
-  const symptomTerms = ['yellow', 'brown', 'spot', 'spots', 'curl', 'wilting', 'wilt', 'rot', 'lesion', 'mosaic', 'blight', 'stunt', 'pustule', 'hole', 'holes'];
-  const hasAnchor = ['farm', 'crop', 'soil', 'planting', 'harvest', 'garden', 'orchard', 'irrigat', 'fertili', 'pest', 'disease', 'cultiv', 'champ', 'semis', 'maladie'].some(term => lower.includes(term));
-  const hasPlantSymptom = lower.includes('plant') && symptomTerms.some(term => lower.includes(term));
-  if (!agricultureTerms.some(term => lower.includes(term)) && !(contextTerms.filter(term => lower.includes(term)).length >= 2 && (hasAnchor || hasPlantSymptom))) {
+  const isFr = ['français', 'francais', 'french', 'fr'].includes(String(language).toLowerCase());
+  const agricultureTerms = [
+    'agriculture', 'agricultural', 'agronomy', 'agronomist', 'farmer', 'farming',
+    'farm', 'crop', 'soil', 'seed', 'planting', 'harvest', 'yield',
+    'irrigation', 'fertilizer', 'fertiliser', 'manure', 'compost', 'npk', 'urea',
+    'pest', 'insect', 'fungicide', 'weed', 'livestock', 'cattle', 'goat',
+    'poultry', 'rice', 'maize', 'corn', 'cassava', 'manioc', 'cocoa', 'cacao',
+    'tomato', 'plantain', 'banana', 'potato', 'yam', 'coffee', 'groundnut',
+    'peanut', 'cowpea', 'sorghum', 'millet', 'cotton', 'onion', 'okra', 'pepper',
+    'agriculture', 'agronomie', 'agronome', 'agriculteur', 'culture', 'cultiver',
+    'plante', 'semis', 'récolte', 'recolte', 'sol', 'champ', 'ferme', 'engrais',
+    'ravageur', 'maladie', 'disease', 'pest', 'fungus', 'insecticide', 'herbicide',
+    'sowing', 'transplant', 'nursery', 'seedling', 'rootstock', 'pruning', 'mulch',
+    'intercrop', 'rotation', 'agroforestry', 'compost', 'organicfarming', 'greenhouse',
+    // Traditional vegetables
+    'eru', 'okok', 'koko', 'ndole', 'ndolé', 'bitter leaf', 'bitterleaf',
+    'huckleberry', 'njama', 'waterleaf', 'vernonia', 'gnetum', 'african nightshade',
+    'traditional vegetable', 'légume traditionnel', 'feuille comestible', 'wild vegetable',
+    // Nutrient deficiency
+    'yellowing', 'yellow leaf', 'feuille jaune', 'nutrient deficiency', 'carence',
+    'deficiency', 'magnesium', 'nitrogen deficiency', 'potassium deficiency',
+    'leaf analysis', 'foliar test', 'pale leaf', 'purple leaf', 'interveinal',
+    'boron', 'zinc deficiency', 'iron deficiency', 'calcium deficiency',
+    'analyse foliaire', 'blossom end rot', 'stunted growth', 'agro hospital',
+    'tissue test', 'plant tissue',
+    // Cocoa rehabilitation
+    'rehabilitat', 'rehabilit', 'réhabilit', 'old cocoa', 'unproductive',
+    'cocoa recovery', 'replant cocoa', 'rejuvenat', 'chupon', 'jorquette',
+    'top-working', 'grafting cocoa', 'greffe cacao',
+    // Livestock & poultry
+    'chicken', 'poulet', 'broiler', 'layer', 'hen', 'egg', 'oeuf', 'coop',
+    'poulailler', 'volaille', 'duck', 'canard', 'guinea fowl', 'pintade',
+    'pig', 'swine', 'porc', 'cochon', 'sheep', 'mouton', 'cow', 'vache', 'bull',
+    'beef', 'dairy', 'bovin', 'boeuf', 'zebu', 'betail', 'bétail', 'élevage',
+    'vaccination', 'deworming', 'vermifuge', 'veterinary', 'vétérinaire',
+    // Fruit trees
+    'mango', 'mangue', 'avocado', 'avocat', 'citrus', 'orange', 'lemon', 'citron',
+    'pawpaw', 'papaya', 'papaye', 'guava', 'goyave', 'pineapple', 'ananas',
+    'passion fruit', 'fruit tree', 'arbre fruitier',
+    // Sustainable & agroforestry
+    'sustainable', 'organic', 'biologique', 'durable', 'agroecology', 'agroécologie',
+    'green manure', 'engrais vert', 'cover crop', 'mucuna', 'tephrosia',
+    'leucaena', 'gliricidia', 'calliandra', 'moringa', 'silvopastoral',
+    // Post-harvest & market
+    'post-harvest', 'stockage', 'conservation', 'drying', 'séchage', 'processing',
+    'transformation', 'market', 'marché', 'profit', 'revenu', 'income',
+    'value chain', 'chaîne de valeur', 'gari', 'storage'
+  ];
+  const regionalTerms = [
+    'littoral', 'douala', 'moungo', 'njombe', 'njombé', 'penja', 'mbanga',
+    'edéa', 'edea', 'center', 'centre', 'yaounde', 'yaoundé', 'ouest', 'west',
+    'bafoussam', 'foumbot', 'nord-ouest', 'north-west', 'bamenda', 'sud-ouest',
+    'south-west', 'buea', 'kumba', 'sud', 'south', 'est', 'east', 'adamawa',
+    'nord', 'north', 'maroua', 'garoua'
+  ];
+  const hasAgricultureTerm = agricultureTerms.some(term => lower.includes(term));
+  const hasRegionalAgricultureQuestion = regionalTerms.some(term => lower.includes(term))
+    && /\b(plant|crop|culture|cultiv|grow|farm|soil|season|harvest|planted|produced|what|which|best|plante|culture|cultiver|sol|saison|récolte|produit|quelle|quels)\b/i.test(lower);
+  if (!hasAgricultureTerm && !hasRegionalAgricultureQuestion) {
     return {
       reply: isFr
-        ? 'Je suis Agro-Vission AI et je réponds uniquement aux questions d’agriculture, de cultures, de sols, de ravageurs et de maladies des plantes au Cameroun.'
-        : 'I am Agro-Vission AI and I answer only agriculture questions about crops, soil, irrigation, pests, plant diseases, farm planning, and Cameroon farming. Please ask an agriculture-related question.',
-      source: 'Agro-Vission Agriculture Scope Guard',
-      isOffline: true,
-      isOutOfScope: true
+        ? 'Je réponds uniquement aux questions d’agriculture, de cultures, de sols, de ravageurs et de maladies des plantes au Cameroun.'
+        : 'I answer only agriculture questions about crops, soil, irrigation, pests, plant diseases, farm planning, and Cameroon farming. Please ask an agriculture-related question.',
+      source: isFr ? 'Filtre de domaine agricole' : 'Agriculture Scope Guard',
+      isOffline: true
     };
   }
+
+  // ── SPECIALIZED DOMAIN 1: COCOA FARM REHABILITATION (FAO/ILRI Good Agronomic Practices) ──
+  if (lower.includes('rehabilitat') || lower.includes('rehabilit') || lower.includes('réhabilit') ||
+      lower.includes('old cocoa') || lower.includes('unproductive cocoa') || lower.includes('cocoa recovery') ||
+      lower.includes('replant cocoa') || lower.includes('rejuvenat') || lower.includes('vieille cacaoyère') ||
+      lower.includes('cacao improductif') || lower.includes('cocoa decline') || lower.includes('top-working') ||
+      lower.includes('grafting cocoa') || lower.includes('greffe cacao') || lower.includes('chupon selection')) {
+    return {
+      reply: isFr
+        ? `🍫 **Réhabilitation des Cacaoyères — Bonnes Pratiques Agronomiques (FAO/ILRI, Cameroun) :**
+
+Le cacao couvre ~5,9 millions d'ha dans le monde dont 73% au Cameroun, Côte d'Ivoire, Ghana et Nigeria. De nombreuses plantations sont vieillissantes et peu productives. La réhabilitation restaure les rendements sans replantation totale.
+
+## 3 STRATÉGIES DE RÉHABILITATION
+
+**1. 🌱 REMPLACEMENT COMPLET (Replantation) :**
+- Utilisé quand >50% des arbres sont morts, malades ou improductifs.
+- Défrichez les vieux arbres; laissez les souches pour protéger le sol contre l'érosion.
+- Replantez des clones certifiés haute performance (Cameroun : SNK 16, SNK 13, ICS 1) à 3m × 3m (1 111 arbres/ha).
+- Ombrage temporaire : bananier ou Gliricidia sepium pour protéger les jeunes plants.
+- Première récolte : 3–4 ans. Production complète : 5–6 ans.
+
+**2. ✂️ GREFFAGE / TOP-WORKING :**
+- Quand les porte-greffes sont sains mais la variété est peu productive.
+- Greffez du budwood certifié haute performance sur les branches ou souches existantes.
+- Technique : écusson (patch bud) ou greffage en fente; enroulez de film polythène; retirez après 3 semaines.
+- Productif en 18–24 mois — beaucoup plus rapide que la replantation complète.
+
+**3. 🌿 SÉLECTION DES CHUPONS :**
+- Laissez 2–3 chupons vigoureux pousser à la base des vieux arbres.
+- Éliminez les plus faibles; conservez 1 tige droite et vigoureuse par arbre.
+- Cette tige remplace l'ancienne canopée improductive en 2–3 ans.
+- Méthode la moins coûteuse; adaptée aux plantations partiellement productives.
+
+## PRATIQUES AGRONOMIQUES CLÉS
+
+**Fertilisation des jeunes cacaoyers :**
+| Âge | Engrais | Dose/arbre | Fréquence |
+|---|---|---|---|
+| 1–2 ans | NPK 12-12-17 | 125g | 2×/an |
+| 3–5 ans | NPK 12-12-17 | 250g | 2×/an |
+| Productif (6+) | NPK 12-12-17 + MgSO₄ | 300g + 100g | 2×/an |
+
+**Taille de formation :**
+- Maintenez 1 tige principale jusqu'à la jorquette naturelle (1,2–1,5m).
+- Sélectionnez 3–5 branches charpentières à la jorquette; supprimez les autres.
+- Supprimez TOUS les chupons du tronc chaque année — ils volent l'énergie des cabosses.
+
+**Protection sanitaire :**
+- Black Pod (Phytophthora megakarya) : Fongicide cuprique toutes les 21 jours en grande saison des pluies. Ramassez et enterrez toutes les cabosses noires chaque semaine.
+- Mirides/Capsides : Pulvérisez Thiamétoxam en août–octobre à la poussée foliaire.`
+        : `🍫 **Cocoa Farm Rehabilitation — FAO Good Agronomic Practices (Cameroon/West Africa):**
+
+Cocoa cultivation covers ~5.9 million ha worldwide, with Cameroon, Côte d'Ivoire, Ghana and Nigeria accounting for 73% of production. Many farms are ageing and unproductive. Rehabilitation restores yields without full replanting.
+
+## 3 REHABILITATION STRATEGIES
+
+**1. 🌱 FULL REPLANTING:**
+- Used when >50% of trees are dead, diseased, or unproductive.
+- Clear old trees; leave stumps in place to protect soil from erosion.
+- Plant certified high-yielding clones (Cameroon: SNK 16, SNK 13, ICS 1) at 3m × 3m (1,111 trees/ha).
+- Temporary shade: plantain or Gliricidia sepium for first 3 years.
+- First harvest: Year 3–4. Full production: Year 5–6.
+
+**2. ✂️ GRAFTING (Top-Working):**
+- Used when rootstock is healthy but variety is low-yielding.
+- Graft certified high-yielding budwood onto healthy existing stumps or branches.
+- Technique: patch bud or cleft graft; wrap with polythene tape; remove after 3 weeks.
+- Productive within 18–24 months — much faster than full replanting.
+
+**3. 🌿 CHUPON SELECTION (Side-Shooting):**
+- Allow 2–3 vigorous suckers (chupons) to grow from the base of old trees.
+- Remove weakest chupons; keep 1 strong upright shoot per tree.
+- This shoot replaces the old unproductive canopy in 2–3 years.
+- Lowest cost method; suitable for partially productive farms.
+
+## KEY AGRONOMIC PRACTICES
+
+**Fertilization programme:**
+| Age | Fertilizer | Rate/Tree | Frequency |
+|---|---|---|---|
+| 1–2 yrs | NPK 12-12-17 | 125g | Twice/year |
+| 3–5 yrs | NPK 12-12-17 | 250g | Twice/year |
+| Bearing (6+) | NPK 12-12-17 + MgSO₄ | 300g + 100g | Twice/year |
+- Apply in a 30–50cm ring around tree; never directly on surface roots.
+- On acidic soils (pH < 5.5): Lime at 1–2 T/ha every 3 years.
+
+**Formative pruning:**
+- Allow ONE main stem to grow to the natural jorquette at 1.2–1.5m height.
+- Select 3–5 strong scaffold branches from the jorquette; remove all others.
+- Remove ALL trunk chupons every year — they steal energy from pod production.
+
+**Disease protection:**
+- Black Pod (Phytophthora megakarya — most severe in Cameroon): Copper fungicide every 21 days during heavy rains. Collect and bury all blackened pods weekly.
+- Mirids/Capsids: Spray Thiamethoxam at August–October leaf flush.`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── SPECIALIZED DOMAIN 2: TRADITIONAL CAMEROON VEGETABLES (Eru, Ndolé, Njama Njama) ──
+  if (lower.includes('eru') || lower.includes('okok') || lower.includes('koko') ||
+      lower.includes('ndole') || lower.includes('ndolé') || lower.includes('bitter leaf') || lower.includes('bitterleaf') ||
+      lower.includes('huckleberry') || lower.includes('njama') || lower.includes('waterleaf') ||
+      lower.includes('vernonia') || lower.includes('gnetum') || lower.includes('african nightshade') ||
+      lower.includes('traditional vegetable') || lower.includes('légume traditionnel') ||
+      lower.includes('feuille comestible') || lower.includes('wild vegetable') || lower.includes('morelle noire') ||
+      lower.includes('solanum scabrum') || lower.includes('talinum')) {
+    return {
+      reply: isFr
+        ? `🥬 **Légumes Traditionnels du Cameroun — Guide de Culture et Nutrition :**
+
+Ces légumes indigènes sont nutritionnellement supérieurs à de nombreuses espèces introduites et adaptés au climat camerounais sans intrants coûteux.
+
+## 🌿 ERU / OKOK / KOKO (*Gnetum africanum*)
+**Valeur nutritionnelle :** Protéines 13–18% (poids sec), acides aminés essentiels, fer, calcium, fibres. Légume à forte valeur marchande — très demandé à Douala et Yaoundé.
+
+**Culture (Domestication recommandée par FAO) :**
+- *Habitat naturel :* Liane grimpante des forêts humides (Sud-Ouest, Littoral, Sud, Est).
+- *Propagation :* Boutures de tiges (enracinement en 4–8 semaines) ou semences trempées 24h. Germination des graines : 4–6 mois.
+- *Tuteur vivant :* Gliricidia sepium (fixatrice d'azote, croissance rapide) ou perches de 2–3 m.
+- *Ombrage requis :* 40–60% (sous cacaoyers, bananiers ou palmiers à huile — idéal en agroforesterie).
+- *Sol :* Limon profond riche en matière organique. Apportez 5–10 kg de compost par trou de plantation.
+- *Écartement :* 3 m × 3 m en système agroforestier.
+- *Récolte :* Jeunes pousses terminales toutes les 4–6 semaines. Ne récoltez jamais plus de 30% du feuillage pour permettre la régénération.
+- ⚠️ Évitez la surexploitation en forêt — domestiquez en agroforesterie !
+
+**Cuisine :** Effilez finement; cuisinez avec l'huile de palme, les feuilles de patate d'eau, les crevettes séchées, la peau de bœuf et le poisson fumé. Servez avec le fufu d'eau ou le garri.
+
+---
+
+## 🌱 NDOLÉ / VERNONIA / BITTERLEAF (*Vernonia amygdalina*)
+**Plat national du Cameroun.** Riche en fer, calcium, zinc, vitamines B, antioxydants. Propriétés médicinales (anti-paludéen, anti-diabétique, aide digestive).
+
+**Culture :**
+- Boutures directes de 30–40 cm plantées dans un sol fertile bien drainé. Enracinement en 2–3 semaines.
+- Écartement : 1 m × 1 m. Plein soleil. NPK 15-15-15 (100 kg/ha) à l'établissement + cendre de bois en entretien.
+- Récolte : 3–4 mois après plantation. Recépez à 30 cm du sol pour favoriser la repousse.
+- Rendement : 8–15 T/ha de feuilles fraîches par an.
+- Traitement anti-amertume : Lavez et pressez les feuilles 3–4 fois dans l'eau (ou faites bouillir brièvement puis rincez).
+
+**Cuisine :** Cuisinez avec la pâte d'arachide, les crevettes, le poisson fumé, la viande. Servez avec du plantain mûr, du riz ou de l'igname.
+
+---
+
+## 🌑 HUCKLEBERRY / NJAMA NJAMA (*Solanum scabrum* — Morelle Noire Africaine)
+**Nutrition :** Excellente source de fer, calcium, vitamine A (bêta-carotène), vitamine C, folate.
+
+**Culture :**
+- Pépinière (3 semaines), repiquage à 4–5 semaines. Écartement : 50 cm × 40 cm sur billons.
+- Fertilisation : Compost (3–5 T/ha) + NPK 15-15-15 (100 kg/ha) au repiquage.
+- Récolte : 5–6 semaines après repiquage. Coupez les sommités toutes les 2 semaines pour favoriser la croissance buissonnante.
+- Rendement : 10–18 T/ha. Très populaire à Bamenda et Bafoussam.
+
+**Cuisine :** Étuvé avec les oignons, l'huile de palme, les crevettes et le piment. Servi avec le fufu de maïs ou de macabo.
+
+---
+
+## 🌊 FEUILLE DE PATATE D'EAU / WATERLEAF (*Talinum fruticosum*)
+Très facile à cultiver. Boutures de 10 cm s'enracinent en 2–3 jours dans un sol humide. Écartement 30 cm × 30 cm. Récolte toutes les 3 semaines. Tolère la mi-ombre. Utilisé en combinaison avec l'Eru.`
+        : `🥬 **Traditional Vegetables of Cameroon — Cultivation & Nutrition Guide:**
+
+These indigenous vegetables are nutritionally superior to many introduced crops and perfectly adapted to Cameroon's climate without expensive inputs.
+
+## 🌿 ERU / OKOK / KOKO (*Gnetum africanum*)
+**Nutritional value:** Protein 13–18% (dry weight), essential amino acids, iron, calcium, dietary fibre. Very high market value — heavily traded in Douala and Yaoundé.
+
+**Cultivation (Domestication — recommended by FAO):**
+- *Natural habitat:* Climbing vine of humid rainforest (South-West, Littoral, South, East regions).
+- *Propagation:* Stem cuttings (roots in 4–8 weeks) or seeds soaked 24h before sowing. Seed germination: 4–6 months.
+- *Live stake:* Gliricidia sepium (nitrogen-fixing, fast-growing) or 2–3m wooden poles for climbing support.
+- *Shade required:* 40–60% — grows well under cocoa, plantain, or oil palm canopy (ideal in agroforestry).
+- *Soil:* Deep, well-drained, organic-rich loam. Apply 5–10 kg compost per planting hole.
+- *Spacing:* 3m × 3m in agroforestry system.
+- *Harvest:* Leaf tips every 4–6 weeks. Never harvest more than 30% of foliage to allow recovery.
+- ⚠️ Avoid over-harvesting from the wild — domesticate in agroforestry systems!
+
+**Cooking:** Shred finely; cook with palm oil, waterleaf, crayfish, cow skin, and smoked fish. Serve with water fufu or garri.
+
+---
+
+## 🌱 NDOLÉ / BITTER LEAF (*Vernonia amygdalina*)
+**Cameroon's national dish.** Rich in iron, calcium, zinc, B-vitamins, antioxidants. Medicinal properties: anti-malarial, anti-diabetic, digestive aid, antibacterial.
+
+**Cultivation:**
+- Direct stem cuttings (30–40cm) planted into fertile, well-drained soil. Root in 2–3 weeks.
+- Spacing: 1m × 1m. Full sun. Light NPK 15-15-15 (100 kg/ha) at establishment + wood ash side-dressing.
+- Harvest leaves from 3–4 months; cut back to 30cm stub for regrowth.
+- Yield: 8–15 T/ha of fresh leaves per year.
+- Debittering: Wash and squeeze leaves 3–4 times (or briefly boil then rinse well) to remove bitterness before cooking.
+
+**Cooking:** Cook with groundnut paste, crayfish, stockfish, prawns. Served at celebrations with plantain, yam, or rice.
+
+---
+
+## 🌑 HUCKLEBERRY / NJAMA NJAMA (*Solanum scabrum* — African Nightshade)
+**Nutrition:** Excellent source of iron, calcium, vitamin A (beta-carotene), vitamin C, and folate.
+
+**Cultivation:**
+- Nursery seedlings (3 weeks); transplant at 4–5 weeks. Spacing: 50cm × 40cm on raised beds.
+- Fertilizer: Compost (3–5 T/ha) + NPK 15-15-15 (100 kg/ha) at transplanting.
+- Harvest leaf tops from 5–6 weeks after transplanting; pick every 2 weeks to encourage bushy growth.
+- Yield: 10–18 T/ha. Very popular in Bamenda and Bafoussam (served with fufu and Khati Khati).
+
+**Cooking:** Smothered with onions, palm oil, crayfish, and habanero pepper.
+
+---
+
+## 🌊 WATERLEAF (*Talinum fruticosum*)
+Very easy: 10cm stem cuttings root in 2–3 days in moist soil. Spacing: 30cm × 30cm. Harvest every 3 weeks. Tolerates partial shade. Used in combination with Eru and as base green in soups.`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── SPECIALIZED DOMAIN 3: NUTRIENT DEFICIENCY DIAGNOSIS & LEAF TESTING (Agro Hospital) ──
+  if (lower.includes('yellow leaf') || lower.includes('yellowing leaves') || lower.includes('feuille jaune') ||
+      lower.includes('nutrient deficiency') || lower.includes('carence') || lower.includes('deficiency') ||
+      lower.includes('magnesium') || lower.includes('nitrogen deficiency') || lower.includes('potassium deficiency') ||
+      lower.includes('leaf analysis') || lower.includes('foliar test') || lower.includes('pale leaf') ||
+      lower.includes('purple leaf') || lower.includes('interveinal') || lower.includes('boron deficiency') ||
+      lower.includes('zinc deficiency') || lower.includes('iron deficiency') || lower.includes('calcium deficiency') ||
+      lower.includes('analyse foliaire') || lower.includes('analyse des feuilles') || lower.includes('blossom end rot') ||
+      lower.includes('leaf curl') || lower.includes('scorched leaf') || lower.includes('stunted growth') ||
+      lower.includes('agro hospital') || lower.includes('tissue test') || lower.includes('plant tissue')) {
+    return {
+      reply: isFr
+        ? `🔬 **Diagnostic des Carences Nutritives — Guide Visuel de Terrain (Cameroun) :**
+
+De nombreux agriculteurs perdent des rendements parce que les carences sont identifiées trop tard. Ce guide visuel vous aide à détecter les problèmes AVANT qu'ils causent des pertes majeures.
+
+## CARENCES EN MACRONUTRIMENTS
+
+🟡 **Azote (N) :** Jaunissement uniforme partant des feuilles basses vers le haut. Croissance lente, tiges fines.
+- *Correction :* Urée 46% à 50–100 kg/ha en couverture. Biologique : fumier de volaille ou engrais vert incorporé.
+
+🟠 **Phosphore (P) :** Feuilles vert foncé avec revers violet/pourpre. Maturation tardive, petits fruits, racines peu développées.
+- *Correction :* Superphosphate Triple (TSP) à 100 kg/ha au semis. Chauler d'abord les sols acides (pH < 5,5).
+
+🟤 **Potassium (K) :** Bords et pointes des feuilles brûlés (nécrose marginale). Lodging, mauvais remplissage des fruits.
+- *Critique pour :* Bananier/plantain, cacao, palmier à huile, pomme de terre.
+- *Correction :* KCl (Muriate de Potasse) à 100 kg/ha. Plantain : 200–300 g KCl/plant tous les 3 mois.
+
+⚪ **Calcium (Ca) :** Pourriture apicale (fond noir) sur tomate et piment. Brûlure des jeunes feuilles.
+- *Correction :* Nitrate de Calcium à 150 kg/ha à la floraison. La chaux agricole corrige Ca et le pH simultanément.
+
+🔵 **Magnésium (Mg) :** Jaunissement internervaire sur vieilles feuilles — nervures restent vertes (patron en arête de poisson). Très fréquent sur cacao et caféier en sol acide.
+- *Correction :* Sulfate de Magnésium (Sel d'Epsom) en pulvérisation foliaire 2% toutes les 2 semaines. Sol : Kiésérite 100 kg/ha.
+
+## CARENCES EN MICROÉLÉMENTS
+
+🟢 **Fer (Fe) :** Jeunes feuilles jaune pâle/blanches, nervures vertes. Sol trop alcalin (pH > 7).
+- *Correction :* Sulfate Ferreux 0,5% en pulvérisation foliaire. Acidifier le sol au soufre.
+
+🔶 **Zinc (Zn) :** Petites feuilles, entre-nœuds courts, stries blanches à la base. Maïs et riz très sensibles.
+- *Correction :* Sulfate de Zinc 0,5% (3 applications à 7 jours d'intervalle).
+
+🟣 **Bore (B) :** Mort des points de croissance. Chute florale sur tomate/piment. Fruits crevassés et liégeux.
+- *Correction :* Borax 0,2% en pulvérisation foliaire à l'initiation florale.
+
+## TABLEAU DE DIAGNOSTIC RAPIDE
+| Symptôme | Feuilles touchées | Carence probable |
+|---|---|---|
+| Jaunissement uniforme | Vieilles feuilles | Azote |
+| Reflets violets au revers | Vieilles feuilles | Phosphore |
+| Bords brûlés/nécrose | Vieilles feuilles | Potassium |
+| Jaunissement internervaire | Vieilles feuilles | Magnésium |
+| Jaunissement internervaire | Jeunes feuilles | Fer ou Manganèse |
+| Petites feuilles + rosette | Jeunes pousses | Zinc |
+| Chute florale, tige creuse | Apex/méristème | Bore |
+| Fond noir fruit tomate | Fruits | Calcium |
+
+## 📞 ANALYSE FOLIAIRE PROFESSIONNELLE
+Pour un diagnostic précis au laboratoire (au-delà de l'observation visuelle) :
+**Agro Hospital Cameroun** — Analyses foliaires, tissus végétaux, maladies fongiques/virales/bactériennes :
+- 📱 (+237) 681 532 846 / 657 469 343 / 653 416 123
+- 📍 Yaoundé & Bamenda — service toutes régions, bilingue.`
+        : `🔬 **Crop Nutrient Deficiency Diagnosis — Visual Field Guide (Cameroon):**
+
+Many farmers in Cameroon lose yields because nutrient deficiencies are identified too late. This visual guide helps you detect problems BEFORE they cause major losses.
+
+## MACRONUTRIENT DEFICIENCIES
+
+🟡 **Nitrogen (N):** Uniform yellowing of old (lower) leaves upward. Slow stunted growth, thin stems.
+- *Correction:* Top-dress Urea 46% at 50–100 kg/ha. Organic: chicken manure or green manure incorporated.
+
+🟠 **Phosphorus (P):** Leaves dark green turning purplish-red on undersides. Delayed maturity, small fruits, poor roots.
+- *Correction:* Triple Superphosphate (TSP) at 100 kg/ha at planting. Lime acidic soils first (pH < 5.5).
+
+🟤 **Potassium (K):** Leaf edges and tips turn brown and curl (marginal scorch). Lodging, poor fruit filling.
+- *Critical for:* Plantain/banana, cocoa, oil palm, potato.
+- *Correction:* Muriate of Potash (KCl) 100 kg/ha. Plantain: 200–300g KCl/plant every 3 months.
+
+⚪ **Calcium (Ca):** Blossom end rot — black sunken base of tomato and pepper fruit. Young leaf tip dieback.
+- *Correction:* Calcium Nitrate at 150 kg/ha at flowering. Lime corrects Ca and pH simultaneously.
+
+🔵 **Magnesium (Mg):** Interveinal chlorosis on old leaves — yellow between green veins (herringbone pattern). Very common in cocoa and coffee on acidic soils.
+- *Correction:* Foliar spray Magnesium Sulfate (Epsom salt) 2% every 2 weeks. Soil: Kieserite 100 kg/ha.
+
+## MICRONUTRIENT DEFICIENCIES
+
+🟢 **Iron (Fe):** Young (new) leaves pale yellow/white with green veins. Alkaline soils (pH > 7).
+- *Correction:* Foliar Ferrous Sulfate 0.5%. Acidify soil with elemental sulfur.
+
+🔶 **Zinc (Zn):** Small leaves, short internodes (rosette), white bands at leaf base. Maize and rice highly susceptible.
+- *Correction:* Zinc Sulfate 0.5% foliar (3 applications at 7-day intervals).
+
+🟣 **Boron (B):** Growing point death, blossom drop, cracked corky fruit.
+- *Correction:* Borax 0.2% foliar spray at flower initiation.
+
+## QUICK DIAGNOSIS TABLE
+| Symptom | Leaves Affected | Likely Deficiency |
+|---|---|---|
+| Uniform pale yellow | Old (lower) leaves | Nitrogen |
+| Purple/red undersides | Old leaves | Phosphorus |
+| Leaf edge scorch | Old leaves | Potassium |
+| Yellow between green veins | Old leaves | Magnesium |
+| Yellow between green veins | New leaves | Iron or Manganese |
+| Small leaves + rosette | New growth tips | Zinc |
+| Blossom drop, hollow stem | Growing apex | Boron |
+| Black sunken fruit base | Tomato/pepper fruits | Calcium |
+
+## 📞 PROFESSIONAL LEAF ANALYSIS
+For precise laboratory diagnosis beyond visual field assessment:
+**Agro Hospital Cameroon** — Plant tissue testing, leaf nutrient analysis, fungal/viral/bacterial crop disease testing:
+- 📱 (+237) 681 532 846 / 657 469 343 / 653 416 123
+- 📍 Yaoundé & Bamenda — serving all regions, English & French.`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
 
   // 1. Cameroon 10-Region Agro-Ecological Query Intelligence
   if (lower.includes('center') || lower.includes('centre') || lower.includes('yaounde') || lower.includes('yaoundé') || lower.includes('bafia') || lower.includes('mbalmayo') || lower.includes('obala')) {
@@ -1316,7 +2029,7 @@ export function offlineChatAgronomist(message, language = 'English') {
     };
   }
 
-  // 2. Specific Crop Knowledge Triggers
+    // 2. Specific Crop Knowledge Triggers
   if (lower.includes('cassava') || lower.includes('manioc')) {
     return {
       reply: isFr
@@ -1518,6 +2231,331 @@ export function offlineChatAgronomist(message, language = 'English') {
 - **Transplanting:** Transplant 45-day seedlings into flat beds at 15cm x 15cm spacing.
 - **Irrigation:** Furrow irrigation only—never wet the foliage overhead.
 - **Purple Blotch:** Spray Mancozeb upon first appearance of purple sunken spots with yellow halos.`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+
+  // ── 1. SOIL pH, LIME & FERTILIZER ─────────────────────────────────────────
+  if (lower.includes('ph') || lower.includes('acid') || lower.includes('acide') || lower.includes('lime') || lower.includes('chaux') ||
+      lower.includes('fertilizer') || lower.includes('engrais') || lower.includes('npk') ||
+      lower.includes('urea') || lower.includes('urée') || lower.includes('nitrogen') || lower.includes('azote') ||
+      lower.includes('phosphorus') || lower.includes('phosphore') || lower.includes('potassium') || lower.includes('potasse') ||
+      lower.includes('fertilizer schedule') || lower.includes('calendrier engrais')) {
+    return {
+      reply: isFr
+        ? `🧪 **Fertilisation & pH du Sol (Agronome IA Hors-Ligne) :**
+- **pH Idéal :** La plupart des cultures tropicales exigent un pH entre 5,5 et 6,8. Testez avec un kit Agritest ou envoyez un échantillon à l'IRAD.
+- **Corriger l'acidité :** Épandez de la chaux agricole (CaCO₃) à 1–2 T/ha et enfouissez 4–6 semaines avant le semis pour corriger un sol trop acide (pH < 5,5).
+- **Programme NPK standard :**
+  - *Semis (0 jours) :* NPK 20-10-10 ou 15-15-15 à 200 kg/ha — fournit P (racines) et K (vigueur).
+  - *4–5 semaines :* Urée 46% N à 100 kg/ha placée à 5 cm des tiges avant buttage.
+  - *Floraison :* Nitrate de Calcium (Ca) à 150 kg/ha pour prévenir la nécrose apicale (tomate, poivron).
+- **Fumure organique :** Incorporez 5–10 T/ha de compost ou fumier décomposé pour améliorer la structure et la rétention d'eau.
+- **Attention :** Ne mélangez jamais l'Urée avec le phosphate triple superphosphate — cela détruit l'azote disponible.`
+        : `🧪 **Soil Fertilization & pH Guide (Offline AI Agronomist):**
+- **Ideal pH:** Most tropical crops thrive at pH 5.5–6.8. Test with an Agritest kit or send a soil sample to IRAD.
+- **Correct acidity:** Broadcast agricultural lime (CaCO₃) at 1–2 T/ha and incorporate 4–6 weeks before planting to fix pH below 5.5.
+- **Standard NPK schedule:**
+  - *Planting (day 0):* NPK 20-10-10 or 15-15-15 at 200 kg/ha — supplies P (roots) and K (vigor).
+  - *4–5 weeks:* Top-dress Urea 46% N at 100 kg/ha placed 5 cm from stems before hilling.
+  - *Flowering:* Calcium Nitrate at 150 kg/ha to prevent blossom end rot (tomato, pepper).
+- **Organic matter:** Incorporate 5–10 T/ha of well-decomposed compost or manure to improve structure and water retention.
+- **Warning:** Never mix Urea with Triple Superphosphate in the same application — it destroys available nitrogen.`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── 2. IRRIGATION & WATER MANAGEMENT ──────────────────────────────────────
+  if (lower.includes('irrigation') || lower.includes('watering') || lower.includes('arrosage') ||
+      lower.includes('drought') || lower.includes('sécheresse') || lower.includes('water stress') ||
+      lower.includes('drip') || lower.includes('flooding') || lower.includes('inondation') ||
+      lower.includes('rainfed') || lower.includes('pluviale')) {
+    return {
+      reply: isFr
+        ? `💧 **Irrigation & Gestion de l'Eau (IA Hors-Ligne) :**
+- **Irrigation goutte-à-goutte :** Idéale pour la tomate, le poivron et l'oignon — économise 50% d'eau et évite les maladies foliaires causées par l'humidité sur les feuilles.
+- **Irrigation à la raie :** Utilisez des sillons d'arrosage pour le maïs, le manioc et les légumes en rangs — irriguer à la base, jamais par aspersion.
+- **Stress hydrique :** Pendant la floraison et la fructification, un manque d'eau pendant 3–5 jours peut réduire le rendement de 30–50%. Irriguez à la demande.
+- **Signes de sur-arrosage :** Jaunissement des feuilles basses, odeur de pourri au collet, fonte des semis — réduisez l'arrosage et améliorer le drainage.
+- **Saison sèche :** En saison sèche (novembre–mars au Nord/Extrême-Nord), prévoyez des réservoirs ou pompes solaires pour maintenir l'humidité au seuil minimum (40% capacité au champ).`
+        : `💧 **Irrigation & Water Management (Offline AI):**
+- **Drip irrigation:** Best for tomato, pepper, and onion — saves 50% water and prevents foliar diseases from overhead wetting.
+- **Furrow irrigation:** Use water channels for maize, cassava, and row vegetables — water at the base, never overhead.
+- **Water stress:** During flowering and fruit set, a 3–5 day water deficit can reduce yield by 30–50%. Irrigate on demand based on crop signs.
+- **Overwatering signs:** Yellowing lower leaves, rotting smell at the base, damping-off — reduce irrigation and improve drainage.
+- **Dry season:** In the dry season (Nov–Mar in North/Far North), plan reservoirs or solar pumps to maintain minimum soil moisture (40% field capacity).`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── 3. PEST CONTROL ────────────────────────────────────────────────────────
+  if (lower.includes('pest') || lower.includes('ravageur') || lower.includes('insect') || lower.includes('insecte') ||
+      lower.includes('aphid') || lower.includes('puceron') || lower.includes('caterpillar') || lower.includes('chenille') ||
+      lower.includes('weevil') || lower.includes('charançon') || lower.includes('armyworm') || lower.includes('légionnaire') ||
+      lower.includes('neem') || lower.includes('pesticide') || lower.includes('spray') || lower.includes('pulvéris') ||
+      lower.includes('thrips') || lower.includes('whitefly') || lower.includes('aleurode') || lower.includes('mealybug')) {
+    return {
+      reply: isFr
+        ? `🐛 **Contrôle des Ravageurs (Agronome IA Hors-Ligne) :**
+- **Huile de neem (500 ml/15L d'eau + savon) :** Solution bio universelle contre pucerons, aleurodes, thrips et mineuses. Pulvérisez le soir pour éviter la brûlure foliaire. Répétez tous les 7 jours.
+- **Chenille légionnaire d'automne (FAW) :** Déposez de la cendre de bois ou du sable fin dans le cornet des jeunes plants de maïs. Si >10% des plants ont des dégâts en fenêtre, pulvérisez l'Emamectine Benzoate 5% SG (7 g/15L).
+- **Charançons (bananier/manioc) :** Traitez les rejets avec de l'eau chaude (55°C pendant 20 min) ou de la cendre avant plantation.
+- **Pucerons :** Introduisez des coccinelles ou pulvérisez Imidaclopride 70% WP (5 g/15L) en cas d'infestation sévère.
+- **Aleurodes (vecteur CMD/CBSD) :** Posez des pièges jaunes collants, espacez les cultures et appliquez un insecticide systémique (Acétamipride) si la pression est forte.
+- **Lutte intégrée (IPM) :** Combinez pièges physiques, biopesticides (Beauveria bassiana) et produits chimiques seulement en dernier recours, en respectant les délais avant récolte.`
+        : `🐛 **Pest Control Guide (Offline AI Agronomist):**
+- **Neem oil (500 ml/15L water + soap):** Universal organic control for aphids, whiteflies, thrips, and leaf miners. Spray in the evening to avoid leaf burn. Repeat every 7 days.
+- **Fall Armyworm (FAW):** Apply wood ash or fine sand into the maize whorl. If >10% of plants show window-pane damage, spray Emamectin Benzoate 5% SG (7 g/15L).
+- **Banana/cassava weevils:** Dip planting material in hot water (55°C for 20 min) or coat with wood ash before planting.
+- **Aphids:** Introduce ladybirds or spray Imidacloprid 70% WP (5 g/15L) for severe infestations.
+- **Whiteflies (CMD/CBSD vector):** Use yellow sticky traps, increase crop spacing, and apply systemic insecticide (Acetamiprid) under heavy pressure.
+- **IPM approach:** Combine physical traps, biopesticides (Beauveria bassiana), and chemical products only as a last resort, observing pre-harvest intervals.`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── 4. FUNGAL DISEASES ─────────────────────────────────────────────────────
+  if (lower.includes('fungus') || lower.includes('champignon') || lower.includes('fungal') ||
+      lower.includes('mold') || lower.includes('moisissure') || lower.includes('blight') ||
+      lower.includes('rust') || lower.includes('rouille') || lower.includes('mildew') ||
+      lower.includes('anthracnose') || lower.includes('cercospora') || lower.includes('early blight') ||
+      lower.includes('late blight') || lower.includes('damping') || lower.includes('fonte') ||
+      lower.includes('botrytis') || lower.includes('pythium') || lower.includes('phytophthora')) {
+    return {
+      reply: isFr
+        ? `🍄 **Maladies Fongiques — Prévention & Traitement (IA Hors-Ligne) :**
+- **Mildiou Précoce (taches concentriques) :** Appliquez du Mancozèbe 80% WP (20 g/15L) dès les premiers symptômes. Répétez tous les 10–14 jours en saison pluvieuse.
+- **Mildiou Tardif (pourriture brune huileuse) :** Traitez avec Metalaxyl + Mancozèbe (ex. Ridomil Gold) à 30 g/15L dès les premières lésions. Pas de pulvérisation le soir.
+- **Rouilles (céréales) :** Utilisez des variétés résistantes. Si présentes, appliquez Propiconazole 25 EC (15 ml/15L).
+- **Black Pod du Cacao (Phytophthora) :** Pulvérisez à base de cuivre (Ridomil Gold Plus ou Nordox) tous les 21 jours en grande saison des pluies. Ramassez et enterrez les cabosses noircies.
+- **Fonte des Semis :** Traitez les semences avec du Thirame avant semis. Évitez les excès d'arrosage et améliorez la ventilation des planches de pépinière.
+- **Mesures préventives générales :** Rotation des cultures, espacement adéquat, débris végétaux enfouis ou brûlés, et outils désinfectés à l'alcool ou à l'eau de Javel diluée (10%).`
+        : `🍄 **Fungal Diseases — Prevention & Treatment (Offline AI):**
+- **Early Blight (concentric target spots):** Apply Mancozeb 80% WP (20 g/15L) at first symptoms. Repeat every 10–14 days during rainy season.
+- **Late Blight (greasy brown rot):** Apply Metalaxyl + Mancozeb (e.g. Ridomil Gold) at 30 g/15L at first lesions. Do not spray in the evening.
+- **Rusts (cereals):** Use resistant varieties. If present, apply Propiconazole 25 EC (15 ml/15L).
+- **Cocoa Black Pod (Phytophthora):** Spray copper-based fungicide (Ridomil Gold Plus or Nordox) every 21 days during major rainy season. Collect and bury blackened pods.
+- **Damping-off:** Treat seeds with Thiram before sowing. Avoid overwatering and improve nursery bed ventilation.
+- **General prevention:** Practice crop rotation, maintain adequate spacing, incorporate or burn crop debris, and disinfect tools with 10% bleach or alcohol.`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── 5. HARVEST & POST-HARVEST STORAGE ─────────────────────────────────────
+  if (lower.includes('harvest') || lower.includes('récolte') || lower.includes('storage') || lower.includes('stockage') ||
+      lower.includes('post-harvest') || lower.includes('silo') || lower.includes('drying') || lower.includes('séchage') ||
+      lower.includes('aflatoxin') || lower.includes('aflatoxine') || lower.includes('hermetic') || lower.includes('hermétique') ||
+      lower.includes('grain storage') || lower.includes('stockage céréales') || lower.includes('warehouse') || lower.includes('entrepôt')) {
+    return {
+      reply: isFr
+        ? `📦 **Récolte & Stockage Post-Récolte (IA Hors-Ligne) :**
+- **Moment de récolte :** Récoltez le maïs à 25–30% d'humidité (grain laiteux-pâteux) puis séchez sous abri ventilé jusqu'à 12–13% avant stockage. Le manioc se récolte à 8–24 mois selon la variété.
+- **Séchage :** Étalez les grains sur des bâches surélevées (jamais à même le sol) pendant 5–7 jours au soleil. Testez l'humidité avec un testeur ou la dent (grain craquant = sec).
+- **Aflatoxines :** Les céréales stockées humides en contact avec le sol développent des moisissures toxiques (Aspergillus). Solution : sacs hermétiques PICS ou GrainPro à 13% d'humidité max.
+- **Greniers traditionnels :** Surélevez les greniers de 60 cm du sol, couvrez le toit de tôle, et traitez avec des poudres à base de phosphine (Phostoxin) pour éloigner les charançons.
+- **Produits frais (tomate, oignon, poivron) :** Récoltez tôt le matin par temps frais. Stockez dans des endroits ombragés et ventilés. Utilisez des bacs en plastique ajourés, jamais des sacs fermés.
+- **Manioc :** Transformez rapidement (48 h après arrachage) en gari, farine ou cossettes séchées pour éviter la détérioration rapide des tubercules.`
+        : `📦 **Harvest & Post-Harvest Storage (Offline AI):**
+- **Harvest timing:** Harvest maize at 25–30% moisture (milky-dough stage), then dry under ventilated shade to 12–13% before storage. Cassava is harvested at 8–24 months depending on variety.
+- **Drying:** Spread grains on raised tarpaulins (never on the ground) for 5–7 sunny days. Test moisture with a meter or tooth test (grain snaps cleanly = dry enough).
+- **Aflatoxins:** Moist grains stored in contact with soil develop toxic Aspergillus molds. Solution: PICS or GrainPro hermetic bags sealed at max 13% moisture.
+- **Traditional granaries:** Raise granary 60 cm off the ground, use metal roof, and treat with phosphine-based powder (Phostoxin pellets) to eliminate weevils.
+- **Fresh produce (tomato, onion, pepper):** Harvest early in the cool morning. Store in shaded, well-ventilated areas in perforated plastic crates — never sealed bags.
+- **Cassava:** Process within 48 hours of harvest into gari, flour, or dried chips to prevent rapid tuber deterioration.`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── 6. COMPOST & ORGANIC FARMING ──────────────────────────────────────────
+  if (lower.includes('compost') || lower.includes('organic') || lower.includes('biologique') ||
+      lower.includes('manure') || lower.includes('fumier') || lower.includes('mulch') || lower.includes('paillis') ||
+      lower.includes('worm') || lower.includes('ver') || lower.includes('biochar') || lower.includes('bio-inpute') ||
+      lower.includes('cover crop') || lower.includes('engrais vert') || lower.includes('green manure')) {
+    return {
+      reply: isFr
+        ? `♻️ **Agriculture Biologique & Compostage (IA Hors-Ligne) :**
+- **Tas de compost :** Alternez couches de 20 cm : matières vertes azotées (fanes de légumes, déchets de cuisine) + matières brunes carbonées (paille, sciure, carton). Arrosez légèrement et retournez toutes les 2 semaines. Prêt en 6–12 semaines.
+- **Compost mûr :** Aspect terreux, odeur de forêt humide, température ambiante au centre. Appliquez à 5–10 T/ha en fond de trouaison avant semis.
+- **Paillis :** Couvrez le sol entre les rangs avec de la paille, des copeaux de bois ou des feuilles mortes (5–10 cm). Réduit l'évaporation de 40%, supprime les mauvaises herbes et nourrit les vers de terre.
+- **Fumier animal :** Compostez le fumier frais pendant 3–4 mois avant utilisation pour détruire les pathogènes et les graines d'adventices. N'appliquez jamais de fumier frais sur les cultures en croissance.
+- **Biochar :** Incorporez du biochar (charbon végétal) à 500 kg/ha pour améliorer durablement la rétention d'eau et de nutriments dans les sols sableux ou latéritiques.
+- **Culture de couverture :** Semez du Pueraria phaseoloides, de la Mucuna ou du niébé en intercalaire pour enrichir le sol en azote (fixation 80–150 kg N/ha/an).`
+        : `♻️ **Organic Farming & Composting (Offline AI Agronomist):**
+- **Compost heap:** Alternate 20 cm layers: green nitrogen-rich materials (vegetable scraps, kitchen waste) + brown carbon materials (straw, sawdust, cardboard). Water lightly and turn every 2 weeks. Ready in 6–12 weeks.
+- **Mature compost:** Looks like dark crumbly earth, smells like forest soil, ambient temperature at center. Apply at 5–10 T/ha in planting holes before sowing.
+- **Mulch:** Cover inter-row soil with straw, wood chips, or dried leaves (5–10 cm). Reduces evaporation by 40%, suppresses weeds, and feeds earthworms.
+- **Animal manure:** Compost fresh manure for 3–4 months before use to destroy pathogens and weed seeds. Never apply fresh manure directly to growing crops.
+- **Biochar:** Incorporate biochar (vegetable charcoal) at 500 kg/ha to permanently improve water and nutrient retention in sandy or laterite soils.
+- **Cover crops:** Sow Pueraria, Mucuna, or cowpea as intercrop to enrich soil with nitrogen (fixes 80–150 kg N/ha/year).`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── 7. NURSERY, SEEDS & TRANSPLANTING ─────────────────────────────────────
+  if (lower.includes('nursery') || lower.includes('pépinière') || lower.includes('seed') || lower.includes('graine') ||
+      lower.includes('seedling') || lower.includes('semis') || lower.includes('germination') ||
+      lower.includes('transplant') || lower.includes('repiquage') || lower.includes('propagation') ||
+      lower.includes('cutting') || lower.includes('bouture') || lower.includes('germination rate')) {
+    return {
+      reply: isFr
+        ? `🌱 **Pépinière, Semences & Repiquage (IA Hors-Ligne) :**
+- **Substrat de pépinière :** Mélangez 2/3 terre fine + 1/3 sable + compost mûr. Stérilisez à la vapeur (seau d'eau bouillante) ou au soleil 48h sous plastique transparent pour éliminer les pathogènes.
+- **Trempage des graines :** Trempez les grosses graines (haricot, pois) 8–12 h dans l'eau tiède pour améliorer la germination. Pour la tomate, semez directement sans trempage.
+- **Traitement semences :** Enrobez les graines avec Thirame 80 WP (3 g/kg de semences) pour protéger contre la fonte des semis.
+- **Repiquage :** Repiquez quand les plants ont 4–6 feuilles vraies (tomate, poivron : 4–6 semaines). Arrosez abondamment 24h avant pour réduire le stress de transplantation.
+- **Durcissement :** 1 semaine avant le repiquage, exposez progressivement les plants à la lumière directe du soleil (commencez par 2h le matin) pour les préparer au plein air.
+- **Multiplication végétative :** Boutures de manioc : 25 cm, 4–6 nœuds, inclinées à 45°. Rejets de bananier : choisissez des rejets-épée vigoureux, parez les racines et plongez dans l'eau chaude (55°C, 20 min).`
+        : `🌱 **Nursery, Seeds & Transplanting (Offline AI):**
+- **Nursery substrate:** Mix 2/3 fine soil + 1/3 sand + matured compost. Sterilize with boiling water or solarize 48h under clear plastic sheeting to kill pathogens.
+- **Seed soaking:** Soak large seeds (beans, cowpea) 8–12 hours in warm water to improve germination rate. Tomato seeds can be sown directly without soaking.
+- **Seed treatment:** Coat seeds with Thiram 80 WP (3 g/kg seed) to protect against damping-off in the nursery.
+- **Transplanting:** Transplant when seedlings have 4–6 true leaves (tomato, pepper: 4–6 weeks). Water heavily 24h before transplanting to reduce transplant shock.
+- **Hardening off:** One week before transplanting, gradually expose seedlings to direct sunlight (start with 2h in the morning) to prepare them for open field conditions.
+- **Vegetative propagation:** Cassava cuttings: 25 cm long, 4–6 nodes, planted at 45° angle in ridges. Banana suckers: choose vigorous sword suckers, pare roots and dip in hot water (55°C for 20 min) before planting.`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── 8. LIVESTOCK & POULTRY INTEGRATION ────────────────────────────────────
+  if (lower.includes('chicken') || lower.includes('poulet') || lower.includes('livestock') || lower.includes('bétail') ||
+      lower.includes('goat') || lower.includes('chèvre') || lower.includes('cow') || lower.includes('vache') ||
+      lower.includes('pig') || lower.includes('porc') || lower.includes('cattle') || lower.includes('sheep') || lower.includes('mouton') ||
+      lower.includes('poultry') || lower.includes('volaille') || lower.includes('duck') || lower.includes('canard') ||
+      lower.includes('animal manure') || lower.includes('fumier animal') || lower.includes('agropastoral')) {
+    return {
+      reply: isFr
+        ? `🐔 **Élevage & Intégration Agropastorale (IA Hors-Ligne) :**
+- **Poulet de chair (Broiler) :** Poussin d'un jour à abattage en 45–55 jours avec alimentation starter (22% protéines, 3 kg/poussin) puis finisher (18% protéines). Vacciner contre Newcastle (ND) et Gumboro à J7.
+- **Ponte :** Les pondeuses commencent à 20–22 semaines. Fournissez 16h de lumière/jour. Alimentation pondeuse riche en calcium (3,5%) pour la solidité des coquilles.
+- **Caprins/Ovins :** Fournissez 2–3 kg de fourrage (Pennisetum, Brachiaria) + 300 g de son de blé/maïs par jour. Déparasitez tous les 3 mois avec Albendazole (7,5 mg/kg).
+- **Bovins :** Un bovin adulte de 500 kg produit 10–15 T de fumier/an. Valorisez-le en compost. Vaccinez contre la PPCB (Péripneumonie bovine) annuellement.
+- **Intégration rizipisciculture :** Combinez riziculture irriguée et élevage de poissons (tilapia) dans les casiers — les poissons contrôlent les mauvaises herbes et enrichissent l'eau en azote.
+- **Biosécurité aviaire :** Clôturez le poulailler, appliquez un pédiluv à l'entrée, et limitez les visiteurs pour prévenir les maladies virales (grippe aviaire, Newcastle).`
+        : `🐔 **Livestock & Agropastoral Integration (Offline AI):**
+- **Broiler chickens:** Day-old chick to slaughter in 45–55 days with starter feed (22% protein, 3 kg/chick) then finisher (18% protein). Vaccinate against Newcastle (ND) and Gumboro at day 7.
+- **Layers:** Hens start laying at 20–22 weeks. Provide 16 hours of light per day. Layer feed rich in calcium (3.5%) for strong eggshells.
+- **Goats/Sheep:** Provide 2–3 kg of forage (Pennisetum, Brachiaria) + 300 g wheat bran/maize per day. Deworm every 3 months with Albendazole (7.5 mg/kg).
+- **Cattle:** One 500 kg adult produces 10–15 T of manure per year. Compost it for crop use. Vaccinate against CBPP (bovine pleuro-pneumonia) annually.
+- **Rice-fish integration:** Combine irrigated rice farming with fish ponds (tilapia) in paddies — fish control weeds and enrich water with nitrogen.
+- **Poultry biosecurity:** Fence the chicken house, install a footbath at entry, limit visitors to prevent viral diseases (avian influenza, Newcastle).`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── 9. CAMEROON CLIMATE & SEASONS ─────────────────────────────────────────
+  if (lower.includes('climate') || lower.includes('climat') || lower.includes('rainfall') || lower.includes('pluie') ||
+      lower.includes('season') || lower.includes('saison') || lower.includes('harmattan') ||
+      lower.includes('dry season') || lower.includes('saison sèche') || lower.includes('rainy season') || lower.includes('saison des pluies') ||
+      lower.includes('temperature') || lower.includes('température') || lower.includes('agro-ecological') || lower.includes('agro-écologique')) {
+    return {
+      reply: isFr
+        ? `☁️ **Climat & Saisons Agricoles du Cameroun (IA Hors-Ligne) :**
+- **Zone Équatoriale (Centre, Sud, Littoral, Sud-Ouest) :** 4 saisons distinctes — 2 saisons des pluies (mars–juin & sept–nov) et 2 saisons sèches. 1500–3000 mm/an. Idéal pour cacao, manioc, plantain, palmier à huile.
+- **Hauts-Plateaux de l'Ouest (Ouest, Nord-Ouest) :** Saison des pluies longue (mars–oct, 1500–2000 mm). Fraîcheur relative. Idéal pour tomate, café Arabica, pomme de terre, haricot, maïs.
+- **Savane Guinéenne (Adamaoua) :** 1 saison des pluies (avr–sept, 1000–1500 mm). Idéal pour maïs, sorgho, igname, arachide, patate douce.
+- **Savane Soudanienne (Nord) :** 1 saison des pluies (juin–sept, 600–1000 mm). Coton, maïs, arachide, sorgho. Attention aux attaques de FAW en juillet-août.
+- **Zone Sahélienne (Extrême-Nord) :** Saison des pluies très courte (juil–sept, 300–600 mm). Agriculture de décrue et irriguo-pluviale. Sorgho/mil, oignon, riz SEMRY, niébé.
+- **Harmattan :** Vent sec du Nord-Est (nov–fév). Augmente l'évapotranspiration, brûle les extrémités foliaires. Protégez les pépinières et irriguez plus fréquemment.`
+        : `☁️ **Cameroon Climate & Agricultural Seasons (Offline AI):**
+- **Equatorial Zone (Centre, South, Littoral, South-West):** 4 distinct seasons — 2 rainy (Mar–Jun & Sep–Nov) + 2 dry. 1500–3000 mm/year. Best for cocoa, cassava, plantain, oil palm.
+- **Western Highlands (West, North-West):** Long rainy season (Mar–Oct, 1500–2000 mm). Cool climate. Best for tomato, Arabica coffee, Irish potato, beans, maize.
+- **Guinea Savanna (Adamawa):** 1 rainy season (Apr–Sep, 1000–1500 mm). Best for maize, sorghum, yam, groundnuts, sweet potato.
+- **Sudanian Savanna (North):** 1 rainy season (Jun–Sep, 600–1000 mm). Cotton, maize, groundnuts, sorghum. Watch for FAW attacks in July–August.
+- **Sahelian Zone (Far North):** Very short rainy season (Jul–Sep, 300–600 mm). Recession and irrigated farming. Sorghum/millet, onion, SEMRY rice, cowpea.
+- **Harmattan:** Dry NE wind (Nov–Feb). Increases evapotranspiration and scorches leaf tips. Protect nurseries with windbreaks and increase irrigation frequency.`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── 10. MARKET PRICES & FARM ECONOMICS ────────────────────────────────────
+  if (lower.includes('price') || lower.includes('prix') || lower.includes('sell') || lower.includes('vendre') ||
+      lower.includes('market') || lower.includes('marché') || lower.includes('profit') || lower.includes('bénéfice') ||
+      lower.includes('income') || lower.includes('revenu') || lower.includes('export') || lower.includes('exportation') ||
+      lower.includes('how much') || lower.includes('combien') || lower.includes('budget') || lower.includes('cost') || lower.includes('coût')) {
+    return {
+      reply: isFr
+        ? `💰 **Économie Agricole & Marchés au Cameroun (IA Hors-Ligne) :**
+- **Prix de référence indicatifs (saison normale) :**
+  - 🌽 Maïs grain sec : 150–220 FCFA/kg (marché local) ; 180–250 FCFA/kg (SODECOTON, zone nord)
+  - 🍅 Tomate fraîche : 100–350 FCFA/kg selon saison (Foumbot, marché Bafoussam)
+  - 🌱 Manioc frais : 70–120 FCFA/kg ; Gari : 400–600 FCFA/kg
+  - ☕ Café Arabica parche : 1200–1800 FCFA/kg (UCCAO, coopérative Ouest)
+  - 🍫 Cacao marchand sec : 1400–2000 FCFA/kg (ONCC, ferme de collecte)
+- **Calcul de rentabilité :** Coûts de production maïs (2 ha) ≈ 350 000–500 000 FCFA (intrants + main-d'œuvre). Rendement attendu : 3–4 T/ha × 180 FCFA/kg = 1 080 000–1 440 000 FCFA brut.
+- **Groupement de vente :** Adhérez à une coopérative (GIC, COOP) pour accéder aux contrats avec SODECOTON, NESPRESSO, OLAM ou les programmes WFP.
+- **Stockage stratégique :** Ne vendez pas à la récolte (prix bas). Stockez 2–3 mois pour vendre en période de soudure (prix +30–50%).`
+        : `💰 **Farm Economics & Markets in Cameroon (Offline AI):**
+- **Reference farm-gate prices (normal season):**
+  - 🌽 Dry maize grain: 150–220 FCFA/kg (local market); 180–250 FCFA/kg (SODECOTON, northern zone)
+  - 🍅 Fresh tomato: 100–350 FCFA/kg depending on season (Foumbot, Bafoussam market)
+  - 🌱 Fresh cassava: 70–120 FCFA/kg; Gari: 400–600 FCFA/kg
+  - ☕ Arabica coffee (parchment): 1200–1800 FCFA/kg (UCCAO cooperative, West Region)
+  - 🍫 Dry cocoa beans: 1400–2000 FCFA/kg (ONCC collection point)
+- **Profitability estimate:** Maize production cost (2 ha) ≈ 350,000–500,000 FCFA (inputs + labor). Expected yield: 3–4 T/ha × 180 FCFA/kg = 1,080,000–1,440,000 FCFA gross revenue.
+- **Group selling:** Join a cooperative (GIC, COOP) to access contracts with SODECOTON, NESPRESSO, OLAM, or WFP purchase programs.
+- **Strategic storage:** Do not sell at harvest (prices are lowest). Store 2–3 months and sell during the lean season (price increase of 30–50%).`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── 11. INTERCROPPING & CROP ROTATION ─────────────────────────────────────
+  if (lower.includes('intercrop') || lower.includes('association') || lower.includes('rotation') ||
+      lower.includes('mixed') || lower.includes('polyculture') || lower.includes('agroforestry') || lower.includes('agroforesterie') ||
+      lower.includes('companion') || lower.includes('associer') || lower.includes('diversif') ||
+      lower.includes('cover crop') || lower.includes('engrais vert') || lower.includes('shade tree') || lower.includes('arbre d\'ombrage')) {
+    return {
+      reply: isFr
+        ? `🌿 **Associations de Cultures & Rotation (IA Hors-Ligne) :**
+- **Maïs + Haricot :** Association classique en Afrique de l'Ouest. Le haricot fixe l'azote (60–80 kg N/ha) et couvre le sol. Semez les haricots 2–3 semaines après le maïs pour éviter la compétition.
+- **Manioc + Arachide :** Le manioc offre de l'ombre partielle après 3 mois, permettant à l'arachide de s'épanouir en début de cycle. Double production sur la même parcelle.
+- **Rotation céréales/légumineuses :** Alternez maïs ou sorgho → haricot ou arachide → maïs. Réduit la pression parasitaire de 30–40% et enrichit naturellement le sol.
+- **Agroforesterie :** Associez arbres fruitiers ou forestiers (manguier, acacia, néré) avec des cultures annuelles en allées. L'ombrage modère la température du sol et les feuilles mortes constituent un paillis naturel.
+- **Tomate + Basilic :** Le basilic repousse les pucerons et les thrips qui attaquent la tomate. Plantez 1 rangée de basilic tous les 4 rangs de tomate.
+- **Cultures d'ombrage pour le cacao/café :** Maintenez 30–40% de couvert d'ombrage (bananier, Albizia) pour stabiliser la température et réduire l'évaporation du sol sous les cacaoyers.`
+        : `🌿 **Intercropping & Crop Rotation (Offline AI):**
+- **Maize + Beans:** Classic West African intercrop. Beans fix nitrogen (60–80 kg N/ha) and cover the soil. Sow beans 2–3 weeks after maize to avoid early competition.
+- **Cassava + Groundnuts:** Cassava provides partial shade after 3 months, allowing groundnuts to thrive in the early cycle. Double production on the same plot.
+- **Cereal/legume rotation:** Alternate maize or sorghum → beans or groundnuts → maize. Reduces pest pressure by 30–40% and naturally enriches the soil.
+- **Agroforestry:** Integrate fruit or timber trees (mango, acacia, néré) with annual crops in alley systems. Shade moderates soil temperature and falling leaves create natural mulch.
+- **Tomato + Basil:** Basil repels aphids and thrips that attack tomato. Plant 1 row of basil for every 4 rows of tomato.
+- **Shade crops for cocoa/coffee:** Maintain 30–40% canopy shade (banana, Albizia) to stabilize temperature and reduce soil evaporation under cocoa trees.`,
+      source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
+      isOffline: true
+    };
+  }
+
+  // ── 12. WEED CONTROL ──────────────────────────────────────────────────────
+  if (lower.includes('weed') || lower.includes('mauvaise herbe') || lower.includes('herbicide') ||
+      lower.includes('désherbage') || lower.includes('Striga') || lower.includes('hoeing') || lower.includes('sarclage') ||
+      lower.includes('glyphosate') || lower.includes('atrazine') || lower.includes('butte') || lower.includes('hilling')) {
+    return {
+      reply: isFr
+        ? `🌾 **Désherbage & Contrôle des Mauvaises Herbes (IA Hors-Ligne) :**
+- **1er sarclage :** Effectuez le 1er désherbage à 2–3 semaines après la levée quand les adventices sont encore petites (stade fil). C'est la période critique — les mauvaises herbes concurrencent surtout dans les 4 premières semaines.
+- **Buttage combiné :** Associez le 2e sarclage au buttage du maïs à 4–6 semaines. Ce travail contrôle les herbes et protège les racines.
+- **Herbicides de pré-levée :** Pour le maïs, Atrazine 500 SC (2–3 L/ha, immédiatement après semis, sol humide) avant la germination des adventices.
+- **Herbicides de post-levée :** Glyphosate (Kalach 360 SL) uniquement en bordure de champ ou sur jachère — jamais sur une culture en croissance (phytotoxique).
+- **Striga (sorcière) :** Parasite dévastateur des céréales au Nord. Solution : variétés de maïs résistantes (EVDT 99), rotation avec le soja ou le niébé, et faux semis (déclencher la germination puis détruire avant plantation).
+- **Paillis anti-adventices :** Un paillis de 8–10 cm de paille, copeaux ou feuilles sèches supprime efficacement 70–80% des herbes sans herbicide chimique.`
+        : `🌾 **Weed Control (Offline AI Agronomist):**
+- **First weeding:** Weed at 2–3 weeks after emergence when weeds are still tiny (thread stage). This is the critical window — weeds compete most intensely in the first 4 weeks.
+- **Combined hilling:** Combine the second weeding with maize hilling at 4–6 weeks. This controls weeds and protects surface roots.
+- **Pre-emergence herbicides:** For maize, Atrazine 500 SC (2–3 L/ha, applied immediately after sowing on moist soil) before weed germination.
+- **Post-emergence herbicides:** Glyphosate (Kalach 360 SL) is only for field edges or fallow land — never on a growing crop (it is non-selective and will kill crops too).
+- **Striga (witchweed):** Devastating cereal parasite in the North. Solutions: Striga-resistant maize varieties (EVDT 99), rotation with soybean or cowpea, and false seeding (stimulate Striga germination then destroy before planting).
+- **Mulch weed suppression:** A 8–10 cm layer of straw, woodchips, or dry leaves effectively suppresses 70–80% of weeds without any chemical herbicide.`,
       source: isFr ? 'Agronome Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)',
       isOffline: true
     };

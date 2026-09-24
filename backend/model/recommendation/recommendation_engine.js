@@ -532,6 +532,9 @@ function getCropRecommendation({ location = '', season = '', soilCondition = '',
   const primary = CROPS_RECOMMENDATION_DATA[primaryCropKey];
   const secondary = CROPS_RECOMMENDATION_DATA[secondaryCropKey];
   const regionProfile = matchedRegionKey ? CAMEROON_REGIONS_PROFILE[matchedRegionKey] : null;
+  const primaryScore = scores[primaryCropKey] || 0;
+  const maximumScore = 120;
+  const compatibilityPercent = Math.max(0, Math.min(100, Math.round((primaryScore / maximumScore) * 100)));
 
   const sizeNum = parseFloat(landSize) || 1;
 
@@ -554,6 +557,9 @@ function getCropRecommendation({ location = '', season = '', soilCondition = '',
       primaryDetails: primary,
       secondaryCrop: secondary.name,
       secondaryDetails: secondary,
+      compatibilityPercent,
+      confidence: compatibilityPercent / 100,
+      confidenceLabel: isFrench ? 'Compatibilité avec vos données' : 'Compatibility with your data',
       agroEcologicalZone: primary.zone || (regionProfile ? regionProfile.climate : (isFrench ? 'Zone Agro-Écologique Tropicale du Cameroun' : 'Tropical Cameroonian Agro-Ecological Zone')),
       soilAssessment: soilAssessmentText,
       seasonalAdvice: seasonalAdviceText,
@@ -571,4 +577,3 @@ module.exports = {
   CROPS_RECOMMENDATION_DATA,
   CAMEROON_REGIONS_PROFILE
 };
-

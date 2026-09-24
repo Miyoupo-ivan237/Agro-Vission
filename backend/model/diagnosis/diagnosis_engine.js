@@ -165,6 +165,38 @@ const CROP_DISEASES_DB = {
         'Crop rotation for 1-2 years with non-cereal crops (legumes, cassava)',
         'Deep tillage to bury infected maize stubble'
       ]
+    },
+    {
+      id: 'maize_nutrient_deficiency',
+      name: 'Maize Nutrient Deficiency & Physiological Stress',
+      scientificName: 'Physiological disorder (N / P / K / Zn / Mg deficiency)',
+      crop: 'Maize',
+      severity: 'Moderate to High',
+      confidence: 0.92,
+      keywords: ['nutrient deficiency', 'yellowing', 'yellow', 'nitrogen', 'phosphorus', 'potassium', 'purple leaves', 'chlorosis', 'pale', 'deficiency', 'stunted growth', 'leaf analysis', 'agro hospital', 'zinc', 'carence'],
+      symptoms: [
+        'Nitrogen (N): Uniform V-shaped yellowing starting from tip of older lower leaves down midrib',
+        'Phosphorus (P): Purplish-red discoloration on leaves and stems of young seedlings, slow root development',
+        'Potassium (K): Yellowing and brown scorching (marginal necrosis) along outer edges of lower leaves',
+        'Zinc (Zn): Broad white/yellow chlorotic bands on both sides of midrib on upper new leaves'
+      ],
+      cause: 'Depleted soil nutrients, low soil pH (acidity), nutrient leaching from heavy rains, or lack of balanced fertilizer application.',
+      organicTreatment: [
+        'Incorporate well-decomposed animal manure or compost (5-10 tons/ha) before planting',
+        'Intercrop with nitrogen-fixing legumes (cowpea, beans, soybean, Mucuna)',
+        'Apply wood ash around plants to provide potassium and micronutrients'
+      ],
+      chemicalTreatment: [
+        'Nitrogen: Side-dress with Urea (46% N) at 100 kg/ha or CAN at knee-high stage (4-5 weeks)',
+        'Phosphorus: Apply Triple Superphosphate (TSP) or SSP (150 kg/ha) at planting',
+        'Potassium: Apply Muriate of Potash (KCl 60%) at 60-100 kg/ha',
+        'Zinc: Foliar spray of 0.5% Zinc Sulfate at 3-4 leaf stage'
+      ],
+      prevention: [
+        'Perform scientific agricultural leaf and soil testing (e.g., Agro Hospital Cameroon: +237 681532846 / 657469343) to detect hidden deficiencies before yield loss',
+        'Apply basal NPK 20-10-10 (200 kg/ha) at sowing followed by timely top-dressing',
+        'Lime acidic soils (pH < 5.5) with agricultural lime at 1-2 tons/ha to unlock fixed phosphorus'
+      ]
     }
   ],
   tomato: [
@@ -808,15 +840,40 @@ function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNote
     bestMatch = CROP_DISEASES_DB[defaultCropKey] ? CROP_DISEASES_DB[defaultCropKey][0] : CROP_DISEASES_DB.maize[0];
   }
 
+  const matchedCropKey = (bestMatch.crop || targetCrops[0] || 'maize').toLowerCase();
+  const guidance = getBackendCropGuidance(matchedCropKey, isFrench);
+
+  const orgTreat = isFrench ? bestMatch.organicTreatment.map(t => translateTreatment(t)) : bestMatch.organicTreatment;
+  const chemTreat = isFrench ? bestMatch.chemicalTreatment.map(t => translateTreatment(t)) : bestMatch.chemicalTreatment;
+  const prevTreat = isFrench ? bestMatch.prevention.map(p => translateTreatment(p)) : bestMatch.prevention;
+
   return {
     success: true,
     diagnosis: {
       ...bestMatch,
       name: isFrench ? translateDiseaseName(bestMatch.name) : bestMatch.name,
-      organicTreatment: isFrench ? bestMatch.organicTreatment.map(t => translateTreatment(t)) : bestMatch.organicTreatment,
-      chemicalTreatment: isFrench ? bestMatch.chemicalTreatment.map(t => translateTreatment(t)) : bestMatch.chemicalTreatment,
+      organicTreatment: orgTreat,
+      chemicalTreatment: chemTreat,
       symptoms: isFrench ? bestMatch.symptoms.map(s => translateTreatment(s)) : bestMatch.symptoms,
-      prevention: isFrench ? bestMatch.prevention.map(p => translateTreatment(p)) : bestMatch.prevention,
+      prevention: prevTreat,
+      cure: {
+        immediateAction: guidance.immediateAction,
+        organicTreatment: orgTreat,
+        chemicalTreatment: chemTreat,
+        knapsackDosage: {
+          rate: isFrench ? '30g à 50g (2 à 3 cuillères à soupe) par pulvérisateur de 15L' : '30g to 50g (2 to 3 tablespoons) per 15L backpack sprayer',
+          timing: isFrench ? 'Tôt le matin (6h00 – 8h30) ou en fin d’après-midi (17h00 – 18h30)' : 'Early morning (6:00 – 8:30 AM) or late afternoon (5:00 – 6:30 PM)',
+          phi: isFrench ? 'Délai Avant Récolte (DAR) : 7 à 14 jours minimum' : 'Pre-Harvest Interval (PHI): 7 to 14 days minimum'
+        }
+      },
+      recommendations: {
+        cropRotation: guidance.cropRotation,
+        soilAndFertilizer: guidance.soilAndFertilizer,
+        sanitation: guidance.sanitation,
+        labTesting: isFrench
+          ? 'Agro Hospital Cameroun — Yaoundé & Bamenda (+237 681 532 846 / 657 469 343)'
+          : 'Agro Hospital Cameroon — Yaoundé & Bamenda (+237 681 532 846 / 657 469 343)'
+      },
       language: language,
       matchedScore: highestScore,
       farmerContext,
@@ -824,6 +881,104 @@ function diagnoseCrop({ crop, symptomsText = '', imageUri = null, additionalNote
       source: isFrench ? 'Moteur de Pathologie IA Agro-Vission (TensorFlow & Pathologie des Plantes)' : 'Agro-Vission AI Pathology Engine (TensorFlow & Plant Pathology)',
       imageUri: imageUri || null
     }
+  };
+}
+
+function getBackendCropGuidance(cropKey, isFrench) {
+  const k = (cropKey || '').toLowerCase();
+  if (k.includes('maize') || k.includes('mais') || k.includes('corn')) {
+    return {
+      cropRotation: isFrench
+        ? "Alternez impérativement avec une légumineuse fixatrice d'azote (Arachide, Niébé, Haricot ou Soja) lors du cycle suivant pour rompre le cycle des ravageurs et enrichir le sol."
+        : "Rotate immediately with a nitrogen-fixing legume (Groundnut, Cowpea, Bean, or Soybean) in the next cycle to break stem borer cycles and restore soil nitrogen.",
+      soilAndFertilizer: isFrench
+        ? "Apportez NPK 20-10-10 (200 kg/ha) au semis et Urée 46% (100 kg/ha) à 4-5 semaines. Sur sols acides, épandez de la cendre de bois ou de la chaux agricole (200-300 kg/ha)."
+        : "Apply basal NPK 20-10-10 (200 kg/ha) at planting and Urea 46% (100 kg/ha) at 4-5 weeks. Broadcast wood ash or agricultural lime (200-300 kg/ha) on acidic soils.",
+      immediateAction: isFrench
+        ? [
+            "Épurer ou effeuiller sans délai les feuilles et plants sévèrement atteints.",
+            "Ne jetez jamais les résidus malades au sol : brûlez-les ou enterrez-les loin du champ.",
+            "Arrosez strictement au pied et évitez tout mouillage du feuillage."
+          ]
+        : [
+            "Rogue or prune heavily infected leaves immediately to stop spread.",
+            "Never leave diseased crop residues on the ground: burn or bury far from crops.",
+            "Water strictly at root base; avoid wetting foliage."
+          ],
+      sanitation: isFrench
+        ? "Maintenez 75 cm x 25 cm d'écartement pour l'aération. Brûlez les cannes post-récolte."
+        : "Maintain 75 cm x 25 cm spacing for air circulation. Burn post-harvest stalks."
+    };
+  }
+  if (k.includes('cassava') || k.includes('manioc')) {
+    return {
+      cropRotation: isFrench
+        ? "Ne replantez jamais du manioc consécutivement sur la même parcelle. Alternez pendant 1 à 2 saisons avec du maïs ou du niébé pour assainir le sol."
+        : "Never replant cassava consecutively on the same plot. Rotate for 1-2 seasons with maize or cowpea to clear soil pathogens.",
+      soilAndFertilizer: isFrench
+        ? "Apportez NPK 12-12-17 ou du compost mûr complété par de la cendre de bois pour le gonflement des tubercules."
+        : "Apply NPK 12-12-17 or mature compost with wood ash for tuber bulking.",
+      immediateAction: isFrench
+        ? [
+            "Arrachez et brûlez les plants présentant des symptômes sévères.",
+            "Désinfectez les coupe-coupes avec de l'eau de Javel à 10%.",
+            "Ne prélevez jamais de boutures dans un champ atteint."
+          ]
+        : [
+            "Rogue and burn plants showing severe symptoms.",
+            "Disinfect harvesting tools with 10% bleach.",
+            "Never take stem cuttings from an infected field."
+          ],
+      sanitation: isFrench
+        ? "Plantez des boutures certifiées (TME 419) à 1 m x 1 m."
+        : "Plant certified stakes (TME 419) at 1 m x 1 m spacing."
+    };
+  }
+  if (k.includes('tomato') || k.includes('tomate')) {
+    return {
+      cropRotation: isFrench
+        ? "RÈGLE D'OR : Ne replantez aucune solanacée (piment, pomme de terre, aubergine) après la tomate. Alternez 2 saisons avec du maïs ou des haricots."
+        : "GOLDEN RULE: Never plant solanaceous crops (pepper, potato, eggplant) after tomato. Rotate 2 seasons with maize or beans.",
+      soilAndFertilizer: isFrench
+        ? "Incorporez du compost mûr et appliquez du nitrate de calcium en début floraison contre la pourriture apicale."
+        : "Incorporate mature compost and apply calcium nitrate at early flowering against blossom end rot.",
+      immediateAction: isFrench
+        ? [
+            "Retirez et brûlez immédiatement les fruits et feuilles malades.",
+            "Stoppez tout arrosage par aspersion; arrosez au pied.",
+            "Tuteurez pour éloigner les plants du sol humide."
+          ]
+        : [
+            "Remove and burn diseased leaves and fruits immediately.",
+            "Halt overhead irrigation; water strictly at root base.",
+            "Stake plants to keep foliage elevated off wet ground."
+          ],
+      sanitation: isFrench
+        ? "Paillage de paille propre au sol pour bloquer les éclaboussures de pluie."
+        : "Apply clean straw mulch to block rain-splash spore dispersal."
+    };
+  }
+  return {
+    cropRotation: isFrench
+      ? "Pratiquez une rotation alternant céréales et légumineuses pour assainir le sol et rompre le cycle des maladies."
+      : "Practice crop rotation alternating cereals and legumes to cleanse the soil and break disease cycles.",
+    soilAndFertilizer: isFrench
+      ? "Favorisez les apports organiques équilibrés et évitez les excès soudains d'azote."
+      : "Prioritize balanced organic inputs and avoid sudden nitrogen excesses.",
+    immediateAction: isFrench
+      ? [
+          "Arrachez ou effeuillez les parties atteintes pour stopper l'infection.",
+          "Brûlez ou enterrez les résidus malades loin du champ.",
+          "Arrosez au pied sans mouiller le feuillage."
+        ]
+      : [
+          "Rogue or prune infected parts immediately to stop disease spread.",
+          "Burn or bury diseased residues far from the field.",
+          "Water at root base without wetting foliage."
+        ],
+    sanitation: isFrench
+      ? "Respectez les densités de semis recommandées et désherbez régulièrement."
+      : "Follow recommended planting density and keep field weed-free."
   };
 }
 

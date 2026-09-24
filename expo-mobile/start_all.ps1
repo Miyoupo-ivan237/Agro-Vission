@@ -1,6 +1,6 @@
 # Start Expo Mobile (AGROVISSION)
 Write-Host "=== Starting AGROVISSION Mobile App (Expo 57) ===" -ForegroundColor Cyan
-Set-Location "C:\Users\FixUser\Desktop\Agro-Vission\expo-mobile"
+Set-Location $PSScriptRoot
 
 $env:REACT_NATIVE_PACKAGER_HOSTNAME = "192.168.42.199"
 Write-Host "=== Metro Bundler Host: 192.168.42.199 (LAN Mode) ===" -ForegroundColor Yellow

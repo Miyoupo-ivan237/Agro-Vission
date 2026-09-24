@@ -133,6 +133,29 @@ export default function WelcomeScreen({ goTo, setLanguage, currentLanguage, user
             {isFrench ? '⚡ IA Hors-Ligne & Modèle Qwen Actif' : '⚡ Offline AI & Qwen Model Active'}
           </Text>
         </View>
+
+        {/* Hero Stats Row */}
+        <View style={styles.heroStats}>
+          <View style={styles.heroStat}>
+            <Text style={styles.heroStatNum}>14+</Text>
+            <Text style={styles.heroStatLabel}>{isFrench ? 'Cultures' : 'Crops'}</Text>
+          </View>
+          <View style={styles.heroStatDivider} />
+          <View style={styles.heroStat}>
+            <Text style={styles.heroStatNum}>40+</Text>
+            <Text style={styles.heroStatLabel}>{isFrench ? 'Maladies' : 'Diseases'}</Text>
+          </View>
+          <View style={styles.heroStatDivider} />
+          <View style={styles.heroStat}>
+            <Text style={styles.heroStatNum}>10</Text>
+            <Text style={styles.heroStatLabel}>{isFrench ? 'Régions' : 'Regions'}</Text>
+          </View>
+          <View style={styles.heroStatDivider} />
+          <View style={styles.heroStat}>
+            <Text style={styles.heroStatNum}>100%</Text>
+            <Text style={styles.heroStatLabel}>{isFrench ? 'Hors-ligne' : 'Offline'}</Text>
+          </View>
+        </View>
       </View>
 
       {/* Main Single Unified Showcase Container */}
@@ -217,6 +240,21 @@ export default function WelcomeScreen({ goTo, setLanguage, currentLanguage, user
               />
             ))}
           </View>
+        </View>
+
+        {/* Feature Highlights */}
+        <View style={styles.featureStrip}>
+          {[
+            { icon: '🔬', label: isFrench ? 'Diagnostic IA' : 'AI Diagnosis' },
+            { icon: '📡', label: isFrench ? '100% Hors-ligne' : '100% Offline' },
+            { icon: '🌍', label: isFrench ? '2 Langues' : 'Bilingual' },
+            { icon: '⚡', label: isFrench ? 'Instantané' : 'Instant' },
+          ].map((f, i) => (
+            <View key={i} style={styles.featureChip}>
+              <Text style={styles.featureChipIcon}>{f.icon}</Text>
+              <Text style={styles.featureChipLabel}>{f.label}</Text>
+            </View>
+          ))}
         </View>
 
         {/* How It Works Quick Explainer */}
@@ -815,5 +853,63 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#94A3B8',
     textAlign: 'center',
+  },
+  // Hero Stats Banner
+  heroStats: {
+    flexDirection: 'row',
+    backgroundColor: '#0F172A',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 12,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  heroStat: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  heroStatNum: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#4ADE80',
+    letterSpacing: -0.5,
+  },
+  heroStatLabel: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontWeight: '600',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  heroStatDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  // Feature Highlights Strip
+  featureStrip: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  featureChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    gap: 4,
+  },
+  featureChipIcon: {
+    fontSize: 13,
+  },
+  featureChipLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#15803D',
   },
 });

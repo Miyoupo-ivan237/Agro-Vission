@@ -1,13 +1,52 @@
 // expo-mobile/src/api.js
 // Client API Client with Automatic Seamless Offline AI Fallback for AGROVISSION
 
+import Constants from 'expo-constants';
 import { offlineDiagnoseCrop, offlineRecommendCrop, offlineChatAgronomist } from './offline_ai.js';
 
 // Keep crop recommendations independent from the optional TensorFlow vision model.
 // Recommendations use the local agronomy rules immediately, even while the model is unavailable.
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.42.199:5000';
+function getApiBaseUrl() {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  // Automatically discover host from Expo Constants / Metro bundler
+  const hostUri = Constants.expoConfig?.hostUri || Constants.manifest2?.extra?.expoGo?.debuggerHost || '';
+  if (hostUri) {
+    const hostIp = hostUri.split(':')[0];
+    if (hostIp) {
+      return `http://${hostIp}:5000`;
+    }
+  }
+  return 'http://192.168.42.199:5000';
+}
+
+const BASE_URL = getApiBaseUrl();
 let sessionToken = null;
+
+/**
+ * Returns true for pure network/connectivity failures that should silently
+ * trigger the offline fallback.  Returns false for real HTTP errors returned
+ * by the server (4xx / 5xx) which have err.info set and must propagate.
+ */
+function isNetworkError(err) {
+  if (err && err.info) return false; // server replied with a structured error — not a network issue
+  const msg = (err && (err.message || err.name || '')).toLowerCase();
+  return (
+    err && err.name === 'AbortError' ||
+    msg.includes('fetch') ||
+    msg.includes('network') ||
+    msg.includes('noroutetohost') ||
+    msg.includes('host unreachable') ||
+    msg.includes('failed to fetch') ||
+    msg.includes('networkrequesterror') ||
+    msg.includes('econnrefused') ||
+    msg.includes('enotfound') ||
+    msg.includes('etimedout') ||
+    msg.includes('econnreset') ||
+    msg.includes('connection refused') ||
+    msg.includes('unable to resolve')
+  );
+}
 
 function getFarmerContext(context = {}) {
   return {
@@ -73,13 +112,16 @@ async function request(path, body, token, timeoutMs = 2500, method = 'AUTO') {
 
   try {
     const requestMethod = method === 'AUTO' ? (body ? 'POST' : 'GET') : method;
-    
+    // DELETE and GET must never carry a request body (HTTP spec)
+    const hasBody = !!body && requestMethod !== 'DELETE' && requestMethod !== 'GET';
+
     const res = await fetch(`${BASE_URL}${path}`, {
       method: requestMethod,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: hasBody ? JSON.stringify(body) : undefined,
       signal: controller.signal
     });
+
     clearTimeout(timeoutId);
 
     const data = await res.json().catch(() => ({}));
@@ -165,15 +207,29 @@ export async function updateProfile(payload, token) {
 // 2. AI Crop Diagnosis
 export async function diagnosePlant({ crop, symptomsText, imageUri, imageBase64, additionalNotes, farmerContext, language = 'English' }) {
   try {
-    const data = await request('/api/ai/diagnose', { crop, symptomsText, imageUri, imageBase64, additionalNotes, farmerContext: getFarmerContext({ ...farmerContext, crop }), language }, sessionToken, 180000);
+    // When an image is provided, vision analysis with Ollama/LLaVA can take 15-40s on local hardware.
+    // Give it enough time (45s) to detect the real image, while keeping fast 10s timeout for pure text.
+    const timeout = (imageBase64 && imageBase64.length > 100) ? 45000 : 10000;
+    const data = await request(
+      '/api/ai/diagnose',
+      { crop, symptomsText, imageUri, imageBase64, additionalNotes, farmerContext: getFarmerContext({ ...farmerContext, crop }), language },
+      sessionToken,
+      timeout
+    );
     if (data && data.success && data.diagnosis) {
       offlineStorage.diagnoses.unshift(data.diagnosis);
       return data;
     }
+    // Server replied but without a valid diagnosis — fall through to offline
   } catch (err) {
-    if (imageUri) throw err;
+    // Only re-throw genuine business validation rejections from the server
+    // (e.g. HTTP 422 for IMAGE_NOT_IDENTIFIABLE or IMAGE_CROP_MISMATCH).
+    // Network failures, 503 service unavailable, timeouts fall silently to on-device offline AI engine.
+    if (err && err.info && err.status === 422) throw err;
+    console.warn('[AgroVission] Backend vision unavailable/timeout, switching to offline AI:', err?.message || err);
   }
 
+  // ── On-Device Offline Fallback ─────────────────────────────────────────────
   const offlineRes = offlineDiagnoseCrop({ crop, symptomsText, imageUri, language });
   if (offlineRes && offlineRes.diagnosis) {
     offlineStorage.diagnoses.unshift(offlineRes.diagnosis);
@@ -342,11 +398,12 @@ export async function adminUnblockUser(userId, token) {
 
 export async function adminDeleteUser(userId, token) {
   try {
-    return await request(`/api/admin/users/${userId}`, {}, token, 3500, 'DELETE');
+    return await request(`/api/admin/users/${userId}`, null, token, 3500, 'DELETE');
   } catch (err) {
     return { success: false, error: err.message };
   }
 }
+
 
 export default {
   registerUser,

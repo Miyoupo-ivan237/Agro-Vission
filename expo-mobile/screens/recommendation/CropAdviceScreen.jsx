@@ -306,9 +306,6 @@ export default function CropAdviceScreen({ goTo, language = 'English' }) {
                   {reg.name}
                 </Text>
                 <Text style={styles.optionZone}>{isFr ? reg.zoneFr || reg.zone : reg.zone}</Text>
-                <Text style={{ fontSize: 11, color: isSelected ? '#15803D' : '#16A34A', marginTop: 2 }}>
-                  🌱 {isFr ? reg.suitableFr : reg.suitable}
-                </Text>
               </Pressable>
             );
           })}
@@ -433,6 +430,21 @@ export default function CropAdviceScreen({ goTo, language = 'English' }) {
         </Pressable>
       </View>
 
+      {/* Locked placeholder – shown before first calculation */}
+      {!recommendation && !loading && (
+        <View style={styles.lockedCard}>
+          <Text style={styles.lockedIcon}>🔒</Text>
+          <Text style={styles.lockedTitle}>
+            {isFr ? 'Remplissez le formulaire pour voir les résultats' : 'Complete the form to unlock results'}
+          </Text>
+          <Text style={styles.lockedSub}>
+            {isFr
+              ? 'Sélectionnez votre région, sol, saison et superficie, puis appuyez sur Calculer.'
+              : 'Select your region, soil, season and land size, then press Calculate.'}
+          </Text>
+        </View>
+      )}
+
       {/* Recommendation Results Card */}
       {recommendation && (
         <View style={styles.resultCard}>
@@ -442,6 +454,21 @@ export default function CropAdviceScreen({ goTo, language = 'English' }) {
             </Text>
           </View>
           <Text style={styles.resultCropTitle}>{recommendation.primaryCrop}</Text>
+          <View style={styles.confidencePanel}>
+            <Text style={styles.confidencePercent}>
+              {Math.round(Number.isFinite(Number(recommendation.compatibilityPercent))
+                ? Number(recommendation.compatibilityPercent)
+                : (Number(recommendation.confidence) || 0) * 100)}%
+            </Text>
+            <Text style={styles.confidenceLabel}>
+              {recommendation.confidenceLabel || (isFr ? 'Compatibilité avec vos données' : 'Compatibility with your data')}
+            </Text>
+            <Text style={styles.confidenceNote}>
+              {isFr
+                ? 'Ce pourcentage compare la région, le sol et la saison saisis ; ce n’est pas une garantie de rendement.'
+                : 'This percentage compares your selected region, soil, and season; it is not a yield guarantee.'}
+            </Text>
+          </View>
           <Image source={require('../../assets/logo.png')} style={styles.resultCropImage} resizeMode="contain" />
 
           <Text style={styles.resultText}>{recommendation.soilAssessment}</Text>
@@ -762,6 +789,32 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     marginBottom: 8,
   },
+  confidencePanel: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  confidencePercent: {
+    color: '#047857',
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  confidenceLabel: {
+    color: '#065F46',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginTop: 2,
+  },
+  confidenceNote: {
+    color: '#475569',
+    fontSize: 10,
+    textAlign: 'center',
+    marginTop: 4,
+  },
   resultText: {
     color: '#334155',
     fontSize: 12,
@@ -823,5 +876,33 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontWeight: 'bold',
     fontSize: 13,
+  },
+  lockedCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 12,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderStyle: 'dashed',
+  },
+  lockedIcon: {
+    fontSize: 40,
+    marginBottom: 10,
+  },
+  lockedTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#475569',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  lockedSub: {
+    fontSize: 12,
+    color: '#94A3B8',
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });

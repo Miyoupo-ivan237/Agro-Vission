@@ -12,7 +12,8 @@ const {
   chatAgronomist,
   checkOllamaStatus,
   getSupportedDiseases,
-  diagnoseImage
+  diagnoseImage,
+  normalizeCrop
 } = require('../model');
 
 // Import notification service
@@ -358,7 +359,22 @@ app.post('/api/ai/diagnose', optionalAuth, async (req, res) => {
               : 'This image does not clearly show a plant. Send a clear photo of a leaf, stem, fruit, or the whole plant.'
           });
         }
-        if (visionDiagnosis.imageCrop && crop && !visionDiagnosis.imageCrop.toLowerCase().includes(crop.toLowerCase())) {
+        if (!visionDiagnosis.imageCrop) {
+          const selectedNorm = normalizeCrop(crop);
+          if (selectedNorm) {
+            visionDiagnosis.imageCrop = selectedNorm;
+          } else {
+            return res.status(422).json({
+              success: false,
+              code: 'IMAGE_CROP_UNCERTAIN',
+              error: language === 'Français'
+                ? 'La plante est visible, mais son espèce exacte ne peut être identifiée avec certitude. Veuillez sélectionner la culture dans la liste.'
+                : 'The plant is visible, but its specific crop cannot be identified reliably. Please select your crop from the list.'
+            });
+          }
+        }
+        const normalizedSelectedCrop = normalizeCrop(crop);
+        if (crop && crop !== 'auto' && normalizedSelectedCrop && visionDiagnosis.imageCrop && visionDiagnosis.imageCrop !== normalizedSelectedCrop) {
           return res.status(422).json({
             success: false,
             code: 'IMAGE_CROP_MISMATCH',
@@ -369,12 +385,8 @@ app.post('/api/ai/diagnose', optionalAuth, async (req, res) => {
         }
         result = { success: true, diagnosis: { ...visionDiagnosis, imageUri: imageUri || null } };
       } catch (visionError) {
-        console.warn('Image diagnosis failed:', visionError.message);
-        return res.status(503).json({
-          success: false,
-          code: 'IMAGE_ANALYSIS_UNAVAILABLE',
-          error: 'Image analysis is temporarily unavailable. Confirm Ollama is running with llava:latest and try again.'
-        });
+        console.warn('[AgroVission] Vision model unavailable, falling back to rule-based diagnosis:', visionError.message);
+        result = diagnoseCrop({ crop, symptomsText, imageUri, additionalNotes, farmerContext, language });
       }
     }
     if (!result) {

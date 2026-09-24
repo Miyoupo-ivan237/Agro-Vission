@@ -3,32 +3,22 @@ import {
   View, Text, StyleSheet, Pressable, ScrollView,
   ImageBackground, Alert, ActivityIndicator, Image
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-
-// Support both ImagePicker.MediaType.Images and direct array format
-if (!ImagePicker.MediaType) {
-  ImagePicker.MediaType = {
-    Images: ['images'],
-    Videos: ['videos'],
-    All: ['images', 'videos'],
-  };
-} else if (!ImagePicker.MediaType.Images) {
-  ImagePicker.MediaType.Images = ['images'];
-}
+import * as ImagesPicker from 'expo-image-picker';
 
 import { diagnosePlant } from '../../src/api';
 import { getT, getSeverityLabel } from '../../src/translations';
+import { getCropAgronomicGuidance } from '../../src/offline_ai';
 import {
   scheduleLocalNotification,
   scheduleTwoWeekReminder
 } from '../../services/localNotificationService';
 
 const CROPS = [
-  { id: 'auto',      label: 'Auto-Detect', fr: 'Détection Auto',     icon: '🤖' },
-  { id: 'groundnut', label: 'Groundnut',   fr: 'Arachide',           icon: '🥜' },
   { id: 'maize',     label: 'Maize',       fr: 'Maïs',              icon: '🌽' },
   { id: 'cassava',   label: 'Cassava',     fr: 'Manioc',            icon: '🌱' },
   { id: 'tomato',    label: 'Tomato',      fr: 'Tomate',            icon: '🍅' },
+  { id: 'groundnut', label: 'Groundnut',   fr: 'Arachide',           icon: '🥜' },
+  { id: 'beans',     label: 'Beans',       fr: 'Haricot',           icon: '🫘' },
   { id: 'plantain',  label: 'Plantain',    fr: 'Banane Plantain',   icon: '🍌' },
   { id: 'banana',    label: 'Banana',      fr: 'Banane',            icon: '🍌' },
   { id: 'cocoa',     label: 'Cocoa',       fr: 'Cacao',             icon: '🍫' },
@@ -38,6 +28,7 @@ const CROPS = [
   { id: 'yam',       label: 'Yam',         fr: 'Igname',            icon: '🥔' },
   { id: 'coffee',    label: 'Coffee',      fr: 'Café',              icon: '☕' },
   { id: 'onion',     label: 'Onion',       fr: 'Oignon',            icon: '🧅' },
+  { id: 'auto',      label: 'Auto-Detect', fr: 'Détection Auto',     icon: '🤖' },
 ];
 
 const SEVERITY_CONFIG = {
@@ -48,6 +39,52 @@ const SEVERITY_CONFIG = {
   Low:              { color: '#0284C7', bg: '#E0F2FE', icon: '🔵' },
 };
 
+function normalizeCropKey(value) {
+  const crop = String(value || '').trim().toLowerCase();
+  if (!crop) return '';
+  const aliases = {
+    corn: 'maize',
+    mais: 'maize',
+    maïs: 'maize',
+    maize: 'maize',
+    arachide: 'groundnut',
+    peanut: 'groundnut',
+    garnut: 'groundnut',
+    groundnut: 'groundnut',
+    haricot: 'beans',
+    bean: 'beans',
+    beans: 'beans',
+    manioc: 'cassava',
+    cassava: 'cassava',
+    tomate: 'tomato',
+    tomato: 'tomato',
+    cacao: 'cocoa',
+    cocoa: 'cocoa',
+    plantain: 'plantain',
+    'banane plantain': 'plantain',
+    banane: 'banana',
+    banana: 'banana',
+    piment: 'pepper',
+    pepper: 'pepper',
+    riz: 'rice',
+    rice: 'rice',
+    igname: 'yam',
+    yam: 'yam',
+    café: 'coffee',
+    cafe: 'coffee',
+    coffee: 'coffee',
+    oignon: 'onion',
+    onion: 'onion',
+    potato: 'potato',
+    'pomme de terre': 'potato'
+  };
+  if (aliases[crop]) return aliases[crop];
+  for (const [alias, canonical] of Object.entries(aliases)) {
+    if (crop.includes(alias)) return canonical;
+  }
+  return crop;
+}
+
 function getSeverityStyle(severity) {
   return SEVERITY_CONFIG[severity] || SEVERITY_CONFIG['Moderate'];
 }
@@ -56,7 +93,7 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
   const t = getT(language);
   const isFr = language === 'Français';
 
-  const [selectedCrop, setSelectedCrop] = useState('auto');
+  const [selectedCrop, setSelectedCrop] = useState('maize');
   const [loading, setLoading]           = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
   const [result, setResult]             = useState(null);
@@ -67,7 +104,7 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
 
   // ── Permissions helper ──────────────────────────────────────────────────────
   const requestCameraPermission = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status } = await ImagesPicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
         isFr ? 'Permission refusée' : 'Permission Denied',
@@ -81,7 +118,7 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
   };
 
   const requestGalleryPermission = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } = await ImagesPicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
         isFr ? 'Permission refusée' : 'Permission Denied',
@@ -118,9 +155,19 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
         );
       }
       const diag = res.diagnosis || res;
+      const identifiedCrop = diag.imageCrop || diag.crop || cropToUse;
+      const expectedCrop = normalizeCropKey(cropToUse);
+      const actualCrop = normalizeCropKey(identifiedCrop);
+      if (expectedCrop !== 'auto' && actualCrop !== expectedCrop) {
+        throw new Error(
+          isFr
+            ? `L'image semble montrer ${identifiedCrop}, mais la culture sélectionnée est ${cropToUse}. Sélectionnez la bonne culture et réessayez.`
+            : `The image appears to show ${identifiedCrop}, but the selected crop is ${cropToUse}. Select the correct crop and try again.`
+        );
+      }
       const plant = res.identifiedPlant || {
-        cropKey: cropToUse === 'auto' ? (diag.crop?.toLowerCase() || 'maize') : cropToUse,
-        name: diag.crop || 'Maize',
+        cropKey: actualCrop,
+        name: identifiedCrop,
         icon: cropToUse === 'cassava' ? '🌱' : (cropToUse === 'groundnut' ? '🥜' : '🌽'),
         confidence: 0.95
       };
@@ -132,15 +179,43 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
         setSelectedCrop(plant.cropKey);
       }
 
-      const notifCropLabel = plant.name || activeCropLabel;
-      await scheduleLocalNotification({
-        title: isFr ? 'Diagnostic terminé' : 'Diagnosis complete',
-        body: isFr ? `Résultat disponible pour ${notifCropLabel}.` : `Your ${notifCropLabel} diagnosis is ready.`,
-        data: { type: 'diagnosis_ready', crop: plant.cropKey }
-      });
-      await scheduleTwoWeekReminder({ crop: notifCropLabel, language });
+      // Notifications are optional; never hide a diagnosis if the device
+      // denies notification permission or does not support local scheduling.
+      try {
+        const notifCropLabel = plant.name || activeCropLabel;
+        await scheduleLocalNotification({
+          title: isFr ? 'Diagnostic terminé' : 'Diagnosis complete',
+          body: isFr ? `Résultat disponible pour ${notifCropLabel}.` : `Your ${notifCropLabel} diagnosis is ready.`,
+          data: { type: 'diagnosis_ready', crop: plant.cropKey }
+        });
+        await scheduleTwoWeekReminder({ crop: notifCropLabel, language });
+      } catch (notificationError) {
+        console.warn('Diagnosis notifications unavailable:', notificationError);
+      }
     } catch (error) {
-      Alert.alert(isFr ? 'Erreur' : 'Error', error.message);
+      // Network errors are caught inside api.js and silently fall back to offline AI.
+      // Errors that reach here are genuine server-side rejections (e.g. IMAGE_NOT_IDENTIFIABLE,
+      // IMAGE_CROP_MISMATCH, or auth failures) or unexpected offline AI errors.
+      const rawMsg = error?.message || '';
+
+      // Map well-known server error codes to bilingual user-friendly text
+      let message;
+      if (rawMsg.includes('IMAGE_NOT_IDENTIFIABLE') || rawMsg.toLowerCase().includes('not clearly show a plant') || rawMsg.toLowerCase().includes('montre pas clairement')) {
+        message = isFr
+          ? "📷 L'image ne montre pas clairement une plante. Prenez une photo nette d'une feuille, tige ou fruit et réessayez."
+          : "📷 The image doesn't clearly show a plant. Take a clear photo of a leaf, stem, or fruit and try again.";
+      } else if (rawMsg.includes('IMAGE_CROP_MISMATCH') || rawMsg.toLowerCase().includes('selected crop')) {
+        message = isFr
+          ? "🌿 L'image semble montrer une plante différente de la culture sélectionnée. Sélectionnez la bonne culture et réessayez."
+          : "🌿 The image appears to show a different plant than the selected crop. Select the correct crop and try again.";
+      } else if (rawMsg.toLowerCase().includes('could not be identified') || rawMsg.toLowerCase().includes("n'a pas pu être identifiée")) {
+        message = isFr
+          ? "🔍 Plante non identifiée. Utilisez une image plus nette ou sélectionnez la culture exacte dans la liste."
+          : "🔍 Plant not identified. Use a clearer image or select the exact crop from the list.";
+      } else {
+        message = rawMsg || (isFr ? 'Le diagnostic a échoué. Réessayez.' : 'Diagnosis failed. Please try again.');
+      }
+      Alert.alert(isFr ? 'Diagnostic' : 'Diagnosis', message);
     } finally {
       setLoading(false);
     }
@@ -151,13 +226,14 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
     const ok = await requestCameraPermission();
     if (!ok) return;
 
-    const picked = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaType.Images,
+    const picked = await ImagesPicker.launchCameraAsync({
+      mediaTypes: 'images',
       quality: 0.75,
       allowsEditing: true,
       aspect: [4, 3],
       base64: true,
     });
+
 
     if (!picked.canceled && picked.assets?.length > 0) {
       const asset = picked.assets[0];
@@ -171,13 +247,14 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
     const ok = await requestGalleryPermission();
     if (!ok) return;
 
-    const picked = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.Images,
+    const picked = await ImagesPicker.launchImageLibraryAsync({
+      mediaTypes: 'images',
       quality: 0.75,
       allowsEditing: true,
       aspect: [4, 3],
       base64: true,
     });
+
 
     if (!picked.canceled && picked.assets?.length > 0) {
       const asset = picked.assets[0];
@@ -337,7 +414,7 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
                 </View>
                 <View style={styles.identifiedBadge}>
                   <Text style={styles.identifiedBadgeText}>
-                    {Math.round((identifiedPlant.confidence || 0.95) * 100)}% {isFr ? 'Fiabilité' : 'Match'}
+                    {Math.round((identifiedPlant.confidence ?? 0.95) * 100)}% {isFr ? 'Fiabilité' : 'Match'}
                   </Text>
                 </View>
               </View>
@@ -350,7 +427,7 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
           )}
 
           {/* ── Results Card ───────────────────────────────────────────────── */}
-          {result && <DiagnosisResultCard result={result} isFr={isFr} />}
+          {result && <DiagnosisResultCard result={result} isFr={isFr} goTo={goTo} />}
 
         </View>
       </ScrollView>
@@ -359,13 +436,34 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
 }
 
 // ── DiagnosisResultCard ────────────────────────────────────────────────────────
-function DiagnosisResultCard({ result, isFr }) {
+function DiagnosisResultCard({ result, isFr, goTo }) {
   const sev = getSeverityStyle(result.severity);
+  const cropKey = normalizeCropKey(result.imageCrop || result.crop || 'maize');
+  const guidance = getCropAgronomicGuidance(cropKey, isFr ? 'Français' : 'English');
+
+  // Extract cure details
+  const immediateActions = (result.cure?.immediateAction && result.cure.immediateAction.length > 0)
+    ? result.cure.immediateAction
+    : guidance.immediateAction;
+  const organicList = (result.organicTreatment && result.organicTreatment.length > 0)
+    ? result.organicTreatment
+    : (result.cure?.organicTreatment || []);
+  const chemicalList = (result.chemicalTreatment && result.chemicalTreatment.length > 0)
+    ? result.chemicalTreatment
+    : (result.cure?.chemicalTreatment || []);
+  const preventionList = (result.prevention && result.prevention.length > 0)
+    ? result.prevention
+    : [];
+  
+  // Extract recommendation details
+  const cropRotationText = result.recommendations?.cropRotation || guidance.cropRotation;
+  const soilFertilizerText = result.recommendations?.soilAndFertilizer || guidance.soilAndFertilizer;
+  const sanitationText = result.recommendations?.sanitation || guidance.sanitation;
 
   return (
     <View style={styles.resultCard}>
 
-      {/* Header */}
+      {/* ── Diagnostic Identification Header ──────────────────────────── */}
       <View style={[styles.resultHeader, { backgroundColor: sev.bg }]}>
         <View style={{ flex: 1 }}>
           <Text style={styles.resultCrop}>{result.crop || ''}</Text>
@@ -376,7 +474,7 @@ function DiagnosisResultCard({ result, isFr }) {
         </View>
         <View style={styles.rightBadges}>
           <View style={[styles.confidenceBadge, { backgroundColor: sev.color }]}>
-            <Text style={styles.confidenceText}>{Math.round((result.confidence || 0.85) * 100)}%</Text>
+            <Text style={styles.confidenceText}>{Math.round((result.confidence ?? 0.85) * 100)}%</Text>
             <Text style={styles.confidenceLabel}>{isFr ? 'fiabilité' : 'match'}</Text>
           </View>
           <View style={[styles.severityBadge, { backgroundColor: sev.color }]}>
@@ -396,37 +494,200 @@ function DiagnosisResultCard({ result, isFr }) {
 
       {/* Cause */}
       {result.cause && (
-        <Section icon="⚠️" title={isFr ? 'Cause' : 'Cause'} accent="#D97706">
+        <Section icon="⚠️" title={isFr ? 'Cause & Facteurs' : 'Cause & Factors'} accent="#D97706">
           <Text style={styles.causeText}>{result.cause}</Text>
         </Section>
       )}
 
-      {/* Organic Treatment */}
-      {(result.organicTreatment || []).length > 0 && (
-        <Section icon="🌿" title={isFr ? 'Traitement Organique' : 'Organic Treatment'} accent="#15803D">
-          {(result.organicTreatment || []).map((s, i) => (
-            <BulletRow key={i} text={s} color="#15803D" bullet={`${i + 1}.`} />
-          ))}
-        </Section>
-      )}
+      {/* ══════════════════════════════════════════════════════════════════ */}
+      {/* 🩺 1. SECTION GUÉRISON / THE CURE (TRAITEMENT CURATIF)             */}
+      {/* ══════════════════════════════════════════════════════════════════ */}
+      <View style={styles.blockCure}>
+        <View style={styles.blockHeaderCure}>
+          <View style={styles.blockBadgeCure}>
+            <Text style={styles.blockBadgeTextCure}>🩺 1. {isFr ? 'LA GUÉRISON' : 'THE CURE'}</Text>
+          </View>
+          <Text style={styles.blockSubTitleCure}>
+            {isFr ? 'Traitements curatifs & actions d\'urgence pour stopper l\'infection' : 'Curative treatments & immediate actions to halt infection'}
+          </Text>
+        </View>
 
-      {/* Chemical Treatment */}
-      {(result.chemicalTreatment || []).length > 0 && (
-        <Section icon="🧪" title={isFr ? 'Traitement Chimique' : 'Chemical Treatment'} accent="#1D4ED8">
-          {(result.chemicalTreatment || []).map((s, i) => (
-            <BulletRow key={i} text={s} color="#1D4ED8" bullet={`${i + 1}.`} />
+        {/* ⚡ Emergency 24h Action */}
+        <View style={styles.actionCallout}>
+          <Text style={styles.actionCalloutTitle}>
+            ⚡ {isFr ? 'ACTIONS D’URGENCE (PREMIÈRES 24H) :' : 'IMMEDIATE ACTIONS (FIRST 24 HOURS):'}
+          </Text>
+          {immediateActions.map((action, idx) => (
+            <Text key={idx} style={styles.actionCalloutItem}>
+              {`${idx + 1}. ${action}`}
+            </Text>
           ))}
-        </Section>
-      )}
+        </View>
 
-      {/* Prevention */}
-      {(result.prevention || []).length > 0 && (
-        <Section icon="🛡️" title={isFr ? 'Prévention' : 'Prevention Tips'} accent="#6D28D9">
-          {(result.prevention || []).map((s, i) => (
-            <BulletRow key={i} text={s} color="#6D28D9" bullet="✓" />
-          ))}
-        </Section>
-      )}
+        {/* 🌿 Organic / Natural Cure */}
+        {organicList.length > 0 && (
+          <View style={styles.innerSection}>
+            <View style={styles.subSectionHeader}>
+              <Text style={styles.subSectionIcon}>🌿</Text>
+              <Text style={[styles.subSectionTitle, { color: '#15803D' }]}>
+                {isFr ? 'Remède Organique & Naturel (Bio-Cure)' : 'Organic & Biological Remedy (Bio-Cure)'}
+              </Text>
+            </View>
+            {organicList.map((s, i) => (
+              <BulletRow key={i} text={s} color="#15803D" bullet={`${i + 1}.`} />
+            ))}
+          </View>
+        )}
+
+        {/* 🧪 Chemical Cure */}
+        {chemicalList.length > 0 && (
+          <View style={styles.innerSection}>
+            <View style={styles.subSectionHeader}>
+              <Text style={styles.subSectionIcon}>🧪</Text>
+              <Text style={[styles.subSectionTitle, { color: '#1D4ED8' }]}>
+                {isFr ? 'Traitement Curatif Chimique Homologué' : 'Approved Curative Chemical Treatment'}
+              </Text>
+            </View>
+            {chemicalList.map((s, i) => (
+              <BulletRow key={i} text={s} color="#1D4ED8" bullet={`${i + 1}.`} />
+            ))}
+          </View>
+        )}
+
+        {/* 🎒 15L Knapsack Sprayer Guide */}
+        <View style={styles.sprayerGuideBox}>
+          <View style={styles.sprayerGuideHeader}>
+            <Text style={styles.sprayerGuideTitle}>
+              🎒 {isFr ? 'GUIDE DE DOSAGE — PULVÉRISATEUR À DOS (15L) :' : 'FIELD DOSAGE GUIDE — 15L BACKPACK SPRAYER:'}
+            </Text>
+          </View>
+          <Text style={styles.sprayerGuideText}>
+            {isFr
+              ? '• Dilution : 30g à 50g (2 à 3 cuillères à soupe) par pulvérisateur plein de 15 Litres d’eau.'
+              : '• Dilution: 30g to 50g (2 to 3 tablespoons) per full 15-liter backpack sprayer.'}
+          </Text>
+          <Text style={styles.sprayerGuideText}>
+            {isFr
+              ? '• Moment optimal : Tôt le matin (6h00 – 8h30) ou en fin d’après-midi (17h00 – 18h30) sans vent fort.'
+              : '• Best Timing: Spray early morning (6:00 – 8:30 AM) or late afternoon (5:00 – 6:30 PM) under calm wind.'}
+          </Text>
+          <Text style={styles.sprayerGuideText}>
+            {isFr
+              ? '• Sécurité : Portez masque et gants. Respectez le Délai Avant Récolte (DAR : 7 à 14 jours minimum).'
+              : '• Safety: Wear gloves and mask. Observe Pre-Harvest Interval (PHI: 7 to 14 days minimum).'}
+          </Text>
+        </View>
+      </View>
+
+      {/* ══════════════════════════════════════════════════════════════════ */}
+      {/* 🛡️ 2. SECTION PRÉVENTION / PREVENTION                              */}
+      {/* ══════════════════════════════════════════════════════════════════ */}
+      <View style={styles.blockPrevention}>
+        <View style={styles.blockHeaderPrevention}>
+          <View style={styles.blockBadgePrevention}>
+            <Text style={styles.blockBadgeTextPrevention}>🛡️ 2. {isFr ? 'LA PRÉVENTION' : 'PREVENTION'}</Text>
+          </View>
+          <Text style={styles.blockSubTitlePrevention}>
+            {isFr ? 'Protéger la prochaine récolte & stopper la propagation' : 'Protect future harvests & halt disease spread'}
+          </Text>
+        </View>
+
+        {preventionList.length > 0 && (
+          <View style={styles.innerSection}>
+            <View style={styles.subSectionHeader}>
+              <Text style={styles.subSectionIcon}>🌱</Text>
+              <Text style={[styles.subSectionTitle, { color: '#047857' }]}>
+                {isFr ? 'Pratiques Culturales & Variétés Résistantes' : 'Cultural Practices & Resistant Varieties'}
+              </Text>
+            </View>
+            {preventionList.map((s, i) => (
+              <BulletRow key={i} text={s} color="#047857" bullet="✓" />
+            ))}
+          </View>
+        )}
+
+        {sanitationText ? (
+          <View style={styles.innerSection}>
+            <View style={styles.subSectionHeader}>
+              <Text style={styles.subSectionIcon}>🧹</Text>
+              <Text style={[styles.subSectionTitle, { color: '#047857' }]}>
+                {isFr ? 'Hygiène & Aération de la Parcelle' : 'Field Hygiene & Aeration'}
+              </Text>
+            </View>
+            <Text style={styles.sanitationBodyText}>{sanitationText}</Text>
+          </View>
+        ) : null}
+      </View>
+
+      {/* ══════════════════════════════════════════════════════════════════ */}
+      {/* 💡 3. SECTION RECOMMANDATIONS / RECOMMENDATIONS                    */}
+      {/* ══════════════════════════════════════════════════════════════════ */}
+      <View style={styles.blockRecommendation}>
+        <View style={styles.blockHeaderRecommendation}>
+          <View style={styles.blockBadgeRecommendation}>
+            <Text style={styles.blockBadgeTextRecommendation}>💡 3. {isFr ? 'LES RECOMMANDATIONS' : 'RECOMMENDATIONS'}</Text>
+          </View>
+          <Text style={styles.blockSubTitleRecommendation}>
+            {isFr ? 'Conseils agronomiques, rotation des cultures & diagnostic labo' : 'Agronomic advice, crop rotation & laboratory testing'}
+          </Text>
+        </View>
+
+        {/* 🔄 Crop Rotation */}
+        <View style={styles.recItemBox}>
+          <View style={styles.recItemHeader}>
+            <Text style={styles.recItemIcon}>🔄</Text>
+            <Text style={styles.recItemTitle}>
+              {isFr ? 'Plan de Rotation des Cultures (Rupture du Cycle) :' : 'Crop Rotation Plan (Break Disease Cycle):'}
+            </Text>
+          </View>
+          <Text style={styles.recItemContent}>{cropRotationText}</Text>
+        </View>
+
+        {/* 🧪 Soil & Fertilizer */}
+        <View style={styles.recItemBox}>
+          <View style={styles.recItemHeader}>
+            <Text style={styles.recItemIcon}>🧪</Text>
+            <Text style={styles.recItemTitle}>
+              {isFr ? 'Gestion du Sol & Nutrition Équilibrée :' : 'Soil & Balanced Nutrient Management:'}
+            </Text>
+          </View>
+          <Text style={styles.recItemContent}>{soilFertilizerText}</Text>
+        </View>
+
+        {/* 🔬 Laboratory Analysis */}
+        <View style={styles.labCard}>
+          <Text style={styles.labTitle}>
+            🔬 {isFr ? 'ANALYSE SCIENTIFIQUE EN LABORATOIRE (Cameroun) :' : 'SCIENTIFIC LEAF ANALYSIS LABORATORY (Cameroon):'}
+          </Text>
+          <Text style={styles.labText}>
+            {isFr
+              ? 'Pour détecter précocement les carences en Azote (N), Phosphore (P), Potassium (K), Zinc ou pathogènes cachés avant la chute des rendements :'
+              : 'To scientifically verify hidden nutrient deficiencies (N, P, K, Zn, Mg) or pathogen infections before harvest loss:'}
+          </Text>
+          <Text style={styles.labContact}>
+            📍 Agro Hospital Cameroun — Yaoundé & Bamenda
+          </Text>
+          <Text style={styles.labPhones}>
+            📞 (+237) 681 532 846 / 657 469 343 / 653 416 123
+          </Text>
+        </View>
+
+        {/* Direct Action Buttons */}
+        {goTo && (
+          <View style={styles.cardActions}>
+            <Pressable style={styles.actionRecommendBtn} onPress={() => goTo('cropAdvice')}>
+              <Text style={styles.actionRecommendText}>
+                🌾 {isFr ? 'Établir Recommandation Complète & Rotation' : 'Build Tailored Recommendation & Rotation'}
+              </Text>
+            </Pressable>
+            <Pressable style={styles.actionChatBtn} onPress={() => goTo('aiChat')}>
+              <Text style={styles.actionChatText}>
+                💬 {isFr ? 'Poser une Question à l\'Agronome IA' : 'Ask Agronomist AI About This Disease'}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
 
       {/* Source badge */}
       <View style={styles.sourceBadge}>
@@ -642,4 +903,280 @@ const styles = StyleSheet.create({
   /* Source */
   sourceBadge: { backgroundColor: '#F0FDF4', padding: 12, alignItems: 'center' },
   sourceText: { fontSize: 11, color: '#15803D', fontWeight: '600' },
+
+  /* Card Action Navigation Buttons */
+  cardActions: {
+    padding: 16,
+    gap: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC'
+  },
+  actionChatBtn: {
+    backgroundColor: '#15803D',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center'
+  },
+  actionChatText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 14
+  },
+  actionRecommendBtn: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1.5,
+    borderColor: '#86EFAC',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center'
+  },
+  actionRecommendText: {
+    color: '#166534',
+    fontWeight: 'bold',
+    fontSize: 14
+  },
+
+  /* Action callout banner */
+  actionCallout: {
+    backgroundColor: '#FEF2F2',
+    borderLeftWidth: 4,
+    borderLeftColor: '#EF4444',
+    padding: 12,
+    marginVertical: 8,
+    borderRadius: 8,
+  },
+  actionCalloutTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#991B1B',
+    marginBottom: 6,
+  },
+  actionCalloutItem: {
+    fontSize: 12,
+    color: '#7F1D1D',
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+
+  /* Sprayer dosage guide */
+  sprayerGuideBox: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    padding: 12,
+    marginTop: 10,
+    marginBottom: 4,
+    borderRadius: 12,
+  },
+  sprayerGuideHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  sprayerGuideTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#1E40AF',
+  },
+  sprayerGuideText: {
+    fontSize: 12,
+    color: '#1E3A8A',
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+
+  /* Lab card */
+  labCard: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    padding: 12,
+    marginTop: 10,
+    marginBottom: 8,
+    borderRadius: 12,
+  },
+  labTitle: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#166534',
+    marginBottom: 4,
+  },
+  labText: {
+    fontSize: 12,
+    color: '#14532D',
+    lineHeight: 18,
+    marginBottom: 6,
+  },
+  labContact: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#166534',
+    marginBottom: 2,
+  },
+  labPhones: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#0F766E',
+  },
+
+  /* ── 3 Distinct Major Blocks: Cure, Prevention, Recommendations ── */
+  blockCure: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1.5,
+    borderColor: '#FDBA74',
+    borderRadius: 16,
+    marginHorizontal: 14,
+    marginTop: 14,
+    padding: 14,
+  },
+  blockHeaderCure: {
+    marginBottom: 10,
+  },
+  blockBadgeCure: {
+    backgroundColor: '#EA580C',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  blockBadgeTextCure: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+  blockSubTitleCure: {
+    fontSize: 12,
+    color: '#9A3412',
+    fontWeight: '600',
+  },
+
+  blockPrevention: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1.5,
+    borderColor: '#86EFAC',
+    borderRadius: 16,
+    marginHorizontal: 14,
+    marginTop: 14,
+    padding: 14,
+  },
+  blockHeaderPrevention: {
+    marginBottom: 10,
+  },
+  blockBadgePrevention: {
+    backgroundColor: '#16A34A',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  blockBadgeTextPrevention: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+  blockSubTitlePrevention: {
+    fontSize: 12,
+    color: '#166534',
+    fontWeight: '600',
+  },
+
+  blockRecommendation: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1.5,
+    borderColor: '#93C5FD',
+    borderRadius: 16,
+    marginHorizontal: 14,
+    marginTop: 14,
+    marginBottom: 14,
+    padding: 14,
+  },
+  blockHeaderRecommendation: {
+    marginBottom: 10,
+  },
+  blockBadgeRecommendation: {
+    backgroundColor: '#2563EB',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  blockBadgeTextRecommendation: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+  blockSubTitleRecommendation: {
+    fontSize: 12,
+    color: '#1E40AF',
+    fontWeight: '600',
+  },
+
+  innerSection: {
+    marginBottom: 8,
+  },
+  subSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    marginTop: 6,
+  },
+  subSectionIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  subSectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  sanitationBodyText: {
+    fontSize: 12,
+    color: '#065F46',
+    lineHeight: 18,
+    backgroundColor: '#ffffff',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+
+  recItemBox: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+  },
+  recItemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  recItemIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  recItemTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E3A8A',
+  },
+  recItemContent: {
+    fontSize: 12,
+    color: '#1F2937',
+    lineHeight: 18,
+  },
 });

@@ -61,18 +61,18 @@ export default function HistoryScreen({ goTo, language = 'English' }) {
           {diagnoses.length === 0 ? (
             <Text style={styles.emptyText}>{isFr ? 'Aucun diagnostic enregistré.' : 'No diagnoses recorded yet.'}</Text>
           ) : (
-            diagnoses.map((d, index) => (
-              <View key={d.id || index} style={styles.itemCard}>
+            diagnoses.map((item, index) => (
+              <View key={`diag-${item.id || 'd'}-${item.createdAt || item.diagnosedAt || ''}-${index}`} style={styles.itemCard}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.itemTitle}>{d.diseaseName || d.name}</Text>
-                  <Text style={styles.cropBadge}>{d.crop}</Text>
+                  <Text style={styles.itemTitle}>{item.diseaseName || item.name}</Text>
+                  <Text style={styles.cropBadge}>{item.crop}</Text>
                 </View>
-                <Text style={styles.symptomsText}>{isFr ? 'Symptômes' : 'Symptoms'}: {d.symptoms}</Text>
-                {d.treatment ? (
-                  <Text style={styles.treatmentText}>{isFr ? 'Traitement' : 'Treatment'}: {d.treatment}</Text>
+                <Text style={styles.symptomsText}>{isFr ? 'Symptômes' : 'Symptoms'}: {item.symptoms}</Text>
+                {item.treatment ? (
+                  <Text style={styles.treatmentText}>{isFr ? 'Traitement' : 'Treatment'}: {item.treatment}</Text>
                 ) : null}
                 <Text style={styles.timestamp}>
-                  {new Date(d.createdAt || d.diagnosedAt || Date.now()).toLocaleDateString()} • {d.source || 'Offline AI'}
+                  {new Date(item.createdAt || item.diagnosedAt || Date.now()).toLocaleDateString()} • {item.source || 'Offline AI'}
                 </Text>
               </View>
             ))
@@ -83,18 +83,18 @@ export default function HistoryScreen({ goTo, language = 'English' }) {
           {recommendations.length === 0 ? (
             <Text style={styles.emptyText}>{isFr ? 'Aucune recommandation enregistrée.' : 'No crop recommendations recorded yet.'}</Text>
           ) : (
-            recommendations.map((r, index) => (
-              <View key={r.id || index} style={styles.itemCard}>
+            recommendations.map((item, index) => (
+              <View key={`rec-${item.id || 'r'}-${item.createdAt || item.generatedAt || ''}-${index}`} style={styles.itemCard}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.itemTitle}>{isFr ? 'Culture' : 'Crop'}: {r.primaryCrop}</Text>
-                  <Text style={styles.cropBadge}>{r.season || (isFr ? 'Saison' : 'Season')}</Text>
+                  <Text style={styles.itemTitle}>{isFr ? 'Culture' : 'Crop'}: {item.primaryCrop}</Text>
+                  <Text style={styles.cropBadge}>{item.season || (isFr ? 'Saison' : 'Season')}</Text>
                 </View>
-                <Text style={styles.symptomsText}>{isFr ? 'Lieu / Sol' : 'Location / Soil'}: {r.location} • {r.soilCondition}</Text>
-                {r.actionPlan ? (
-                  <Text style={styles.treatmentText}>{isFr ? 'Plan' : 'Plan'}: {r.actionPlan}</Text>
+                <Text style={styles.symptomsText}>{isFr ? 'Lieu / Sol' : 'Location / Soil'}: {item.location} • {item.soilCondition}</Text>
+                {item.actionPlan ? (
+                  <Text style={styles.treatmentText}>{isFr ? 'Plan' : 'Plan'}: {item.actionPlan}</Text>
                 ) : null}
                 <Text style={styles.timestamp}>
-                  {new Date(r.createdAt || r.generatedAt || Date.now()).toLocaleDateString()} • {r.source || 'Offline Agro-Engine'}
+                  {new Date(item.createdAt || item.generatedAt || Date.now()).toLocaleDateString()} • {item.source || 'Offline Agro-Engine'}
                 </Text>
               </View>
             ))
@@ -105,14 +105,14 @@ export default function HistoryScreen({ goTo, language = 'English' }) {
           {chats.length === 0 ? (
             <Text style={styles.emptyText}>{isFr ? 'Aucune question enregistrée.' : 'No agronomist questions recorded yet.'}</Text>
           ) : (
-            chats.map((chat, index) => (
-              <View key={chat.id || index} style={styles.itemCard}>
+            chats.map((item, index) => (
+              <View key={`chat-${item.id || 'c'}-${item.createdAt || ''}-${index}`} style={styles.itemCard}>
                 <Text style={styles.questionLabel}>{isFr ? 'Votre question' : 'Your question'}</Text>
-                <Text style={styles.symptomsText}>{chat.message}</Text>
+                <Text style={styles.symptomsText}>{item.message}</Text>
                 <Text style={styles.questionLabel}>{isFr ? 'Réponse de l’agronome' : 'Agronomist answer'}</Text>
-                <Text style={styles.treatmentText}>{chat.reply}</Text>
+                <Text style={styles.treatmentText}>{item.reply}</Text>
                 <Text style={styles.timestamp}>
-                  {new Date(chat.createdAt || Date.now()).toLocaleDateString()} • {chat.modelUsed || 'AI Agronomist'}
+                  {new Date(item.createdAt || Date.now()).toLocaleDateString()} • {item.modelUsed || 'AI Agronomist'}
                 </Text>
               </View>
             ))

@@ -4,7 +4,7 @@
   "private": true,
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "node ./node_modules/expo/bin/cli start --clear --port 8082",
+    "start": "node ./node_modules/expo/bin/cli start --clear --lan --port 8082",
     "start-offline": "node ./node_modules/expo/bin/cli start --offline --clear --port 8082",
     "start-usb": "node ./node_modules/expo/bin/cli start --localhost --clear --port 8082",
     "start-tunnel": "node ./node_modules/expo/bin/cli start --tunnel --clear",

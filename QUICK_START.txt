@@ -131,7 +131,7 @@ Solution:
 Problem: Can't connect on phone after scanning
 Solution:
   ✓ Make sure phone is on same WiFi
-  ✓ Make sure PC IP is 192.168.42.199
+  ✓ Make sure PC IP is 192.168.4.81
   ✓ Check firewall allows port 5000
   ✓ Check that Backend window shows "running"
 

@@ -1,5 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Image, ImageBackground, Dimensions } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  View, Text, Pressable, StyleSheet, ScrollView, Image,
+  ImageBackground, Dimensions, TextInput, ActivityIndicator
+} from 'react-native';
+import { sendAgronomistChat } from '../../src/api';
+import { offlineChatAgronomist } from '../../src/offline_ai';
 
 const { width } = Dimensions.get('window');
 
@@ -51,6 +56,15 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
   const [spotlightIndex, setSpotlightIndex] = useState(0);
   const spotlight = CROP_SPOTLIGHTS[spotlightIndex];
 
+  // Agronomist Chat Console State
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatReply, setChatReply] = useState(null);
+
+  // My Account Card Expansion State
+  const [accountVisible, setAccountVisible] = useState(true);
+  const scrollViewRef = useRef();
+
   useEffect(() => {
     const timer = setInterval(() => {
       setSpotlightIndex((current) => (current + 1) % CROP_SPOTLIGHTS.length);
@@ -63,9 +77,53 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
     goTo('welcome');
   };
 
+  const handleAskAgronomist = async (questionToAsk) => {
+    const query = (questionToAsk || chatInput).trim();
+    if (!query) return;
+    setChatLoading(true);
+    setChatReply(null);
+
+    try {
+      const res = await sendAgronomistChat({ message: query, history: [], language });
+      setChatReply({
+        question: query,
+        reply: res.reply || res.text || res.message,
+        source: res.source || (isFr ? 'Agronome IA en Ligne' : 'Online AI Agronomist')
+      });
+    } catch (e) {
+      const offlineRes = offlineChatAgronomist(query, language);
+      setChatReply({
+        question: query,
+        reply: offlineRes.reply,
+        source: offlineRes.source || (isFr ? 'Agronome IA Embarqué (Hors-Ligne)' : 'On-Device Agronomist (Offline)')
+      });
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const PROMPT_CHIPS = isFr ? [
+    { label: '🌽 Chenille Maïs', query: 'Comment traiter la chenille légionnaire sur le maïs ?' },
+    { label: '🌱 Mosaïque Manioc', query: 'Comment lutter contre la mosaïque du manioc ?' },
+    { label: '🧪 Dosage NPK 20-10-10', query: 'Quel est le dosage de NPK 20-10-10 par hectare pour le maïs ?' },
+    { label: '🍫 Réhabiliter Cacao', query: 'Quelles sont les 3 étapes pour réhabiliter une vieille cacaoyère ?' },
+    { label: '🥬 Cultiver l’Eru', query: 'Comment réussir la culture et la domestication de l’Eru ?' }
+  ] : [
+    { label: '🌽 Maize Armyworm', query: 'How to control fall armyworm on maize in Cameroon?' },
+    { label: '🌱 Cassava Mosaic', query: 'How to prevent cassava mosaic disease?' },
+    { label: '🧪 NPK 20-10-10 Rates', query: 'What is the dosage of NPK 20-10-10 per hectare for maize?' },
+    { label: '🍫 Cocoa Rehabilitation', query: 'What are the steps to rehabilitate an unproductive cocoa farm?' },
+    { label: '🥬 Grow Eru / Okok', query: 'How to cultivate and domesticate Eru in Cameroon?' }
+  ];
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-      {/* Top Header */}
+    <ScrollView
+      ref={scrollViewRef}
+      style={styles.container}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* ── Top Header ──────────────────────────────────────────────── */}
       <View style={styles.header}>
         <View style={styles.logoRow}>
           <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
@@ -82,12 +140,22 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
           </View>
         </View>
 
-        <Pressable style={styles.welcomeBtn} onPress={handleSignOut}>
-          <Text style={styles.welcomeBtnText}>🚪 {isFr ? 'Déconnexion' : 'Sign Out'}</Text>
-        </Pressable>
+        <View style={styles.headerRightBtns}>
+          <Pressable
+            style={[styles.accountToggleBtn, accountVisible && styles.accountToggleBtnActive]}
+            onPress={() => setAccountVisible(prev => !prev)}
+          >
+            <Text style={[styles.accountToggleBtnText, accountVisible && styles.accountToggleBtnTextActive]}>
+              👤 {isFr ? 'Mon Compte' : 'My Account'}
+            </Text>
+          </Pressable>
+          <Pressable style={styles.welcomeBtn} onPress={handleSignOut}>
+            <Text style={styles.welcomeBtnText}>🚪</Text>
+          </Pressable>
+        </View>
       </View>
 
-      {/* Farm Status Metrics Bar */}
+      {/* ── Farm Status Metrics Bar ──────────────────────────────────── */}
       <View style={styles.metricsBar}>
         <View style={styles.metricItem}>
           <Text style={styles.metricIcon}>📍</Text>
@@ -114,7 +182,7 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
         </View>
       </View>
 
-      {/* Hero Action: AI Diagnosis Banner with User Verified Agriculture Image */}
+      {/* ── Hero Action: AI Diagnosis Banner (Inspect & Diagnose) ────── */}
       <ImageBackground
         source={require('../../assets/plant-diagnosis-tablet.jpg')}
         style={styles.heroCard}
@@ -147,7 +215,7 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
         </View>
       </ImageBackground>
 
-      {/* Cameroon Crop Spotlight Banner */}
+      {/* ── Cameroon Crop Spotlight Banner (Tailored Recommendation) ─── */}
       <ImageBackground
         source={{ uri: spotlight.image }}
         style={styles.recommendationBanner}
@@ -180,105 +248,175 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
         </View>
       </ImageBackground>
 
-      {/* Services Grid Section Header */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>
-          {isFr ? 'Outils & Services Agricoles' : 'Agricultural Tools & Services'}
+      {/* ── Section: AI Agronomist Interactive Chat Bar ──────────────── */}
+      <View style={styles.agronomistCard}>
+        <View style={styles.agronomistHeaderRow}>
+          <View style={styles.agronomistBadge}>
+            <Text style={styles.agronomistBadgeText}>🤖 {isFr ? 'AGRONOME IA EN DIRECT' : 'LIVE AI AGRONOMIST'}</Text>
+          </View>
+          <View style={styles.onlinePill}>
+            <Text style={styles.onlineDot}>●</Text>
+            <Text style={styles.onlineText}>{isFr ? '24/7 Hors-Ligne' : '24/7 Offline Ready'}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.agronomistTitle}>
+          {isFr ? 'Une Question pour vos Cultures ou Sols ?' : 'Have a Question About Your Crops or Soil?'}
         </Text>
-        <Text style={styles.sectionSub}>
+        <Text style={styles.agronomistSub}>
           {isFr
-            ? 'Sélectionnez un outil pour vos travaux quotidiens aux champs'
-            : 'Select a tool to assist your daily field operations'}
+            ? 'Posez votre question directement ci-dessous pour obtenir une recommandation agronomique certifiée :'
+            : 'Type your farming question below for instant certified agronomic guidance:'}
         </Text>
+
+        {/* Quick Suggestion Chips */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
+          {PROMPT_CHIPS.map((chip, idx) => (
+            <Pressable
+              key={idx}
+              style={styles.promptChip}
+              onPress={() => {
+                setChatInput(chip.query);
+                handleAskAgronomist(chip.query);
+              }}
+            >
+              <Text style={styles.promptChipText}>{chip.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        {/* Chat Input Bar */}
+        <View style={styles.chatInputContainer}>
+          <TextInput
+            style={styles.chatTextInput}
+            value={chatInput}
+            onChangeText={setChatInput}
+            placeholder={isFr ? 'ex: Comment soigner la chenille sur le maïs ?' : 'e.g. How to treat fall armyworm on maize?'}
+            placeholderTextColor="#94A3B8"
+            returnKeyType="send"
+            onSubmitEditing={() => handleAskAgronomist(chatInput)}
+          />
+          <Pressable
+            style={[styles.chatSendBtn, (!chatInput.trim() || chatLoading) && styles.chatSendBtnDisabled]}
+            onPress={() => handleAskAgronomist(chatInput)}
+            disabled={!chatInput.trim() || chatLoading}
+          >
+            {chatLoading ? (
+              <ActivityIndicator color="#ffffff" size="small" />
+            ) : (
+              <Text style={styles.chatSendBtnText}>➤</Text>
+            )}
+          </Pressable>
+        </View>
+
+        {/* Instant Answer Preview Box */}
+        {chatReply && (
+          <View style={styles.chatAnswerBox}>
+            <View style={styles.chatAnswerHeader}>
+              <Text style={styles.chatAnswerBadge}>🌾 {isFr ? 'Réponse Agronomique' : 'Agronomic Advice'}</Text>
+              <Text style={styles.chatAnswerSource}>{chatReply.source}</Text>
+            </View>
+            <Text style={styles.chatAnswerQuery}>« {chatReply.question} »</Text>
+            <Text style={styles.chatAnswerBody}>{chatReply.reply}</Text>
+
+            <Pressable style={styles.openChatFullBtn} onPress={() => goTo('aiChat')}>
+              <Text style={styles.openChatFullBtnText}>
+                💬 {isFr ? 'Continuer la discussion dans le Chat Complet →' : 'Continue in Full AI Chat Screen →'}
+              </Text>
+            </Pressable>
+          </View>
+        )}
       </View>
 
-      {/* 2x2 Feature Grid */}
-      <View style={styles.grid}>
-        {/* Feature 1: Crop Advice */}
-        <Pressable style={styles.gridCard} onPress={() => goTo('cropAdvice')}>
-          <View style={[styles.cardIconBox, { backgroundColor: '#FEF3C7' }]}>
-            <Text style={styles.cardIcon}>🌾</Text>
+      {/* ── Section: My Account Hub (Field Survey, Alert & History) ──── */}
+      {accountVisible && (
+        <View style={styles.accountHubCard}>
+          {/* Account Profile Header */}
+          <View style={styles.accountProfileRow}>
+            <View style={styles.accountAvatar}>
+              <Text style={styles.accountAvatarText}>👨‍🌾</Text>
+            </View>
+            <View style={styles.accountMetaCol}>
+              <View style={styles.accountTitleRow}>
+                <Text style={styles.accountCardTitle}>
+                  {isFr ? 'Mon Compte Agriculteur' : 'My Farmer Account'}
+                </Text>
+                <View style={styles.verifiedChip}>
+                  <Text style={styles.verifiedChipText}>✓ {isFr ? 'ACTIF' : 'ACTIVE'}</Text>
+                </View>
+              </View>
+              <Text style={styles.accountEmailText} numberOfLines={1}>
+                {userEmail || (isFr ? 'Planteur du Cameroun' : 'Cameroon Farmer')}
+              </Text>
+            </View>
           </View>
-          <View style={styles.cardContent}>
-            <Text style={styles.gridTitle}>
-              {isFr ? 'Conseils de Culture' : 'Crop Advice'}
-            </Text>
-            <Text style={styles.gridText}>
-              {isFr
-                ? 'Calendriers agro-écologiques et fertilisation pour les 10 régions du Cameroun'
-                : 'Agro-ecological planting & fertilizer schedules for Cameroon'}
-            </Text>
-          </View>
-          <Text style={[styles.cardArrow, { color: '#D97706' }]}>
-            {isFr ? 'Ouvrir →' : 'Open →'}
-          </Text>
-        </Pressable>
 
-        {/* Feature 2: AI Agronomist Chat */}
-        <Pressable style={styles.gridCard} onPress={() => goTo('aiChat')}>
-          <View style={[styles.cardIconBox, { backgroundColor: '#EEF2FF' }]}>
-            <Text style={styles.cardIcon}>🤖</Text>
-          </View>
-          <View style={styles.cardContent}>
-            <Text style={styles.gridTitle}>
-              {isFr ? 'Agronome IA' : 'AI Agronomist'}
-            </Text>
-            <Text style={styles.gridText}>
-              {isFr
-                ? 'Posez vos questions à l\'expert Qwen IA en français ou en anglais'
-                : 'Ask questions to your local Qwen AI agronomist in English or French'}
-            </Text>
-          </View>
-          <Text style={[styles.cardArrow, { color: '#4F46E5' }]}>
-            {isFr ? 'Discuter →' : 'Chat →'}
-          </Text>
-        </Pressable>
+          <View style={styles.accountDivider} />
 
-        {/* Feature 3: Field Survey */}
-        <Pressable style={styles.gridCard} onPress={() => goTo('survey')}>
-          <View style={[styles.cardIconBox, { backgroundColor: '#ECFDF5' }]}>
-            <Text style={styles.cardIcon}>📋</Text>
-          </View>
-          <View style={styles.cardContent}>
-            <Text style={styles.gridTitle}>
-              {isFr ? 'Enquête Parcelle' : 'Field Survey'}
-            </Text>
-            <Text style={styles.gridText}>
-              {isFr
-                ? 'Suivez l\'humidité du sol, les stades végétatifs et les attaques de ravageurs'
-                : 'Log field moisture, crop growth stages, and pest infestations'}
-            </Text>
-          </View>
-          <Text style={[styles.cardArrow, { color: '#059669' }]}>
-            {isFr ? 'Noter →' : 'Log →'}
-          </Text>
-        </Pressable>
+          {/* Module 1: Field Survey */}
+          <Pressable style={styles.accountActionCard} onPress={() => goTo('survey')}>
+            <View style={[styles.accountActionIconWrap, { backgroundColor: '#ECFDF5' }]}>
+              <Text style={styles.accountActionIcon}>📋</Text>
+            </View>
+            <View style={styles.accountActionInfo}>
+              <Text style={styles.accountActionTitle}>
+                {isFr ? 'Enquête Parcelle' : 'Field Survey'}
+              </Text>
+              <Text style={styles.accountActionDesc}>
+                {isFr
+                  ? 'Suivre l\'humidité du sol, les stades végétatifs et les ravageurs'
+                  : 'Log soil moisture, vegetative growth stages, and pest infestations'}
+              </Text>
+            </View>
+            <Text style={[styles.accountActionArrow, { color: '#059669' }]}>→</Text>
+          </Pressable>
 
-        {/* Feature 4: Notifications */}
-        <Pressable style={styles.gridCard} onPress={() => goTo('notifications')}>
-          <View style={[styles.cardIconBox, { backgroundColor: '#E0F2FE' }]}>
-            <Text style={styles.cardIcon}>🔔</Text>
-          </View>
-          <View style={styles.cardContent}>
-            <Text style={styles.gridTitle}>{isFr ? 'Alertes & Historique' : 'Alerts & History'}</Text>
-            <Text style={styles.gridText}>
-              {isFr ? 'Rapports de diagnostic passés et alertes régionales' : 'View past diagnosis reports and regional farm alerts'}
-            </Text>
-          </View>
-          <Text style={[styles.cardArrow, { color: '#0284C7' }]}>
-            {isFr ? 'Voir →' : 'View →'}
-          </Text>
-        </Pressable>
-        <Pressable style={styles.gridCard} onPress={() => goTo('history')}>
-          <Text style={styles.cardIcon}>📜</Text>
-          <Text style={styles.gridTitle}>{isFr ? 'Mon Historique' : 'My History'}</Text>
-          <Text style={styles.gridText}>
-            {isFr ? 'Consultez vos questions, réponses et anciens diagnostics.' : 'Review your questions, answers, and previous diagnoses.'}
-          </Text>
-        </Pressable>
-      </View>
+          {/* Module 2: Alerts & Notifications */}
+          <Pressable style={styles.accountActionCard} onPress={() => goTo('notifications')}>
+            <View style={[styles.accountActionIconWrap, { backgroundColor: '#E0F2FE' }]}>
+              <Text style={styles.accountActionIcon}>🔔</Text>
+            </View>
+            <View style={styles.accountActionInfo}>
+              <Text style={styles.accountActionTitle}>
+                {isFr ? 'Alertes & Rappels' : 'Alerts & Reminders'}
+              </Text>
+              <Text style={styles.accountActionDesc}>
+                {isFr
+                  ? 'Rappels de diagnostic à 2 semaines et alertes sanitaires régionales'
+                  : '2-week treatment follow-up reminders and regional outbreak alerts'}
+              </Text>
+            </View>
+            <Text style={[styles.accountActionArrow, { color: '#0284C7' }]}>→</Text>
+          </Pressable>
 
-      {/* Admin Quick Action (Only visible to verified Administrator, NEVER ordinary farmers) */}
+          {/* Module 3: History */}
+          <Pressable style={styles.accountActionCard} onPress={() => goTo('history')}>
+            <View style={[styles.accountActionIconWrap, { backgroundColor: '#FEF3C7' }]}>
+              <Text style={styles.accountActionIcon}>📜</Text>
+            </View>
+            <View style={styles.accountActionInfo}>
+              <Text style={styles.accountActionTitle}>
+                {isFr ? 'Mon Historique' : 'My History'}
+              </Text>
+              <Text style={styles.accountActionDesc}>
+                {isFr
+                  ? 'Consulter vos diagnostics de plantes, recommandations et échanges IA'
+                  : 'Review all saved crop diagnoses, recommendations, and AI answers'}
+              </Text>
+            </View>
+            <Text style={[styles.accountActionArrow, { color: '#D97706' }]}>→</Text>
+          </Pressable>
+
+          {/* Sign Out Action inside My Account */}
+          <Pressable style={styles.accountSignOutBtn} onPress={handleSignOut}>
+            <Text style={styles.accountSignOutText}>
+              🚪 {isFr ? 'Se Déconnecter de la Session' : 'Sign Out of Account'}
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* ── Admin Quick Action (Verified Administrator Only) ─────────── */}
       {userEmail === 'ivanmiyoupo@gmail.com' && (
         <Pressable style={styles.adminCard} onPress={() => goTo('admin')}>
           <View style={styles.adminCardLeft}>
@@ -304,7 +442,7 @@ export default function HomeScreen({ goTo, userEmail, setUserEmail, language = '
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC', // Crisp modern neutral (not all-green)
+    backgroundColor: '#F8FAFC',
   },
   scrollContent: {
     paddingHorizontal: 18,
@@ -364,25 +502,50 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 2,
   },
-  welcomeBtn: {
+  headerRightBtns: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  accountToggleBtn: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
-  welcomeBtnText: {
+  accountToggleBtnActive: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#10B981',
+  },
+  accountToggleBtnText: {
     color: '#334155',
     fontWeight: '700',
     fontSize: 12,
   },
-  // Metrics Bar
+  accountToggleBtnTextActive: {
+    color: '#047857',
+  },
+  welcomeBtn: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    elevation: 1,
+  },
+  welcomeBtnText: {
+    fontSize: 14,
+  },
+
+  /* Metrics Bar */
   metricsBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -424,9 +587,10 @@ const styles = StyleSheet.create({
     height: 24,
     backgroundColor: '#F1F5F9',
   },
-  // Hero Card
+
+  /* Hero Card */
   heroCard: {
-    minHeight: 250,
+    minHeight: 240,
     borderRadius: 20,
     marginBottom: 18,
     overflow: 'hidden',
@@ -489,7 +653,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   primaryButton: {
-    backgroundColor: '#16A34A', // Attractive agricultural vibrant green button
+    backgroundColor: '#16A34A',
     paddingVertical: 13,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -505,9 +669,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 14,
   },
-  // Recommendation Spotlight
+
+  /* Recommendation Spotlight */
   recommendationBanner: {
-    minHeight: 200,
+    minHeight: 190,
     borderRadius: 20,
     overflow: 'hidden',
     marginBottom: 20,
@@ -573,73 +738,291 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '900',
   },
-  // Grid
-  sectionHeader: {
+
+  /* ── Interactive Agronomist Chat Console ───────────────────── */
+  agronomistCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  agronomistHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  agronomistBadge: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  agronomistBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#4F46E5',
+    letterSpacing: 0.5,
+  },
+  onlinePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 5,
+  },
+  onlineDot: {
+    color: '#10B981',
+    fontSize: 10,
+  },
+  onlineText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#047857',
+  },
+  agronomistTitle: {
+    fontSize: 17,
+    fontWeight: '900',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  agronomistSub: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 17,
     marginBottom: 12,
   },
-  sectionTitle: {
+  chipsScroll: {
+    marginBottom: 12,
+  },
+  promptChip: {
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  promptChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  chatInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  chatTextInput: {
+    flex: 1,
+    fontSize: 13,
+    color: '#0F172A',
+    paddingVertical: 8,
+  },
+  chatSendBtn: {
+    backgroundColor: '#059669',
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+  },
+  chatSendBtnDisabled: {
+    backgroundColor: '#94A3B8',
+    opacity: 0.6,
+  },
+  chatSendBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  chatAnswerBox: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 14,
+  },
+  chatAnswerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  chatAnswerBadge: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#15803D',
+  },
+  chatAnswerSource: {
+    fontSize: 10,
+    color: '#047857',
+    fontWeight: '600',
+  },
+  chatAnswerQuery: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    color: '#166534',
+    marginBottom: 8,
+  },
+  chatAnswerBody: {
+    fontSize: 13,
+    color: '#14532D',
+    lineHeight: 19,
+    marginBottom: 10,
+  },
+  openChatFullBtn: {
+    backgroundColor: '#166534',
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  openChatFullBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+
+  /* ── My Account Hub Card ───────────────────────────────────── */
+  accountHubCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  accountProfileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  accountAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1.5,
+    borderColor: '#86EFAC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accountAvatarText: {
+    fontSize: 24,
+  },
+  accountMetaCol: {
+    flex: 1,
+  },
+  accountTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  accountCardTitle: {
     fontSize: 16,
     fontWeight: '900',
     color: '#0F172A',
   },
-  sectionSub: {
+  verifiedChip: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  verifiedChipText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#15803D',
+  },
+  accountEmailText: {
     fontSize: 12,
     color: '#64748B',
     marginTop: 2,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 16,
+  accountDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: 14,
   },
-  gridCard: {
-    width: '48%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 14,
+  accountActionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    justifyContent: 'space-between',
-    minHeight: 155,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 10,
   },
-  cardIconBox: {
+  accountActionIconWrap: {
     width: 40,
     height: 40,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginRight: 12,
   },
-  cardIcon: {
+  accountActionIcon: {
     fontSize: 20,
   },
-  cardContent: {
+  accountActionInfo: {
     flex: 1,
   },
-  gridTitle: {
+  accountActionTitle: {
     fontSize: 14,
     fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 3,
+    marginBottom: 2,
   },
-  gridText: {
+  accountActionDesc: {
     fontSize: 11,
     color: '#64748B',
     lineHeight: 15,
   },
-  cardArrow: {
-    fontSize: 11,
-    fontWeight: '800',
+  accountActionArrow: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  accountSignOutBtn: {
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingVertical: 11,
+    borderRadius: 12,
+    alignItems: 'center',
     marginTop: 6,
   },
-  // Admin Card
+  accountSignOutText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+
+  /* ── Admin Card ────────────────────────────────────────────── */
   adminCard: {
     flexDirection: 'row',
     alignItems: 'center',

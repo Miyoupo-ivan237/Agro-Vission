@@ -21,6 +21,7 @@ import {
   markAllNotificationsAsRead,
 } from '../../services/notificationService';
 
+
 function fmtDate(iso) {
   if (!iso) return '';
   try {
@@ -181,9 +182,10 @@ export default function AdminDashboard({ goTo, language = 'English' }) {
   }
 
   const TABS = [
-    { key: 'overview', icon: '📊', en: 'Overview',      fr: 'Vue'          },
-    { key: 'farmers',  icon: '👥', en: 'Farmers',       fr: 'Agriculteurs' },
-    { key: 'alerts',   icon: '🤖', en: 'AI Log',        fr: 'Journal IA'   },
+    { key: 'overview',  icon: '📊', en: 'Overview',      fr: 'Vue'          },
+    { key: 'farmers',   icon: '👥', en: 'Farmers',       fr: 'Agriculteurs' },
+    { key: 'alerts',    icon: '🤖', en: 'AI Log',        fr: 'Journal IA'   },
+    { key: 'settings',  icon: '⚙️', en: 'Settings',      fr: 'Paramètres'   },
   ];
 
   return (
@@ -549,6 +551,57 @@ export default function AdminDashboard({ goTo, language = 'English' }) {
             <View style={{ height: 40 }} />
           </>
         )}
+
+        {/* SETTINGS TAB */}
+        {activeTab === 'settings' && (
+          <>
+            <View style={styles.settingsSection}>
+              <Text style={styles.sectionTitle}>{isFr ? 'Informations Système' : 'System Information'}</Text>
+              {[
+                { icon: '📱', label: isFr ? 'Application' : 'Application', value: 'Agro-Vission v1.0.0' },
+                { icon: '🌍', label: isFr ? 'Région cible' : 'Target region', value: 'Cameroon — 10 Régions' },
+                { icon: '🤖', label: isFr ? 'Moteur IA' : 'AI Engine', value: 'Offline + Qwen 2.5 3B' },
+                { icon: '🔬', label: isFr ? 'Cultures prises en charge' : 'Supported crops', value: '14 crops, 40+ diseases' },
+                { icon: '🌐', label: isFr ? 'Langues' : 'Languages', value: 'English & Français' },
+                { icon: '💾', label: isFr ? 'Stockage' : 'Storage', value: isFr ? 'Données locales + AsyncStorage' : 'Local data + AsyncStorage' },
+              ].map((item, i) => (
+                <View key={i} style={styles.settingsRow}>
+                  <Text style={styles.settingsIcon}>{item.icon}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.settingsLabel}>{item.label}</Text>
+                    <Text style={styles.settingsValue}>{item.value}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            <Text style={styles.sectionTitle}>{isFr ? 'Actions Admin' : 'Admin Actions'}</Text>
+            <Pressable style={styles.actionBtn} onPress={() => goTo('diagnosis')}>
+              <Text style={styles.actionIcon}>🔬</Text>
+              <Text style={styles.actionLabel}>{isFr ? 'Tester le Diagnostic IA' : 'Test AI Diagnosis'}</Text>
+              <Text style={styles.actionArrow}>›</Text>
+            </Pressable>
+            <Pressable style={styles.actionBtn} onPress={() => goTo('cropAdvice')}>
+              <Text style={styles.actionIcon}>🌾</Text>
+              <Text style={styles.actionLabel}>{isFr ? 'Tester les Recommandations' : 'Test Crop Recommendations'}</Text>
+              <Text style={styles.actionArrow}>›</Text>
+            </Pressable>
+            <Pressable style={styles.actionBtn} onPress={() => goTo('aiChat')}>
+              <Text style={styles.actionIcon}>🤖</Text>
+              <Text style={styles.actionLabel}>{isFr ? "Tester l'Agronome IA" : 'Test AI Agronomist Chat'}</Text>
+              <Text style={styles.actionArrow}>›</Text>
+            </Pressable>
+            <Pressable style={styles.actionBtn} onPress={() => goTo('home')}>
+              <Text style={styles.actionIcon}>🏠</Text>
+              <Text style={styles.actionLabel}>{isFr ? 'Tableau de Bord Agriculteur' : 'Farmer Dashboard'}</Text>
+              <Text style={styles.actionArrow}>›</Text>
+            </Pressable>
+            <Pressable style={[styles.logoutBtn, { marginBottom: 40 }]} onPress={handleLogout}>
+              <Text style={styles.logoutIcon}>🚪</Text>
+              <Text style={styles.logoutLabel}>{isFr ? 'Se déconnecter' : 'Logout'}</Text>
+            </Pressable>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -746,4 +799,38 @@ const styles = StyleSheet.create({
   notifMsg:      { fontSize: 12, color: '#475569', marginTop: 2 },
   notifDate:     { fontSize: 10, color: '#94A3B8', marginTop: 4 },
   notifTypeText: { fontSize: 9, fontWeight: '700', color: '#475569' },
+
+  // Settings Tab
+  settingsSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 16,
+    marginBottom: 20,
+    elevation: 2,
+  },
+  settingsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    gap: 12,
+  },
+  settingsIcon: {
+    fontSize: 22,
+    width: 32,
+    textAlign: 'center',
+  },
+  settingsLabel: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  settingsValue: {
+    fontSize: 13,
+    color: '#1E293B',
+    fontWeight: '700',
+    marginTop: 1,
+  },
 });
