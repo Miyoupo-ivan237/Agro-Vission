@@ -13,7 +13,10 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.warn('App Error Caught:', error, errorInfo);
+    console.warn('App Error Caught:', error?.stack || error?.message || error);
+    if (errorInfo?.componentStack) {
+      console.warn('Component Stack:', errorInfo.componentStack);
+    }
   }
 
   render() {

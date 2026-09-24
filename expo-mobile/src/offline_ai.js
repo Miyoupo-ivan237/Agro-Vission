@@ -652,6 +652,282 @@ export const OFFLINE_DISEASES = {
       prevention: ['Plant blast-resistant seed lines (NERICA)'],
       preventionFr: ['Semer des variétés certifiées tolérantes (lignées NERICA)']
     }
+  ],
+  beans: [
+    {
+      id: 'bean_anthracnose',
+      name: 'Bean Anthracnose',
+      nameFr: 'Anthracnose du Haricot',
+      scientificName: 'Colletotrichum lindemuthianum',
+      crop: 'Common Beans',
+      severity: 'High',
+      confidence: 0.93,
+      keywords: ['bean', 'beans', 'haricot', 'anthracnose', 'sunken', 'canker', 'pod spot', 'brick-red', 'kumba'],
+      symptoms: [
+        'Dark brown to brick-red sunken lesions on bean pods and stems',
+        'Angular reddish-brown vein necrosis on the underside of young leaves',
+        'Seed discoloration and premature pod drop during prolonged damp spells'
+      ],
+      symptomsFr: [
+        'Chancres déprimés brun-rougeâtre circulaires le long des nervures foliaires et sur les gousses',
+        'Nécrose violacée des nervures à la face inférieure des feuilles',
+        'Taches noires sur les graines et chute prématurée des gousses par temps pluvieux'
+      ],
+      organicTreatment: [
+        'Rogue out and destroy infected bean plants immediately upon early notice',
+        'Spray fresh neem seed oil or diluted wood ash leachate to inhibit fungal spore growth'
+      ],
+      organicTreatmentFr: [
+        'Arracher et brûler immédiatement les premiers plants atteints hors de la parcelle',
+        'Pulvériser de l\'huile de neem ou une solution de cendre de bois pour freiner la germination des spores'
+      ],
+      chemicalTreatment: [
+        'Apply Copper Hydroxide (Kocide 2000) or Mancozeb (80% WP) at 30g-50g per 15L knapsack',
+        'Spray systemic Azoxystrobin at early flowering if persistent rain creates disease pressure'
+      ],
+      chemicalTreatmentFr: [
+        'Appliquer de la bouillie bordelaise ou du Mancozèbe (80% WP) à raison de 40g par pulvérisateur de 15L',
+        'Appliquer de l\'Azoxystrobine dès la floraison en cas d\'humidité et de brouillard persistants'
+      ],
+      prevention: [
+        'Plant certified disease-free seed (such as PNG or GLP 190 varieties)',
+        'Never walk through or cultivate in bean fields when morning dew or rain makes foliage wet'
+      ],
+      preventionFr: [
+        'Semer uniquement des graines saines certifiées (variétés GLP 190, PNG)',
+        'Ne jamais circuler ni désherber dans la parcelle de haricot lorsque le feuillage est mouillé'
+      ]
+    }
+  ],
+  coffee: [
+    {
+      id: 'coffee_cbd',
+      name: 'Coffee Berry Disease (CBD)',
+      nameFr: 'Anthracnose des Baies du Caféier (CBD)',
+      scientificName: 'Colletotrichum kahawae',
+      crop: 'Coffee',
+      severity: 'Critical',
+      confidence: 0.95,
+      keywords: ['coffee', 'cafe', 'café', 'cbd', 'berry', 'cherry', 'mummified', 'anthracnose', 'bafoussam', 'bamenda'],
+      symptoms: [
+        'Dark brown to black sunken necrotic spots on green coffee berries',
+        'Rapid berry mummification turning green fruit into dry black empty shells',
+        'Premature fruit drop severely slashing commercial parchment yield'
+      ],
+      symptomsFr: [
+        'Lésions brun-noir déprimées et rugueuses sur les cerises de café vertes',
+        'Momification complète et noircissement des baies qui sèchent sur l\'arbre',
+        'Chute précoce massive des baies entraînant une perte de récolte pouvant atteindre 80%'
+      ],
+      organicTreatment: [
+        'Sanitary pruning: cut off dead twigs and suckers to allow sunlight and airflow into tree canopy',
+        'Rake and incinerate all fallen mummified berries from tree basins before rainy season'
+      ],
+      organicTreatmentFr: [
+        'Taille sanitaire : éliminer les gourmands et bois morts pour faire entrer le soleil dans le houppier',
+        'Ratisser et brûler toutes les cerises momifiées tombées au sol avant la saison des pluies'
+      ],
+      chemicalTreatment: [
+        'Apply protective Cuprous Oxide (Nordox 75 WG) at 50g per 15L sprayer during pinhead berry stage',
+        'Alternate with systemic Chlorothalonil or Tebuconazole according to regional coffee calendar'
+      ],
+      chemicalTreatmentFr: [
+        'Traiter à l\'oxyde cuivreux (Nordox 75 WG) à raison de 50g par pulvérisateur de 15L au stade grains de plomb',
+        'Alterner avec du Chlorothalonil ou Tébuconazole selon le calendrier phytosanitaire régional'
+      ],
+      prevention: [
+        'Plant resistant Arabica selections (Java cultivar) or certified robusta clones',
+        'Maintain balanced organic mulch around tree basins with regular potassium replenishment'
+      ],
+      preventionFr: [
+        'Planter des variétés tolérantes (cultivar Java) ou clones de Robusta certifiés',
+        'Maintenir un paillage épais et un bon apport en potasse au pied pour renforcer les tissus'
+      ]
+    }
+  ],
+  yam: [
+    {
+      id: 'yam_anthracnose',
+      name: 'Yam Anthracnose / Foliar Dieback',
+      nameFr: 'Anthracnose & Dessèchement de l’Igname',
+      scientificName: 'Colletotrichum gloeosporioides',
+      crop: 'Yam',
+      severity: 'High',
+      confidence: 0.92,
+      keywords: ['yam', 'igname', 'dieback', 'scorch', 'anthracnose', 'bafia', 'mound', 'tuber'],
+      symptoms: [
+        'Small dark pinpoint foliar lesions surrounded by distinct chlorotic yellow halos',
+        'Rapid blackening and die-back of young climbing vines giving a fire-scorched look',
+        'Stunted vine canopy resulting in undersized and fibrous tuber development'
+      ],
+      symptomsFr: [
+        'Petites ponctuations nécrotiques noires entourées d\'un halo jaune sur les feuilles',
+        'Dessèchement brutal et noircissement des extrémités des lianes donnant un aspect brûlé',
+        'Ralentissement de la croissance entraînant des tubercules rachitiques et fibreux'
+      ],
+      organicTreatment: [
+        'High bamboo staking (3m-4m) to elevate climbing vines away from humid soil contact',
+        'Spread wood ash around the mound base to create an alkaline protective barrier'
+      ],
+      organicTreatmentFr: [
+        'Tuteurage haut (3m à 4m) sur bambous solides pour soulever les lianes au-dessus du sol humide',
+        'Épandre de la cendre de bois tamisée au pied des buttes pour assainir l\'environnement'
+      ],
+      chemicalTreatment: [
+        'Spray preventive Mancozeb (80% WP) or Copper Oxychloride at 40g per 15L backpack sprayer',
+        'Apply systemic Azoxystrobin if early vine die-back appears during the heavy rainy season'
+      ],
+      chemicalTreatmentFr: [
+        'Pulvériser du Mancozèbe (80% WP) ou de l\'oxychlorure de cuivre (40g/15L) dès la montaison des lianes',
+        'Appliquer de l\'Azoxystrobine dès l\'apparition des premières brûlures de liane'
+      ],
+      prevention: [
+        'Plant certified clean seed setts treated with ash or fungicide dip before planting',
+        'Construct wide, well-aerated mounds with good spacing (1m x 1m) to avoid humidity buildup'
+      ],
+      preventionFr: [
+        'Planter des semenceaux sains trempés dans une bouillie fongicide ou de cendre avant mise en terre',
+        'Édifier des buttes bien aérées et espacées (1m x 1m) sur sol profond et meuble'
+      ]
+    }
+  ],
+  onion: [
+    {
+      id: 'onion_purple_blotch',
+      name: 'Purple Blotch of Onion',
+      nameFr: 'Alternariose / Tache Pourpre de l’Oignon',
+      scientificName: 'Alternaria porri',
+      crop: 'Onion',
+      severity: 'High',
+      confidence: 0.94,
+      keywords: ['onion', 'oignon', 'purple blotch', 'alternaria', 'maroua', 'kousseri', 'bulb'],
+      symptoms: [
+        'Water-soaked oval lesions on leaves rapidly developing distinct purplish-brown centers',
+        'Zonate rings with yellow margins causing hollow leaf tips to collapse and bend over',
+        'Premature bulb maturation with shriveled size and poor dry-storage shelf-life'
+      ],
+      symptomsFr: [
+        'Taches ovales aqueuses devenant pourpres au centre avec zonations concentriques caractéristiques',
+        'Affaissement et cassure des feuilles creuses jaunies au niveau des lésions',
+        'Calibre des bulbes très réduit et pourriture rapide lors de la conservation'
+      ],
+      organicTreatment: [
+        'Irrigate strictly by sunken furrows or drip lines—never sprinkle water over onion necks',
+        'Spray biopesticide concoction of crushed garlic, neem oil, and mild natural soap'
+      ],
+      organicTreatmentFr: [
+        'Irriguer strictement par rigoles sans jamais mouiller les feuilles par aspersion',
+        'Pulvériser un extrait d\'ail et d\'huile de neem avec du savon noir comme bio-fongicide'
+      ],
+      chemicalTreatment: [
+        'Spray Difenoconazole (Score 250 EC) or Mancozeb (80% WP) at 35g-45g per 15L knapsack',
+        'Add a sticker-spreader surfactant to ensure spray clings to waxy onion foliage'
+      ],
+      chemicalTreatmentFr: [
+        'Pulvériser du Difénoconazole (Score) ou Mancozèbe (40g/15L) dès les premiers signes foliaires',
+        'Ajouter un mouillant agricole pour faire adhérer le produit sur la cuticule cireuse de l\'oignon'
+      ],
+      prevention: [
+        'Transplant robust 45-day nursery seedlings into well-drained raised beds',
+        'Rotate with maize or sorghum; avoid all Allium crops (leek, garlic) for 2 full seasons'
+      ],
+      preventionFr: [
+        'Repiquer des plants vigoureux de 45 jours sur planches filtrantes bien drainées',
+        'Pratiquer une rotation stricte de 2 ans sans alliacées (ail, poireau) sur la parcelle'
+      ]
+    }
+  ],
+  cotton: [
+    {
+      id: 'cotton_bollworm',
+      name: 'Cotton Bollworm Complex',
+      nameFr: 'Chenille de la Capsule du Coton',
+      scientificName: 'Helicoverpa armigera',
+      crop: 'Cotton',
+      severity: 'Critical',
+      confidence: 0.95,
+      keywords: ['cotton', 'coton', 'bollworm', 'caterpillar', 'capsule', 'sodecoton', 'garoua', 'maroua'],
+      symptoms: [
+        'Bored holes at the base of cotton flower buds (squares) and developing green bolls',
+        'Flaring and shedding of young squares accompanied by dark caterpillar frass pellets',
+        'Hollowed out bolls failing to produce white lint, resulting in severe commercial loss'
+      ],
+      symptomsFr: [
+        'Trous de pénétration nets à la base des boutons floraux et des capsules vertes',
+        'Évasement et chute prématurée des boutons floraux souillés par les déjections de chenilles',
+        'Capsules dévorées de l\'intérieur incapables de produire la fibre blanche marchande'
+      ],
+      organicTreatment: [
+        'Handpick and destroy early instar larvae during weekly morning scouting runs',
+        'Spray biological Bacillus thuringiensis (Bt) or concentrated neem kernel extract'
+      ],
+      organicTreatmentFr: [
+        'Ramassage manuel des jeunes chenilles lors des comptages matinaux réguliers',
+        'Pulvérisation d\'une suspension de Bacillus thuringiensis (Bt) ou extrait de graines de neem'
+      ],
+      chemicalTreatment: [
+        'Apply Emamectin Benzoate or Indoxacarb as per official SODECOTON threshold recommendations',
+        'Alternate insecticide modes of action to prevent pyrethroid resistance in caterpillar populations'
+      ],
+      chemicalTreatmentFr: [
+        'Appliquer de l\'Émamectine Benzoate ou Indoxacarbe selon les seuils officiels SODECOTON',
+        'Alterner les familles chimiques pour éviter le développement de résistances'
+      ],
+      prevention: [
+        'Adhere strictly to the regional SODECOTON sowing window at the onset of rains',
+        'Uproot and incinerate dry cotton stalks immediately after harvest to destroy diapausing pupae'
+      ],
+      preventionFr: [
+        'Respecter strictement la fenêtre de semis précoce SODECOTON dès les premières pluies',
+        'Arracher et brûler les tiges de cotonnier post-récolte pour éliminer les nymphes hivernantes'
+      ]
+    }
+  ],
+  soybean: [
+    {
+      id: 'soybean_rust',
+      name: 'Asian Soybean Rust',
+      nameFr: 'Rouille Asiatique du Soja',
+      scientificName: 'Phakopsora pachyrhizi',
+      crop: 'Soybean',
+      severity: 'Critical',
+      confidence: 0.94,
+      keywords: ['soybean', 'soja', 'rust', 'rouille', 'pustules', 'bafoussam', 'ngaoundere', 'santa'],
+      symptoms: [
+        'Minute tan-to-brown polygonal pustules densely covering the underside of mature leaves',
+        'Rapid chlorotic yellowing and premature leaf defoliation starting from the lower canopy',
+        'Poor pod filling with lightweight shriveled seeds, slashing grain yield by up to 60%'
+      ],
+      symptomsFr: [
+        'Minuscules pustules polygonales brunes très nombreuses sur la face inférieure des feuilles',
+        'Jaunissement fulgurant et chute prématurée des feuilles en partant du bas du plant',
+        'Mauvais remplissage des gousses avec grains petits et ridés, perte de rendement jusqu\'à 60%'
+      ],
+      organicTreatment: [
+        'Early sowing at onset of regular rains to ensure pod filling before peak fungal spore pressure',
+        'Spray copper hydroxide solution or sulfur-based organic dusts early in the morning'
+      ],
+      organicTreatmentFr: [
+        'Semis très précoce dès l\'installation des pluies pour remplir les gousses avant le pic fongique',
+        'Pulvérisation matinale de bouillie cuprique douce ou poudrage au soufre ventilé'
+      ],
+      chemicalTreatment: [
+        'Apply systemic Triazole + Strobilurin mixture (Tebuconazole + Azoxystrobin) at R1/R3 flowering stages',
+        'Spray at 40g per 15L sprayer as soon as the first pustules appear in regional monitoring plots'
+      ],
+      chemicalTreatmentFr: [
+        'Appliquer un fongicide systémique (Tébuconazole + Azoxystrobine) dès l\'apparition des premières pustules',
+        'Doser à 40g par pulvérisateur de 15L en couvrant bien l\'intérieur du feuillage'
+      ],
+      prevention: [
+        'Plant certified tolerant varieties (such as IITA/IRAD TGx improved lines)',
+        'Rotate with maize or sorghum; avoid continuous soybean planting on the same parcel'
+      ],
+      preventionFr: [
+        'Semer des variétés tolérantes certifiées (lignées TGx de l\'IRAD/IITA)',
+        'Pratiquer une rotation avec le maïs pour briser le cycle de conservation des spores'
+      ]
+    }
   ]
 };
 
@@ -833,12 +1109,25 @@ export const KNOWN_CROPS = [
   { id: 'maize', label: 'Maize (Corn)', fr: 'Maïs', icon: '🌽', keywords: ['maize', 'corn', 'mais', 'maïs', 'whorl', 'ear', 'cob', 'tassel', 'stem borer', 'armyworm', 'zeamays'] },
   { id: 'cassava', label: 'Cassava', fr: 'Manioc', icon: '🌱', keywords: ['cassava', 'manioc', 'tuber', 'mosaic', 'whitefly', 'cmd', 'cbsd', 'manihot'] },
   { id: 'tomato', label: 'Tomato', fr: 'Tomate', icon: '🍅', keywords: ['tomato', 'tomate', 'blight', 'solanum', 'lycopersicum', 'wilt'] },
-  { id: 'plantain', label: 'Plantain', fr: 'Banane Plantain', icon: '🍌', keywords: ['plantain', 'banana', 'banane', 'musa', 'sigatoka', 'bunch', 'regime'] },
+  { id: 'plantain', label: 'Plantain', fr: 'Banane Plantain', icon: '🍌', keywords: ['plantain', 'banane plantain', 'musa', 'sigatoka', 'bunch', 'regime'] },
+  { id: 'banana', label: 'Banana', fr: 'Banane', icon: '🍌', keywords: ['banana', 'banane', 'musa acuminata', 'cavendish', 'gros michel'] },
   { id: 'cocoa', label: 'Cocoa', fr: 'Cacao', icon: '🍫', keywords: ['cocoa', 'cacao', 'pod', 'theobroma', 'black pod', 'mirid', 'cabosse'] },
   { id: 'potato', label: 'Irish Potato', fr: 'Pomme de Terre', icon: '🥔', keywords: ['potato', 'pomme de terre', 'solanum tuberosum', 'late blight', 'tubereux'] },
   { id: 'pepper', label: 'Pepper', fr: 'Piment', icon: '🌶️', keywords: ['pepper', 'piment', 'poivron', 'capsicum', 'chili', 'anthracnose'] },
-  { id: 'groundnut', label: 'Groundnut', fr: 'Arachide', icon: '🥜', keywords: ['groundnut', 'arachide', 'peanut', 'rosette', 'peg'] },
-  { id: 'rice', label: 'Rice', fr: 'Riz', icon: '🌾', keywords: ['rice', 'riz', 'oryza', 'paddy', 'blast', 'semry', 'ndop'] }
+  { id: 'groundnut', label: 'Groundnut', fr: 'Arachide', icon: '🥜', keywords: ['groundnut', 'arachide', 'peanut', 'rosette', 'peg', 'arachis'] },
+  { id: 'rice', label: 'Rice', fr: 'Riz', icon: '🌾', keywords: ['rice', 'riz', 'oryza', 'paddy', 'blast', 'semry', 'ndop'] },
+  { id: 'beans', label: 'Common Beans', fr: 'Haricot Commun', icon: '🫘', keywords: ['bean', 'beans', 'haricot', 'phaseolus', 'kumba'] },
+  { id: 'coffee', label: 'Coffee', fr: 'Caféier', icon: '☕', keywords: ['coffee', 'cafe', 'café', 'coffea', 'arabica', 'robusta'] },
+  { id: 'yam', label: 'Yam', fr: 'Igname', icon: '🥔', keywords: ['yam', 'igname', 'dioscorea', 'bafia'] },
+  { id: 'onion', label: 'Onion', fr: 'Oignon', icon: '🧅', keywords: ['onion', 'oignon', 'allium', 'cepa', 'maroua'] },
+  { id: 'cotton', label: 'Cotton', fr: 'Coton', icon: '☁️', keywords: ['cotton', 'coton', 'sodecoton', 'gossypium'] },
+  { id: 'soybean', label: 'Soybean', fr: 'Soja', icon: '🫘', keywords: ['soybean', 'soja', 'soya', 'glycine max'] },
+  { id: 'sweet_potato', label: 'Sweet Potato', fr: 'Patate Douce', icon: '🍠', keywords: ['sweet potato', 'sweet_potato', 'patate', 'patate douce', 'ipomoea'] },
+  { id: 'sorghum', label: 'Sorghum', fr: 'Sorgho', icon: '🌾', keywords: ['sorghum', 'sorgho', 'muskuwaari', 'karal'] },
+  { id: 'cowpea', label: 'Cowpea', fr: 'Niébé', icon: '🫘', keywords: ['cowpea', 'niebe', 'niébé', 'vigna unguiculata'] },
+  { id: 'ginger', label: 'Ginger', fr: 'Gingembre', icon: '🌿', keywords: ['ginger', 'gingembre', 'zingiber'] },
+  { id: 'oil_palm', label: 'Oil Palm', fr: 'Palmier à Huile', icon: '🌴', keywords: ['oil palm', 'oil_palm', 'palmier', 'elaeis', 'tenera'] },
+  { id: 'eru', label: 'Eru / Okok', fr: 'Eru / Okok', icon: '🥬', keywords: ['eru', 'okok', 'gnetum africanum'] }
 ];
 
 export function identifyPlantFromImage({ crop = null, imageUri = null, symptomsText = '', fileName = '', language = 'English' } = {}) {
@@ -851,12 +1140,25 @@ export function identifyPlantFromImage({ crop = null, imageUri = null, symptomsT
     if (rawCrop === 'manioc') normalized = 'cassava';
     else if (rawCrop === 'maïs' || rawCrop === 'corn' || rawCrop === 'mais') normalized = 'maize';
     else if (rawCrop === 'tomate') normalized = 'tomato';
-    else if (rawCrop === 'banane' || rawCrop === 'banana') normalized = 'plantain';
+    else if (rawCrop === 'banane plantain') normalized = 'plantain';
+    else if (rawCrop === 'banane') normalized = 'banana';
     else if (rawCrop === 'cacao') normalized = 'cocoa';
     else if (rawCrop === 'pomme de terre') normalized = 'potato';
     else if (rawCrop === 'piment') normalized = 'pepper';
     else if (rawCrop === 'arachide' || rawCrop === 'peanut' || rawCrop === 'garnut' || rawCrop === 'groundnut') normalized = 'groundnut';
     else if (rawCrop === 'riz') normalized = 'rice';
+    else if (rawCrop === 'haricot' || rawCrop === 'bean') normalized = 'beans';
+    else if (rawCrop === 'café' || rawCrop === 'cafe') normalized = 'coffee';
+    else if (rawCrop === 'igname') normalized = 'yam';
+    else if (rawCrop === 'oignon') normalized = 'onion';
+    else if (rawCrop === 'coton') normalized = 'cotton';
+    else if (rawCrop === 'soja' || rawCrop === 'soya') normalized = 'soybean';
+    else if (rawCrop === 'patate' || rawCrop === 'patate douce') normalized = 'sweet_potato';
+    else if (rawCrop === 'sorgho' || rawCrop === 'muskuwaari') normalized = 'sorghum';
+    else if (rawCrop === 'niébé' || rawCrop === 'niebe') normalized = 'cowpea';
+    else if (rawCrop === 'gingembre') normalized = 'ginger';
+    else if (rawCrop === 'palmier') normalized = 'oil_palm';
+    else if (rawCrop === 'okok') normalized = 'eru';
 
     const match = KNOWN_CROPS.find(c => c.id === normalized) || KNOWN_CROPS[0];
     return {

@@ -17,7 +17,7 @@ const APP_SERVICES = [
     descFr: 'Scannez les feuilles avec la vision IA. Détection instantanée des maladies et remèdes certifiés bio & chimiques.',
     ctaEn: '📸 Inspect Leaf Now',
     ctaFr: '📸 Scanner une Feuille',
-    image: require('../../assets/plant-diagnosis-tablet.jpg'),
+    image: require('../../assets/crops/cocoa.jpg'),
     accentColor: '#16A34A',
     badgeBg: '#DCFCE7'
   },
@@ -25,15 +25,15 @@ const APP_SERVICES = [
     key: 'cropAdvice',
     icon: '🌾',
     route: 'cropAdvice',
-    badgeEn: '10 AGRO-ECOLOGICAL ZONES',
-    badgeFr: '10 ZONES AGRO-ÉCOLOGIQUES',
-    titleEn: 'Smart Crop Recommendation',
-    titleFr: 'Conseils Cultures Intelligents',
-    descEn: 'Personalized crop selection and NPK fertilizer calendars adapted to Cameroon soils, rainfall, and farm acreage for maximum harvest yield.',
-    descFr: 'Sélection des meilleures cultures et calendriers d\'engrais adaptés aux sols et au climat du Cameroun.',
+    badgeEn: 'MAJOR CAMEROON CROPS',
+    badgeFr: 'GRANDES CULTURES DU CAMEROUN',
+    titleEn: 'Major Cameroon Crop Advisory',
+    titleFr: 'Conseils Grandes Cultures Cameroun',
+    descEn: 'Personalized crop calendars and NPK fertilization adapted to Cameroon agro-ecological zones (Centre, Littoral, West, North, East) for maximum harvest yield.',
+    descFr: 'Sélection des meilleures cultures et calendriers d\'engrais adaptés aux 10 régions du Cameroun.',
     ctaEn: '🌱 Build Crop Plan',
     ctaFr: '🌱 Créer mon Plan',
-    image: { uri: 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=1200&q=80' },
+    image: require('../../assets/crops/plantain.jpg'),
     accentColor: '#D97706',
     badgeBg: '#FEF3C7'
   },
@@ -41,15 +41,15 @@ const APP_SERVICES = [
     key: 'aiChat',
     icon: '🤖',
     route: 'aiChat',
-    badgeEn: 'QWEN 2.5 3B CONSULTANT',
-    badgeFr: 'EXPERT QWEN 2.5 3B',
+    badgeEn: 'AGRONOMIST CONSULTANT 24/7',
+    badgeFr: 'AGRONOME IA EN DIRECT 24/7',
     titleEn: 'AI Agronomist Chat',
     titleFr: 'Agronome IA en Direct',
     descEn: '24/7 localized farming advisory in French & English. Ask about armyworm control, cassava mosaic, soil pH, cocoa black pod, and organic remedies.',
     descFr: 'Conseils agronomiques 24/7 en français et anglais. Posez vos questions sur les ravageurs, maladies et sols.',
     ctaEn: '💬 Talk with Agronomist',
-    ctaFr: '💬 Échanger avec l\'IA',
-    image: { uri: 'https://images.unsplash.com/photo-1592982537447-6f23349c814b?auto=format&fit=crop&w=1200&q=80' },
+    ctaFr: '💬 Échanger avec l\'Agronome',
+    image: require('../../assets/crops/coffee.jpg'),
     accentColor: '#059669',
     badgeBg: '#D1FAE5'
   },
@@ -65,7 +65,7 @@ const APP_SERVICES = [
     descFr: 'Enregistrez l\'humidité, le stade végétatif et les attaques parasitaires pour suivre la santé de votre parcelle.',
     ctaEn: '📋 Start Field Survey',
     ctaFr: '📋 Démarrer l\'Enquête',
-    image: require('../../assets/plant-diagnosis-tablet.jpg'),
+    image: require('../../assets/crops/cassava.jpg'),
     accentColor: '#15803D',
     badgeBg: '#DCFCE7'
   }
@@ -163,10 +163,10 @@ export default function WelcomeScreen({ goTo, setLanguage, currentLanguage, user
         {/* Section Heading */}
         <View style={styles.showcaseHeader}>
           <Text style={styles.showcaseEyebrow}>
-            🌿 {isFrench ? 'SERVICES AGRICOLES INTELLIGENTS' : 'INTELLIGENT FARM SERVICES'}
+            🇨🇲 {isFrench ? 'GRANDES CULTURES DU CAMEROUN & SERVICES' : 'MAJOR CAMEROON CROPS & FARM SERVICES'}
           </Text>
           <Text style={styles.showcaseMainTitle}>
-            {isFrench ? 'Tout pour protéger et développer vos cultures' : 'Everything Your Farm Needs to Flourish'}
+            {isFrench ? 'Tout pour protéger et développer vos récoltes au Cameroun' : 'Protect & Boost Your Farm Yields in Cameroon'}
           </Text>
         </View>
 
@@ -184,7 +184,7 @@ export default function WelcomeScreen({ goTo, setLanguage, currentLanguage, user
                 onPress={() => setActiveServiceIndex(idx)}
               >
                 <Text style={styles.tabIcon}>{srv.icon}</Text>
-                <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                <Text style={[styles.tabText, isActive && styles.tabTextActive]} numberOfLines={1}>
                   {idx === 0 ? (isFrench ? 'Diagnostic' : 'Diagnosis') :
                    idx === 1 ? (isFrench ? 'Cultures' : 'Crops') :
                    idx === 2 ? (isFrench ? 'Agronome' : 'Agronomist') :
@@ -543,12 +543,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
     borderRadius: 12,
     backgroundColor: '#F8FAFC',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    gap: 4,
+    gap: 3,
   },
   tabButtonActive: {
     shadowColor: '#000',
@@ -558,12 +558,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   tabIcon: {
-    fontSize: 14,
+    fontSize: 13,
   },
   tabText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
     color: '#475569',
+    flexShrink: 0,
   },
   tabTextActive: {
     color: '#FFFFFF',

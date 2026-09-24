@@ -76,7 +76,27 @@ function normalizeCropKey(value) {
     oignon: 'onion',
     onion: 'onion',
     potato: 'potato',
-    'pomme de terre': 'potato'
+    'pomme de terre': 'potato',
+    cotton: 'cotton',
+    coton: 'cotton',
+    soybean: 'soybean',
+    soja: 'soybean',
+    soya: 'soybean',
+    sweet_potato: 'sweet_potato',
+    patate: 'sweet_potato',
+    'patate douce': 'sweet_potato',
+    sorghum: 'sorghum',
+    sorgho: 'sorghum',
+    muskuwaari: 'sorghum',
+    cowpea: 'cowpea',
+    niébé: 'cowpea',
+    niebe: 'cowpea',
+    ginger: 'ginger',
+    gingembre: 'ginger',
+    oil_palm: 'oil_palm',
+    palmier: 'oil_palm',
+    eru: 'eru',
+    okok: 'eru'
   };
   if (aliases[crop]) return aliases[crop];
   for (const [alias, canonical] of Object.entries(aliases)) {
@@ -182,13 +202,17 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
       // Notifications are optional; never hide a diagnosis if the device
       // denies notification permission or does not support local scheduling.
       try {
-        const notifCropLabel = plant.name || activeCropLabel;
-        await scheduleLocalNotification({
-          title: isFr ? 'Diagnostic terminé' : 'Diagnosis complete',
-          body: isFr ? `Résultat disponible pour ${notifCropLabel}.` : `Your ${notifCropLabel} diagnosis is ready.`,
-          data: { type: 'diagnosis_ready', crop: plant.cropKey }
-        });
-        await scheduleTwoWeekReminder({ crop: notifCropLabel, language });
+        const notifCropLabel = plant?.name || activeCropLabel || 'Culture';
+        if (typeof scheduleLocalNotification === 'function') {
+          await scheduleLocalNotification({
+            title: isFr ? 'Diagnostic terminé' : 'Diagnosis complete',
+            body: isFr ? `Résultat disponible pour ${notifCropLabel}.` : `Your ${notifCropLabel} diagnosis is ready.`,
+            data: { type: 'diagnosis_ready', crop: plant?.cropKey || 'general' }
+          });
+        }
+        if (typeof scheduleTwoWeekReminder === 'function') {
+          await scheduleTwoWeekReminder({ crop: notifCropLabel, language });
+        }
       } catch (notificationError) {
         console.warn('Diagnosis notifications unavailable:', notificationError);
       }
@@ -437,23 +461,28 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
 
 // ── DiagnosisResultCard ────────────────────────────────────────────────────────
 function DiagnosisResultCard({ result, isFr, goTo }) {
-  const sev = getSeverityStyle(result.severity);
+  if (!result) return null;
+  const sev = getSeverityStyle(result.severity) || { color: '#65A30D', bg: '#ECFCCB', icon: '🟢' };
   const cropKey = normalizeCropKey(result.imageCrop || result.crop || 'maize');
-  const guidance = getCropAgronomicGuidance(cropKey, isFr ? 'Français' : 'English');
+  const guidance = getCropAgronomicGuidance(cropKey, isFr ? 'Français' : 'English') || {};
 
-  // Extract cure details
-  const immediateActions = (result.cure?.immediateAction && result.cure.immediateAction.length > 0)
-    ? result.cure.immediateAction
-    : guidance.immediateAction;
-  const organicList = (result.organicTreatment && result.organicTreatment.length > 0)
-    ? result.organicTreatment
-    : (result.cure?.organicTreatment || []);
-  const chemicalList = (result.chemicalTreatment && result.chemicalTreatment.length > 0)
-    ? result.chemicalTreatment
-    : (result.cure?.chemicalTreatment || []);
-  const preventionList = (result.prevention && result.prevention.length > 0)
-    ? result.prevention
-    : [];
+  // Safe list parser: handles arrays, delimited strings, or single values without crashing
+  const toSafeList = (val) => {
+    if (!val) return [];
+    if (Array.isArray(val)) {
+      return val.map(item => String(item || '')).filter(s => s.trim().length > 0);
+    }
+    if (typeof val === 'string') {
+      return val.split(/;\s*|\n+/).map(s => s.trim()).filter(Boolean);
+    }
+    return [String(val)];
+  };
+
+  const symptomsList = toSafeList(result.symptoms);
+  const immediateActions = toSafeList(result.cure?.immediateAction || guidance?.immediateAction);
+  const organicList = toSafeList(result.organicTreatment || result.cure?.organicTreatment);
+  const chemicalList = toSafeList(result.chemicalTreatment || result.cure?.chemicalTreatment);
+  const preventionList = toSafeList(result.prevention);
   
   // Extract recommendation details
   const cropRotationText = result.recommendations?.cropRotation || guidance.cropRotation;
@@ -464,29 +493,31 @@ function DiagnosisResultCard({ result, isFr, goTo }) {
     <View style={styles.resultCard}>
 
       {/* ── Diagnostic Identification Header ──────────────────────────── */}
-      <View style={[styles.resultHeader, { backgroundColor: sev.bg }]}>
+      <View style={[styles.resultHeader, { backgroundColor: sev.bg || '#F0FDF4' }]}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.resultCrop}>{result.crop || ''}</Text>
-          <Text style={[styles.resultTitle, { color: sev.color }]}>{result.name}</Text>
+          <Text style={styles.resultCrop}>{String(result.crop || '')}</Text>
+          <Text style={[styles.resultTitle, { color: sev.color || '#166534' }]}>{result.name}</Text>
           {result.scientificName ? (
             <Text style={styles.resultScientific}>🔬 {result.scientificName}</Text>
           ) : null}
         </View>
         <View style={styles.rightBadges}>
-          <View style={[styles.confidenceBadge, { backgroundColor: sev.color }]}>
+          <View style={[styles.confidenceBadge, { backgroundColor: sev.color || '#166534' }]}>
             <Text style={styles.confidenceText}>{Math.round((result.confidence ?? 0.85) * 100)}%</Text>
             <Text style={styles.confidenceLabel}>{isFr ? 'fiabilité' : 'match'}</Text>
           </View>
-          <View style={[styles.severityBadge, { backgroundColor: sev.color }]}>
-            <Text style={styles.severityText}>{sev.icon} {getSeverityLabel(result.severity, isFr)}</Text>
+          <View style={[styles.severityBadge, { backgroundColor: sev.color || '#166534' }]}>
+            <Text style={styles.severityText}>
+              {sev.icon || '🟢'} {typeof getSeverityLabel === 'function' ? getSeverityLabel(result.severity, isFr) : (result.severity || 'Moderate')}
+            </Text>
           </View>
         </View>
       </View>
 
       {/* Symptoms */}
-      {(result.symptoms || []).length > 0 && (
+      {symptomsList.length > 0 && (
         <Section icon="🔍" title={isFr ? 'Symptômes observés' : 'Observed Symptoms'}>
-          {(result.symptoms || []).map((s, i) => (
+          {symptomsList.map((s, i) => (
             <BulletRow key={i} text={s} color="#475569" bullet="•" />
           ))}
         </Section>
@@ -513,16 +544,18 @@ function DiagnosisResultCard({ result, isFr, goTo }) {
         </View>
 
         {/* ⚡ Emergency 24h Action */}
-        <View style={styles.actionCallout}>
-          <Text style={styles.actionCalloutTitle}>
-            ⚡ {isFr ? 'ACTIONS D’URGENCE (PREMIÈRES 24H) :' : 'IMMEDIATE ACTIONS (FIRST 24 HOURS):'}
-          </Text>
-          {immediateActions.map((action, idx) => (
-            <Text key={idx} style={styles.actionCalloutItem}>
-              {`${idx + 1}. ${action}`}
+        {immediateActions.length > 0 && (
+          <View style={styles.actionCallout}>
+            <Text style={styles.actionCalloutTitle}>
+              ⚡ {isFr ? 'ACTIONS D’URGENCE (PREMIÈRES 24H) :' : 'IMMEDIATE ACTIONS (FIRST 24 HOURS):'}
             </Text>
-          ))}
-        </View>
+            {immediateActions.map((action, idx) => (
+              <Text key={idx} style={styles.actionCalloutItem}>
+                {`${idx + 1}. ${action}`}
+              </Text>
+            ))}
+          </View>
+        )}
 
         {/* 🌿 Organic / Natural Cure */}
         {organicList.length > 0 && (

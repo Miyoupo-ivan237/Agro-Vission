@@ -11,12 +11,13 @@ import SurveyScreen from '../screens/survey/SurveyScreen';
 import AdminDashboard from '../screens/auth/AdminDashboard';
 import NotificationCenterScreen from '../screens/notifications/NotificationCenterScreen';
 import HistoryScreen from '../screens/farmer/HistoryScreen';
+import AccountScreen from '../screens/farmer/AccountScreen';
 
 export default function AppNavigator({ route, setRoute, language, setLanguage, userEmail, setUserEmail }) {
   const goTo = setRoute;
 
   // Protected features require user account creation / login first
-  const isProtected = ['home', 'admin', 'diagnosis', 'cropAdvice', 'aiChat', 'survey', 'notifications', 'history'].includes(route);
+  const isProtected = ['home', 'account', 'admin', 'diagnosis', 'cropAdvice', 'aiChat', 'survey', 'notifications', 'history'].includes(route);
   if (isProtected && !userEmail) {
     return <WelcomeScreen goTo={goTo} currentLanguage={language} setLanguage={setLanguage} userEmail={userEmail} setUserEmail={setUserEmail} />;
   }
@@ -32,6 +33,8 @@ export default function AppNavigator({ route, setRoute, language, setLanguage, u
       return <RegisterScreen goTo={goTo} setUserEmail={setUserEmail} language={language} />;
     case 'home':
       return <FarmerDashboard goTo={goTo} language={language} userEmail={userEmail} setUserEmail={setUserEmail} />;
+    case 'account':
+      return <AccountScreen goTo={goTo} language={language} userEmail={userEmail} setUserEmail={setUserEmail} />;
     case 'admin':
       return <AdminDashboard goTo={goTo} language={language} />;
     case 'diagnosis':
