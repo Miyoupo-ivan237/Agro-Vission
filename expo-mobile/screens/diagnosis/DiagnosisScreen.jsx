@@ -369,15 +369,26 @@ export default function DiagnosisScreen({ goTo, language = 'English' }) {
           {capturedImage ? (
             <View style={styles.previewContainer}>
               <Image source={{ uri: capturedImage }} style={styles.previewImage} resizeMode="cover" />
+              {/* Scanning overlay shown while AI is analysing */}
+              {loading && (
+                <View style={styles.scanningOverlay}>
+                  <ActivityIndicator size="large" color="#4ADE80" />
+                  <Text style={styles.scanningText}>
+                    {isFr ? '🔬 Analyse IA en cours...' : '🔬 AI Scanning...'}
+                  </Text>
+                </View>
+              )}
               <View style={styles.previewOverlay}>
                 <View style={styles.previewBadge}>
                   <Text style={styles.previewBadgeText}>
                     {activeCrop?.icon} {activeCropLabel}
                   </Text>
                 </View>
-                <Pressable style={styles.retakeButton} onPress={handleReset}>
-                  <Text style={styles.retakeText}>✕ {isFr ? 'Retirer' : 'Remove'}</Text>
-                </Pressable>
+                {!loading && (
+                  <Pressable style={styles.retakeButton} onPress={handleReset}>
+                    <Text style={styles.retakeText}>✕ {isFr ? 'Retirer' : 'Remove'}</Text>
+                  </Pressable>
+                )}
               </View>
             </View>
           ) : (
@@ -828,6 +839,12 @@ const styles = StyleSheet.create({
     elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4,
   },
   previewImage: { width: '100%', height: 220 },
+  scanningOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center',
+    zIndex: 10,
+  },
+  scanningText: { color: '#4ADE80', fontSize: 15, fontWeight: 'bold', marginTop: 12 },
   previewOverlay: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',

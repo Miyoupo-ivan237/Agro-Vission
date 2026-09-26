@@ -225,8 +225,8 @@ export async function diagnosePlant({ crop, symptomsText, imageUri, imageBase64,
     // Only re-throw genuine business validation rejections from the server
     // (e.g. HTTP 422 for IMAGE_NOT_IDENTIFIABLE or IMAGE_CROP_MISMATCH).
     // Network failures, 503 service unavailable, timeouts fall silently to on-device offline AI engine.
-    if (err && err.info && err.status === 422) throw err;
-    console.warn('[AgroVission] Backend vision unavailable/timeout, switching to offline AI:', err?.message || err);
+    if (err && err.info && (err.info.status === 422 || err.info.statusCode === 422)) throw err;
+    console.log('[AgroVission] Backend unavailable, using offline AI:', err?.message || 'network error');
   }
 
   // ── On-Device Offline Fallback ─────────────────────────────────────────────
